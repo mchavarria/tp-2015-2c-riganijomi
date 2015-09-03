@@ -4,7 +4,7 @@
  *  Created on: 3/9/2015
  *      Author: utnso
  */
-
+#include <stdio.h>
 /*
  * El objetivo de esta funcion es que inicalice el proceso planificador
  */
