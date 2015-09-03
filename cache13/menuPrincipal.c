@@ -5,23 +5,22 @@
  *      Author: utnso
  */
 #include <stdio.h>
+#include "functions.h"
 
-/* Devuelve el valor elegido del menu */
-extern int show_menu(void);
-
-extern void planificador(void);
-extern void admMemoria(void);
-extern void admSwap(void);
 
 int main() {
 	int eleccion;
-	void (*fArray[]) (void) = {planificador, admMemoria, admSwap};
+
+	void (*functionsArray[]) (void) = {planificador, admMemoria, admSwap};
+
+	/* Ciclo infinito para mantener la consola activa */
 	for (;;) {
 		eleccion = show_menu();
+
 		if (eleccion >= 1 && eleccion <= 3) {
-			fArray[eleccion-1]() ;
-		} else {
-			printf("Opcion no valida, elija otra");
+			/* utiliza el puntero de la funcion que fue agregada en el array */
+			/* de esta manera llamamos a la funcion sin necesidad de usar if/case */
+			functionsArray[eleccion-1]() ;
 		}
 	}
 	return 0;
