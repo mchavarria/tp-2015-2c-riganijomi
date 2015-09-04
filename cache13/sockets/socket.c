@@ -82,14 +82,19 @@ int crear_socket_servidor(){
 	 *
 	 *	Cuando el cliente cierra la conexion, recv() devolvera 0.
 	 */
+	char mensaje[PACKAGESIZE];
 	char package[PACKAGESIZE];
 	int status = 1;		// Estructura que manjea el status de los recieve.
 
 	printf("Cliente conectado. Esperando mensajes:\n");
 
+	write(socketCliente, "Soy el planificador, te doy la bienvenida!!", PACKAGESIZE);
+
 	while (status != 0){
 		status = recv(socketCliente, (void*) package, PACKAGESIZE, 0);
 		if (status != 0) printf("%s", package);
+		fgets(mensaje, PACKAGESIZE, stdin);
+		write(socketCliente, mensaje, PACKAGESIZE);
 
 	}
 
