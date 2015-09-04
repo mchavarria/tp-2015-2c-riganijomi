@@ -13,7 +13,8 @@
 #define PUERTO "6667"
 
 //Tiene que ser enviada por quién solicita conexión con un socket servidor
-//#define IP "127.0.0.1"
+#define IP "192.168.1.126"
+
 
 int crear_socket_servidor(){
 
@@ -101,7 +102,7 @@ int crear_socket_servidor(){
 	return 0;
 }
 
-int cliente(){
+int crearSocketCliente(){
 
 	/*
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.

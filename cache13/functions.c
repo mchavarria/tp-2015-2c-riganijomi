@@ -5,7 +5,7 @@
  *      Author: utnso
  */
 #include <stdio.h>
-#include "socket.h"
+#include "sockets/socket.h"
 /*
  * El objetivo de esta funcion es que inicalice el proceso planificador
  */
@@ -20,6 +20,8 @@ void planificador() {
  */
 void admMemoria() {
 	printf("Elegiste el administrador de memoria\n");
+	printf("Va a crearse un socket cliente.\n");
+	crearSocketCliente();
 }
 
 /*
