@@ -13,7 +13,7 @@
 #define PUERTO "6667"
 
 //Tiene que ser enviada por quién solicita conexión con un socket servidor
-#define IP "192.168.1.126"
+#define IP "192.168.1.119"
 
 
 int crear_socket_servidor(){
@@ -149,13 +149,25 @@ int crearSocketCliente(){
 	 */
 	int serverSocket;
 	serverSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
-
+	if (serverSocket == -1)
+	{
+		printf("Could not create socket");
+	} else {
+		puts("Socket created");
+	}
 	/*
 	 * 	Perfecto, ya tengo el medio para conectarme (el archivo), y ya se lo pedi al sistema.
 	 * 	Ahora me conecto!
 	 *
 	 */
-	connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen);
+	if (connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen))
+	{
+		perror("connect failed. Error");
+		return 1;
+	} else {
+		puts("Connected\n");
+	}
+
 	freeaddrinfo(serverInfo);	// No lo necesitamos mas
 
 	/*
