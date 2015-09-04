@@ -40,13 +40,26 @@ int crear_socket_servidor(){
 	/* Necesitamos un socket que escuche las conecciones entrantes */
 	int listeningSocket;
 	listeningSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
+	if (listeningSocket == -1)
+	{
+		printf("Could not create socket");
+	} else {
+		puts("Socket created");
+	}
 
 	/*
 	 * 	Todavia no estoy escuchando las conexiones entrantes!
 	 *
 	 */
-	bind(listeningSocket,serverInfo->ai_addr, serverInfo->ai_addrlen);
-	freeaddrinfo(serverInfo); // Ya no lo vamos a necesitar
+	if(bind(listeningSocket,serverInfo->ai_addr, serverInfo->ai_addrlen) < 0)
+	{
+		//print the error message
+		perror("bind failed. Error");
+		return 1;
+	} else {
+	    puts("bind done");
+	    freeaddrinfo(serverInfo); // Ya no lo vamos a necesitar
+	}
 
 	/*
 	 * Solo me queda decirle que vaya y escuche!
@@ -74,7 +87,13 @@ int crear_socket_servidor(){
 	socklen_t addrlen = sizeof(addr);
 
 	int socketCliente = accept(listeningSocket, (struct sockaddr *) &addr, &addrlen);
-
+	if (socketCliente < 0)
+	{
+		perror("accept failed");
+		return 1;
+	} else {
+	    puts("Connection accepted");
+	}
 	/*
 	 * 	Ya estamos listos para recibir paquetes de nuestro cliente...
 	 *
@@ -82,14 +101,19 @@ int crear_socket_servidor(){
 	 *
 	 *	Cuando el cliente cierra la conexion, recv() devolvera 0.
 	 */
+	char mensaje[PACKAGESIZE];
 	char package[PACKAGESIZE];
 	int status = 1;		// Estructura que manjea el status de los recieve.
 
 	printf("Cliente conectado. Esperando mensajes:\n");
 
+	write(socketCliente, "Soy el planificador, te doy la bienvenida!!", PACKAGESIZE);
+
 	while (status != 0){
 		status = recv(socketCliente, (void*) package, PACKAGESIZE, 0);
 		if (status != 0) printf("%s", package);
+		fgets(mensaje, PACKAGESIZE, stdin);
+		write(socketCliente, mensaje, PACKAGESIZE);
 
 	}
 
@@ -149,11 +173,14 @@ int crearSocketCliente(){
 	char message[PACKAGESIZE];
 
 	printf("Conectado al servidor. Bienvenido al sistema, ya puede enviar mensajes. Escriba 'exit' para salir\n");
+	char server_reply[PACKAGESIZE];
 
 	while(enviar){
+		recv(serverSocket , server_reply , PACKAGESIZE , 0);
+		puts(server_reply);
 		fgets(message, PACKAGESIZE, stdin);			// Lee una linea en el stdin (lo que escribimos en la consola) hasta encontrar un \n (y lo incluye) o llegar a PACKAGESIZE.
 		if (!strcmp(message,"exit\n")) enviar = 0;			// Chequeo que el usuario no quiera salir
-		if (enviar) send(serverSocket, message, strlen(message) + 1, 0); 	// Solo envio si el usuario no quiere salir.
+		if (enviar) send(serverSocket, message, PACKAGESIZE, 0); 	// Solo envio si el usuario no quiere salir.
 	}
 
 
