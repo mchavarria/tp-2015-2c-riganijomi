@@ -5,11 +5,14 @@
  *      Author: utnso
  */
 #include <stdio.h>
+#include "socket.h"
 /*
  * El objetivo de esta funcion es que inicalice el proceso planificador
  */
 void planificador() {
 	printf("Elegiste el planificador\n");
+	printf("Va a crear un socket de escucha.\n");
+	crear_socket_servidor();
 }
 
 /*
