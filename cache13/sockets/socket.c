@@ -6,17 +6,23 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#include <sys/stat.h>
+#include <commons/collections/dictionary.h>
+#include <commons/config.h>
+#include <commons/string.h>
+
 //Puede ser del cfg
 #define PACKAGESIZE 1024	// Define cual va a ser el size maximo del paquete a enviar
 #define BACKLOG 5 // Define cuantas conexiones vamos a mantener pendientes al mismo tiempo
-//puerto del servidor tiene que estar en la cfg
-#define PUERTO "6667"
 
-//Tiene que ser enviada por quién solicita conexión con un socket servidor
-#define IP "192.168.1.119"
 
 
 int crear_socket_servidor(){
+	//obtiene el puerto del archivo
+	t_config* config;
+	config = config_create("rutaDondeEsteElArchivo.cfg");
+	char * PUERTO;
+	PUERTO = config_get_string_value(config, "PORT");
 
 	/*
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
@@ -127,6 +133,17 @@ int crear_socket_servidor(){
 }
 
 int crearSocketCliente(){
+	//obtine el puerto e ip del archivo
+	t_config* config;
+	config = config_create("rutaDondeEsteElArchivo.cfg");
+	char * PUERTO;
+	char * IP;
+	PUERTO = config_get_string_value(config, "PORT");
+	IP = config_get_string_value(config, "IP");
+
+
+
+
 
 	/*
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
