@@ -10,13 +10,13 @@
 #define PACKAGESIZE 1024	// Define cual va a ser el size maximo del paquete a enviar
 #define BACKLOG 5 // Define cuantas conexiones vamos a mantener pendientes al mismo tiempo
 //puerto del servidor tiene que estar en la cfg
-#define PUERTO "6667"
+//#define PUERTO "6672"
 
 //Tiene que ser enviada por quién solicita conexión con un socket servidor
-#define IP "192.168.1.126"
+#define IP "192.168.1.119"
 
 
-int crear_socket_servidor(){
+int crear_socket_servidor(char * puerto){
 
 	/*
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
@@ -30,7 +30,7 @@ int crear_socket_servidor(){
 	hints.ai_flags = AI_PASSIVE;		// Asigna el address del localhost: 127.0.0.1
 	hints.ai_socktype = SOCK_STREAM;	// Indica que usaremos el protocolo TCP
 
-	getaddrinfo(NULL, PUERTO, &hints, &serverInfo); // Notar que le pasamos NULL como IP, ya que le indicamos que use localhost en AI_PASSIVE
+	getaddrinfo(NULL, puerto, &hints, &serverInfo); // Notar que le pasamos NULL como IP, ya que le indicamos que use localhost en AI_PASSIVE
 
 
 	/*
@@ -42,9 +42,9 @@ int crear_socket_servidor(){
 	listeningSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
 	if (listeningSocket == -1)
 	{
-		printf("Could not create socket");
+		printf("No se pudo crear el socket");
 	} else {
-		puts("Socket created");
+		puts("El socket ha sido creado");
 	}
 
 	/*
@@ -54,10 +54,10 @@ int crear_socket_servidor(){
 	if(bind(listeningSocket,serverInfo->ai_addr, serverInfo->ai_addrlen) < 0)
 	{
 		//print the error message
-		perror("bind failed. Error");
+		perror("Error de bind");
 		return 1;
 	} else {
-	    puts("bind done");
+	    puts("bind correcto");
 	    freeaddrinfo(serverInfo); // Ya no lo vamos a necesitar
 	}
 
@@ -66,7 +66,7 @@ int crear_socket_servidor(){
 	 *
 	 */
 	listen(listeningSocket, BACKLOG);		// IMPORTANTE: listen() es una syscall BLOQUEANTE.
-
+	puts("Paso el listening");
 	/*
 	 * 	El sistema esperara hasta que reciba una conexion entrante...
 	 * 	...
@@ -101,7 +101,7 @@ int crear_socket_servidor(){
 	 *
 	 *	Cuando el cliente cierra la conexion, recv() devolvera 0.
 	 */
-	char mensaje[PACKAGESIZE];
+	/*char mensaje[PACKAGESIZE];
 	char package[PACKAGESIZE];
 	int status = 1;		// Estructura que manjea el status de los recieve.
 
@@ -119,14 +119,16 @@ int crear_socket_servidor(){
 
 	/*
 	 * 	Terminado el intercambio de paquetes, cerramos todas las conexiones
-	 */
+	 *//*
 	close(socketCliente);
-	close(listeningSocket);
+	close(listeningSocket);*/
+	sleep(14);
+	write(socketCliente, "asdasdasd", PACKAGESIZE);
 
 	return 0;
 }
 
-int crearSocketCliente(){
+int crearSocketCliente(char * puerto, char * ip, int * server){
 
 	/*
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
@@ -139,7 +141,7 @@ int crearSocketCliente(){
 	hints.ai_family = AF_UNSPEC;		// Permite que la maquina se encargue de verificar si usamos IPv4 o IPv6
 	hints.ai_socktype = SOCK_STREAM;	// Indica que usaremos el protocolo TCP
 
-	getaddrinfo(IP, PUERTO, &hints, &serverInfo);	// Carga en serverInfo los datos de la conexion
+	getaddrinfo(ip, puerto, &hints, &serverInfo);	// Carga en serverInfo los datos de la conexion
 
 
 	/*
@@ -149,15 +151,16 @@ int crearSocketCliente(){
 	 */
 	int serverSocket;
 	serverSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
-
+	*server = serverSocket;
 	/*
 	 * 	Perfecto, ya tengo el medio para conectarme (el archivo), y ya se lo pedi al sistema.
 	 * 	Ahora me conecto!
 	 *
 	 */
+	printf("Antes del connect\n");
 	connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen);
 	freeaddrinfo(serverInfo);	// No lo necesitamos mas
-
+	printf("Paso el connect\n");
 	/*
 	 *	Estoy conectado! Ya solo me queda una cosa:
 	 *
@@ -169,6 +172,7 @@ int crearSocketCliente(){
 	 *	Ademas, contamos con la verificacion de que el usuario escriba "exit" para dejar de transmitir.
 	 *
 	 */
+	/*
 	int enviar = 1;
 	char message[PACKAGESIZE];
 
@@ -187,7 +191,49 @@ int crearSocketCliente(){
 	/*
 	 *	Asique ahora solo me queda cerrar la conexion con un close();
 	 */
+/*
+	close(serverSocket);*/
+	return 0;
+}
 
+int crearSocketClienteSinReferencia(char * puerto, char * ip){
+
+	/*
+	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
+	 *
+	 */
+	char package[PACKAGESIZE];
+	struct addrinfo hints;
+	struct addrinfo *serverInfo;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;		// Permite que la maquina se encargue de verificar si usamos IPv4 o IPv6
+	hints.ai_socktype = SOCK_STREAM;	// Indica que usaremos el protocolo TCP
+
+	getaddrinfo(ip, puerto, &hints, &serverInfo);	// Carga en serverInfo los datos de la conexion
+
+
+	/*
+	 *
+	 * 	Obtiene un socket (un file descriptor -todo en linux es un archivo-), utilizando la estructura serverInfo que generamos antes.
+	 *
+	 */
+	int serverSocket;
+	serverSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
+	/*
+	 * 	Perfecto, ya tengo el medio para conectarme (el archivo), y ya se lo pedi al sistema.
+	 * 	Ahora me conecto!
+	 *
+	 */
+	printf("Antes del connect\n");
+	connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen);
+	freeaddrinfo(serverInfo);	// No lo necesitamos mas
+	printf("Paso el connect\n");
+
+	printf("Antes del receive\n");
+	recv(serverSocket, (void*) package, PACKAGESIZE, 0);
+	printf("El valor: %s", package);
 	close(serverSocket);
+
 	return 0;
 }

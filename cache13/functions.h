@@ -1,10 +1,6 @@
-#ifndef FUNCTIONS_H_
-#define FUNCTIONS_H_
-
-int show_menu(void);
+#ifndef PLANIFICADOR_FUNCTIONS_H_
+#define PLANIFICADOR_FUNCTIONS_H_
 
 void planificador(void);
-void admMemoria(void);
-void admSwap(void);
 
-#endif /* FUNCTIONS_H_ */
+#endif /* PLANIFICADOR_FUNCTIONS_H_ */

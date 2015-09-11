@@ -6,52 +6,62 @@
  */
 #include <stdio.h>
 #include "sockets/socket.h"
+#include <unistd.h>
+
+#define PACKAGESIZE 1024
+
+int clientePlanificador = 0;
+int servidorPlanificador = 0;
+int clienteAdministradorMemoria = 0;
+char package[PACKAGESIZE];
 /*
  * El objetivo de esta funcion es que inicalice el proceso planificador
  */
-void planificador() {
-	printf("Elegiste el planificador\n");
-	printf("Va a crear un socket de escucha.\n");
-	crear_socket_servidor();
-}
+void crearCPU(char * puerto, char * puerto2) {
+	int pid;
+	int pid2;
+	int status;
+	pid = fork();
+	if (pid == 0) {
+		sleep(5);
+		printf("Va a crearse el CPU.\n");
+		crearSocketClienteSinReferencia(puerto, "192.168.1.119");
 
-/*
- * El objetivo de esta funcion es que inicalice el proceso administrador de memoria
- */
-void admMemoria() {
-	printf("Elegiste el administrador de memoria\n");
-	printf("Va a crearse un socket cliente.\n");
-	crearSocketCliente();
-}
-
-/*
- * El objetivo de esta funcion es que inicalice el proceso administrador de swap
- */
-void admSwap() {
-	printf("Elegiste el administrador de swap\n");
-}
-
-int show_menu() {
-	int eleccion;
-	int inicio = 0;
-	char c;
-	do {
-		if (inicio != 0){
-			printf("Opcion no valida, elija nuevamente \n");
+	} else {
+		pid2 = fork();
+		int server;
+		if (pid2 == 0) {
+			sleep(30);
+			printf("Va a crearse el socket con la memoria.\n");
+			crearSocketCliente(puerto2, "192.168.1.126", &server);
+			//printf("%s", package);
+			send(server, package, PACKAGESIZE, 0);
+		} else {
+			consola();
 		}
-		printf("1 para planificador\n");
-		printf("2 para administrador de memoria\n");
-		printf("3 para administrador de swap\n");
-
-		inicio++;
-
-	}  while (((scanf("%d%c", &eleccion, &c)!=2 || c!='\n') && clean_stdin()) || eleccion<1 || eleccion>3);
-
-	return eleccion;
+	}
 }
 
-int clean_stdin()
-{
-    while (getchar()!='\n');
-    return 1;
+int consola() {
+	char message[PACKAGESIZE];
+
+	fgets(message, PACKAGESIZE, stdin);
+	printf(message);
+
+	consola();
+}
+
+
+void planificador() {
+	int pid;
+	int pid2;
+	printf("Se va a crear un planificador.\n");
+
+	pid = fork();
+    if (pid == 0) {
+    	printf("Va a crearse el servidor del planificador.\n");
+    	servidorPlanificador = crear_socket_servidor("6500");
+    } else {
+    	crearCPU("6500", "6667");
+    }
 }
