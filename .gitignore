@@ -33,3 +33,5 @@
 
 # Metadata files
 .metadata/*
+memoria/.cproject
+memoria/.project
