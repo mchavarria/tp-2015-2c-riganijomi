@@ -35,11 +35,36 @@ char * devolverParteUsable(package, desde) {
 	return cosaUsable;
 }
 
+char * obtenerDirectorio(char * nombreArchivo) {
+	char directorioActual[1024];
+	getcwd(directorioActual, sizeof(directorioActual));
+	strcat(directorioActual, nombreArchivo);
+	return directorioActual;
+}
+
+void enviarNumeroDePagina (char * resultado) {
+	char * directorioActual;
+	char * puerto;
+	directorioActual = obtenerDirectorio("/src/config.cfg");
+	puts(directorioActual);
+	puerto = configObtenerPuertoMemoria(directorioActual);
+	puts(puerto);
+}
+
+void finalizarProcesos() {
+	char * directorioActual;
+	char * puerto;
+	directorioActual = obtenerDirectorio("/src/config.cfg");
+	puts(directorioActual);
+	puerto = configObtenerPuertoMemoria(directorioActual);
+	puts(puerto);
+}
+
 int main(void) {
 	char package[1024];
 	/* aca va lo del socket y se llena package */
 
-	strcpy(package, "escribir 500 asdasdsadas\0");
+	strcpy(package, "leer 20\0");
 	puts(package);
 	puts("antes del if");
 	char * resultado;
@@ -48,9 +73,10 @@ int main(void) {
 		resultado = devolverParteUsable(package, 5);
 		puts(resultado);
 
+		enviarNumeroDePagina(resultado);
 		}
 	if (esElComando(package, "finalizar")) {
-		puts("Finalizo");
+		finalizarProceso();
 	}
 	if (esElComando(package, "entrada-salida")) {
 		resultado = devolverParteUsable(package, 15);
