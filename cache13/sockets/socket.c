@@ -19,12 +19,14 @@
 
 int crear_socket_servidor(){
 	//obtiene el puerto del archivo
-	t_config* config;
-	config = config_create("rutaDondeEsteElArchivo.cfg");
+        t_config* config;
+	char directorioActual[1024];
+	getcwd(directorioActual, sizeof(directorioActual));
+	config = config_create(strcat(directorioActual, "/src/ruta.cfg"));
 	char * PUERTO;
+	char * IP;
 	PUERTO = config_get_string_value(config, "PORT");
-
-	/*
+	IP = config_get_string_value(config, "IP");
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
 	 *
 	 */
