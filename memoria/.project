@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>cache13</name>
+	<name>memoria</name>
 	<comment></comment>
 	<projects>
+		<project>libreriaRiganijomi</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

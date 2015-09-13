@@ -6,43 +6,21 @@
 #include <netdb.h>
 #include <unistd.h>
 
-#include <sys/stat.h>
-#include <commons/collections/dictionary.h>
-#include <commons/config.h>
-#include <commons/string.h>
-
 //Puede ser del cfg
 #define PACKAGESIZE 1024	// Define cual va a ser el size maximo del paquete a enviar
 #define BACKLOG 5 // Define cuantas conexiones vamos a mantener pendientes al mismo tiempo
-<<<<<<< HEAD
 //puerto del servidor tiene que estar en la cfg
 //#define PUERTO "6672"
-=======
->>>>>>> branch 'master' of https://github.com/sisoputnfrba/tp-2015-2c-riganijomi.git
 
-<<<<<<< HEAD
 //Tiene que ser enviada por quién solicita conexión con un socket servidor
 #define IP "192.168.1.119"
-=======
->>>>>>> branch 'master' of https://github.com/sisoputnfrba/tp-2015-2c-riganijomi.git
+
+char package[PACKAGESIZE];
 
 
-<<<<<<< HEAD
 int crear_socket_servidor(char * puerto){
 
 	/*
-=======
-int crear_socket_servidor(){
-	//obtiene el puerto del archivo
-        t_config* config;
-	char directorioActual[1024];
-	getcwd(directorioActual, sizeof(directorioActual));
-	config = config_create(strcat(directorioActual, "/src/ruta.cfg"));
-	char * PUERTO;
-	char * IP;
-	PUERTO = config_get_string_value(config, "PORT");
-	IP = config_get_string_value(config, "IP");
->>>>>>> branch 'master' of https://github.com/sisoputnfrba/tp-2015-2c-riganijomi.git
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
 	 *
 	 */
@@ -147,27 +125,12 @@ int crear_socket_servidor(){
 	close(socketCliente);
 	close(listeningSocket);*/
 	sleep(14);
-	write(socketCliente, "asdasdasd", PACKAGESIZE);
+	write(socketCliente, package, PACKAGESIZE);
 
 	return 0;
 }
 
-<<<<<<< HEAD
 int crearSocketCliente(char * puerto, char * ip, int * server){
-=======
-int crearSocketCliente(){
-	//obtine el puerto e ip del archivo
-	t_config* config;
-	config = config_create("rutaDondeEsteElArchivo.cfg");
-	char * PUERTO;
-	char * IP;
-	PUERTO = config_get_string_value(config, "PORT");
-	IP = config_get_string_value(config, "IP");
-
-
-
-
->>>>>>> branch 'master' of https://github.com/sisoputnfrba/tp-2015-2c-riganijomi.git
 
 	/*
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
@@ -190,34 +153,14 @@ int crearSocketCliente(){
 	 */
 	int serverSocket;
 	serverSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
-<<<<<<< HEAD
 	*server = serverSocket;
-=======
-	if (serverSocket == -1)
-	{
-		printf("Could not create socket");
-	} else {
-		puts("Socket created");
-	}
->>>>>>> branch 'master' of https://github.com/sisoputnfrba/tp-2015-2c-riganijomi.git
 	/*
 	 * 	Perfecto, ya tengo el medio para conectarme (el archivo), y ya se lo pedi al sistema.
 	 * 	Ahora me conecto!
 	 *
 	 */
-<<<<<<< HEAD
 	printf("Antes del connect\n");
 	connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen);
-=======
-	if (connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen))
-	{
-		perror("connect failed. Error");
-		return 1;
-	} else {
-		puts("Connected\n");
-	}
-
->>>>>>> branch 'master' of https://github.com/sisoputnfrba/tp-2015-2c-riganijomi.git
 	freeaddrinfo(serverInfo);	// No lo necesitamos mas
 	printf("Paso el connect\n");
 	/*
@@ -261,7 +204,7 @@ int crearSocketClienteSinReferencia(char * puerto, char * ip){
 	 *  Obtiene los datos de la direccion de red y lo guarda en serverInfo.
 	 *
 	 */
-	char package[PACKAGESIZE];
+
 	struct addrinfo hints;
 	struct addrinfo *serverInfo;
 

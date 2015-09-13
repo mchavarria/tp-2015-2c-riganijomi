@@ -1,4 +1,10 @@
 /*
+ * planificador.c
+ *
+ *  Created on: 13/9/2015
+ *      Author: utnso
+ */
+/*
  * functions.c
  *
  *  Created on: 3/9/2015
@@ -51,17 +57,16 @@ int consola() {
 	consola();
 }
 
-
-void planificador() {
+int main() {
 	int pid;
 	int pid2;
 	printf("Se va a crear un planificador.\n");
 
 	pid = fork();
-    if (pid == 0) {
-    	printf("Va a crearse el servidor del planificador.\n");
-    	servidorPlanificador = crear_socket_servidor("6500");
-    } else {
-    	crearCPU("6500", "6667");
-    }
+	if (pid == 0) {
+		printf("Va a crearse el servidor del planificador.\n");
+		servidorPlanificador = crear_socket_servidor("6500");
+	} else {
+		crearCPU("6500", "6667");
+	}
 }
