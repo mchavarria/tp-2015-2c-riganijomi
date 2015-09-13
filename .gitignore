@@ -33,5 +33,9 @@
 
 # Metadata files
 .metadata/*
-memoria/.cproject
+swap/tests
+swap/tests/*
 memoria/.project
+memoria/.cpproject
+swap/.cpproject
+swap/.project
