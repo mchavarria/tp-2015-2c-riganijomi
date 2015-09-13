@@ -1,4 +1,12 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
 
+#include <sys/stat.h>
 #include <commons/collections/dictionary.h>
 #include <commons/config.h>
 #include <commons/string.h>
@@ -14,7 +22,8 @@ char * configObtenerIpPlanificador(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
 	char * IP;
-	IP = config_get_string_value(config, "IP");
+	IP = config_get_string_value(config, "IP_PLANIFICADOR");
+	puts("despues de IP");
 	return IP;
 }
 
@@ -39,7 +48,7 @@ char * configObtenerPuertoPlanificador(char * ruta) {
 	config = config_create(ruta);
 	char * PUERTO;
 
-	PUERTO = config_get_string_value(config, "PORT");
+	PUERTO = config_get_string_value(config, "PUERTO_PLANIFICADOR");
 	return PUERTO;
 }
 char * configObtenerPuertoMemoria(char * ruta) {

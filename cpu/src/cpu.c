@@ -31,7 +31,7 @@ int esElComando(char * package, char * comando) {
 	return 0;
 }
 
-char * devolverParteUsable(package, desde) {
+char* devolverParteUsable(char * package, int desde) {
 	char * cosaUsable;
 	cosaUsable = string_substring_from(package, desde);
 	return cosaUsable;
@@ -58,7 +58,8 @@ void finalizarProcesos() {
 	char * puerto;
 	directorioActual = obtenerDirectorio("/src/config.cfg");
 	puts(directorioActual);
-	puerto = configObtenerPuertoMemoria(directorioActual);
+	//puerto = configObtenerPuertoMemoria(directorioActual);
+	strcpy(puerto,"6500");
 	puts(puerto);
 }
 

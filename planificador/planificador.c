@@ -23,30 +23,6 @@ char package[PACKAGESIZE];
 /*
  * El objetivo de esta funcion es que inicalice el proceso planificador
  */
-void crearCPU(char * puerto, char * puerto2) {
-	int pid;
-	int pid2;
-	int status;
-	pid = fork();
-	if (pid == 0) {
-		sleep(5);
-		printf("Va a crearse el CPU.\n");
-		crearSocketClienteSinReferencia(puerto, "192.168.1.119");
-
-	} else {
-		pid2 = fork();
-		int server;
-		if (pid2 == 0) {
-			sleep(30);
-			printf("Va a crearse el socket con la memoria.\n");
-			crearSocketCliente(puerto2, "192.168.1.126", &server);
-			//printf("%s", package);
-			send(server, package, PACKAGESIZE, 0);
-		} else {
-			consola();
-		}
-	}
-}
 
 int consola() {
 	char message[PACKAGESIZE];
@@ -57,6 +33,30 @@ int consola() {
 	consola();
 }
 
+void abrirArchivo(char * programa, int socketServidor) {
+	char directorioActual[1024];
+	char directorioActualConArchivo[1024];
+	getcwd(directorioActual, sizeof(directorioActual));
+	strcpy(directorioActualConArchivo, directorioActual);
+	strcat(directorioActualConArchivo, "/");
+	strcat(directorioActualConArchivo, programa);
+	puts("tiene archivo pasado");
+	char * filename = directorioActualConArchivo;
+	FILE *file = fopen ( filename, "r" );
+	if ( file != NULL )  {
+	   char line [ 128 ]; /* or other suitable maximum line size */
+	   while (fgets ( line, sizeof line, file ) != NULL ) {
+		   puts("Lee linea");
+		 fputs ( line, stdout ); /* write the line */
+		 write(socketServidor,line, 1024);
+	   }
+	   fclose ( file );
+	}
+	else {
+	   perror ( filename ); /* why didn't the file open? */
+	}
+}
+
 int main() {
 	int pid;
 	int pid2;
@@ -65,8 +65,9 @@ int main() {
 	pid = fork();
 	if (pid == 0) {
 		printf("Va a crearse el servidor del planificador.\n");
-		servidorPlanificador = crear_socket_servidor("6500");
+		servidorPlanificador = crear_socket_servidor("6900");
+		abrirArchivo("programa1.pro", servidorPlanificador);
 	} else {
-		crearCPU("6500", "6667");
+		consola();
 	}
 }
