@@ -21,6 +21,8 @@
 #include <commons/config.h>
 #include <commons/string.h>
 
+#include <cspecs/cspec.h>
+
 int esElComando(char * package, char * comando) {
 	string_to_lower(package);
 	if (string_starts_with(package, comando)) {
@@ -61,8 +63,36 @@ void finalizarProcesos() {
 }
 
 int main(void) {
+	char * IP;
+	char * puerto;
 	char package[1024];
-	/* aca va lo del socket y se llena package */
+	int socketCliente;
+
+	char directorioActual[1024];
+	getcwd(directorioActual, sizeof(directorioActual));
+	strcat(directorioActual, "/src/config.cfg\0");
+
+
+	puts("Antes de mandar la ruta del archivo");
+
+	IP = configObtenerIpPlanificador(directorioActual);
+	puts(IP);
+
+	puerto = configObtenerPuertoPlanificador(directorioActual);
+
+	puts(puerto);
+
+	socketCliente = socketCrearCliente(puerto, IP);
+
+	puts("Se creo el cliente");
+
+	recv(socketCliente, package, 1024, 0);
+
+	puts("despues del receive");
+
+	puts(package);
+
+	//return 0; //para probar la recepcion
 
 	strcpy(package, "leer 20\0");
 	puts(package);
@@ -76,7 +106,7 @@ int main(void) {
 		enviarNumeroDePagina(resultado);
 		}
 	if (esElComando(package, "finalizar")) {
-		finalizarProceso();
+		finalizarProcesos();
 	}
 	if (esElComando(package, "entrada-salida")) {
 		resultado = devolverParteUsable(package, 15);
