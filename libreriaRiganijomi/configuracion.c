@@ -31,7 +31,7 @@ char * configObtenerPuertoSwap(char * ruta) {
 	config = config_create(ruta);
 	char * PUERTO;
 
-	PUERTO = config_get_string_value(config, "PORT");
+	PUERTO = config_get_string_value(config, "PUERTO_SWAP");
 	return PUERTO;
 }
 char * configObtenerPuertoPlanificador(char * ruta) {
@@ -50,4 +50,10 @@ char * configObtenerPuertoMemoria(char * ruta) {
 	PUERTO = config_get_string_value(config, "PORT");
 	return PUERTO;
 }
-
+char * configObtenerIpSwap(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * IP;
+	IP = config_get_string_value(config, "IP_SWAP");
+	return IP;
+}
