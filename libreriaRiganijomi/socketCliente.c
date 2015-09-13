@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#define PACKAGESIZE 1024
+
 /*
  * Crea un socket servidor para la solicitud
  * antes de solicitar deben definir la variable donde alojan al servidor
@@ -56,7 +58,7 @@ int socketCrearCliente(char * PUERTO, char * IP){
  */
 int socketEnviarMensaje(int serverSocket, char  * mensaje) {
 	puts("antes");;
-	int estado = send(serverSocket, mensaje, sizeof(mensaje), 0);
+	int estado = send(serverSocket, mensaje, PACKAGESIZE , 0);
 	if (estado == -1){
 		//-1 Indica error en el envío
 		puts("error enviando mensaje al servidor");

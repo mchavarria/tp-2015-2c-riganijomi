@@ -56,7 +56,7 @@ char * configObtenerPuertoMemoria(char * ruta) {
 	config = config_create(ruta);
 	char * PUERTO;
 
-	PUERTO = config_get_string_value(config, "PORT");
+	PUERTO = config_get_string_value(config, "PUERTO_MEMORIA");
 	return PUERTO;
 }
 char * configObtenerIpSwap(char * ruta) {

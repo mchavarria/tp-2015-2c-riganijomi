@@ -7,5 +7,6 @@ char * configObtenerPuertoMemoria(char * ruta);
 char * configObtenerPuertoSwap(char * ruta);
 char * configObtenerPuertoPlanificador(char * ruta);
 char * configObtenerIpSwap(char * ruta);
+char * configObtenerNombreArchivoSwap(char * ruta);
 
 #endif /* CONFIGURACION_H_ */
