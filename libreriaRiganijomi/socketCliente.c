@@ -69,7 +69,7 @@ int socketEnviarMensaje(int serverSocket, char  * mensaje) {
 
 void socketRecibirMensaje(int serverSocket, char * mensaje) {
 
-	if (recv(serverSocket , mensaje , sizeof(mensaje) , 0) == -1){
+	if (recv(serverSocket , mensaje , PACKAGESIZE , 0) == -1){
 		puts('error recibiendo mensaje');
 	}
 }

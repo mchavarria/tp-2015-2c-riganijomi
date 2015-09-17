@@ -46,9 +46,10 @@ void abrirArchivo(char * programa, int socketServidor) {
 	if ( file != NULL )  {
 	   char line [ 128 ]; /* or other suitable maximum line size */
 	   while (fgets ( line, sizeof line, file ) != NULL ) {
-		   puts("Lee linea");
-		 fputs ( line, stdout ); /* write the line */
-		 write(socketServidor,line, 1024);
+		   fputs ( line, stdout ); /* write the line */
+		   write(socketServidor,line, PACKAGESIZE);
+		   socketEnviarMensaje(socketServidor, line);
+		   socketRecibirMensaje(socketServidor, line);
 	   }
 	   fclose ( file );
 	}
