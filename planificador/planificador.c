@@ -16,13 +16,19 @@
 
 #define PACKAGESIZE 1024
 
+struct PCB {
+	int processID;
+	int estado;
+	int programCounter;
+	char contextoEjecucion[1024];
+};
+
+typedef struct PCB PCB;
+
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
 int clienteAdministradorMemoria = 0;
 char package[PACKAGESIZE];
-/*
- * El objetivo de esta funcion es que inicalice el proceso planificador
- */
 
 int consola() {
 	char message[PACKAGESIZE];
@@ -38,35 +44,21 @@ void abrirArchivo(char * programa, int socketServidor) {
 	char directorioActualConArchivo[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcpy(directorioActualConArchivo, directorioActual);
-	strcat(directorioActualConArchivo, "/");
+	strcat(directorioActualConArchivo, "/test/");
 	strcat(directorioActualConArchivo, programa);
-	puts("tiene archivo pasado");
-	char * filename = directorioActualConArchivo;
-	FILE *file = fopen ( filename, "r" );
-	if ( file != NULL )  {
-	   char line [ 128 ]; /* or other suitable maximum line size */
-	   while (fgets ( line, sizeof line, file ) != NULL ) {
-		   fputs ( line, stdout ); /* write the line */
-		   write(socketServidor,line, PACKAGESIZE);
-		   socketEnviarMensaje(socketServidor, line);
-		   socketRecibirMensaje(socketServidor, line);
-	   }
-	   fclose ( file );
-	}
-	else {
-	   perror ( filename ); /* why didn't the file open? */
-	}
+	socketEnviarMensaje(socketServidor, directorioActualConArchivo);
+	socketRecibirMensaje(socketServidor, package);
+	puts(package);
 }
 
 int main() {
 	int pid;
-	int pid2;
 	printf("Se va a crear un planificador.\n");
 
 	pid = fork();
 	if (pid == 0) {
 		printf("Va a crearse el servidor del planificador.\n");
-		servidorPlanificador = crear_socket_servidor("6900");
+		servidorPlanificador = socketCrearServidor("6667");
 		abrirArchivo("programa1.pro", servidorPlanificador);
 	} else {
 		consola();
