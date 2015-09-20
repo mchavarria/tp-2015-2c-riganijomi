@@ -12,4 +12,6 @@ void instruccionEscribirPagina (int * pagina, char * texto);
 void instruccionEntradaSalida (int * tiempo);
 void instruccionFinalizarProceso();
 
+void cargarCfgs();
+
 #endif /* CPU_H_ */
