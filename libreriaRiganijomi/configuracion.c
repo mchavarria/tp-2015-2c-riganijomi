@@ -104,3 +104,25 @@ char * configObtenerRetardoMemoria(char * ruta) {
 	RET = config_get_string_value(config, "RETARDO_MEMORIA");
 	return RET;
 }
+
+char * configObtenerCantidadHilos(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * NOMBRE_ARCHIVO;
+	NOMBRE_ARCHIVO = config_get_string_value(config, "CANTIDAD_HILOS");
+	return NOMBRE_ARCHIVO;
+}
+char * configObtenerIpADM(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * NOMBRE_ARCHIVO;
+	NOMBRE_ARCHIVO = config_get_string_value(config, "IP_ADM");
+	return NOMBRE_ARCHIVO;
+}
+char * configObtenerPuertoADM(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * NOMBRE_ARCHIVO;
+	NOMBRE_ARCHIVO = config_get_string_value(config, "PUERTO_ADM");
+	return NOMBRE_ARCHIVO;
+}
