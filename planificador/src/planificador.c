@@ -23,9 +23,19 @@
 
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
-int clienteAdministradorMemoria = 0;
 char package[PACKAGESIZE];
 char comando[PACKAGESIZE];
+
+int main() {
+	listaDeProcesos = list_create();
+	pthread_t thr1;
+	char *m1 = "thr1";
+	int  r1;
+
+	r1 = pthread_create( &thr1, NULL, servidor, (void*) m1);
+	consola();
+
+}
 
 int esElComando(char * package, char * comando) {
 	string_to_lower(package);
@@ -51,7 +61,7 @@ void detectarComando(char * comando){
 
 	if (esElComando(comando, "correr")) {
 		resultado = devolverParteUsable(comando, 7);
-		crearProcesoNuevo(resultado);
+		agregarALista(resultado);
 	}
 }
 
@@ -67,10 +77,10 @@ char *  conseguirRutaArchivo(char * programa, int socketServidor) {
 	return directorioActualConArchivo;
 }
 
-void crearProcesoNuevo(char * programa) {
+void agregarALista(char * programa) {
 	puts("Crea la lista"); //BORRAR LINEA
 
-	PCB* proceso1 = malloc(sizeof(PCB));
+	t_pcb* proceso1 = malloc(sizeof(t_pcb));
 
 	proceso1->processID = 1;
 
@@ -119,15 +129,4 @@ void servidor(){
 	puerto = configObtenerPuertoEscucha(directorioActual);
 
 	servidorPlanificador = socketCrearServidor(puerto);
-}
-
-int main() {
-	listaDeProcesos = list_create();
-	pthread_t thr1;
-	char *m1 = "thr1";
-	int  r1;
-
-	r1 = pthread_create( &thr1, NULL, servidor, (void*) m1);
-	consola();
-
 }

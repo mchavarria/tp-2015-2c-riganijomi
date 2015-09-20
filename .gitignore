@@ -39,3 +39,7 @@ memoria/.project
 memoria/.cpproject
 swap/.cpproject
 swap/.project
+cpu/.project
+cpu/.cpproject
+planificador/.cpproject
+planificador/.project
