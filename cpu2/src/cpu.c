@@ -15,23 +15,13 @@
 #include <commons/log.h>
 
 
-struct PCB {
-	int processID;
-	int estado;
-	int programCounter;
-	char contextoEjecucion[512];
-};
-
-typedef struct PCB PCB;
-
 int main(void) {
 	//Variables
 	char * IP;
 	char * puerto;
 	char archivo[1024];
 	int socketPlanificador;
-	PCB * pcbProg = malloc(sizeof(PCB));
-
+    char * valor;
 
 	//Prepara el archivo log al cual va a escribir
 	t_log* archivoLog = log_create("cpu.log", "CPU", false, 2);
@@ -57,85 +47,69 @@ int main(void) {
 	puts("Se creo el cliente");//TODO Borrar luego!!
 
 	//Recibe un "proceso" para ejecutar
-	socketRecibirMensaje(socketPlanificador, pcbProg);
+	socketRecibirMensaje(socketPlanificador, archivo);
 	puts("despues del receive");//TODO Borrar luego!!
-	printf("%d",pcbProg->processID);
-	puts(pcbProg->contextoEjecucion);//TODO Borrar luego!!
+	printf("%d",archivo);
+	puts(archivo);//TODO Borrar luego!!
 	puts("voy a leer el archivo");//TODO Borrar luego!!
+    //Abre el archivo recibido por el Planificador
+		FILE *file = fopen ( archivo, "r" );
+		if ( file != NULL )  {
+		   char line [ 128 ]; //Largo a definir de la linea
+		   while (fgets ( line, sizeof line, file ) != NULL ) {
+	//Lee linea y ejecuta
+        if (esElComando(line, "leer")) {
+           	valor = devolverParteUsable(line, 5);
+           	instruccionLeerPagina (valor);
 
+   		}
+	   	if (esElComando(line, "finalizar")) {
+	   		instruccionFinalizarProceso();
+	   	}
+	   	if (esElComando(line, "entrada-salida")) {
+	   		valor= devolverParteUsable(line, 15);
+   	    	instruccionEntradaSalida (valor);
+	   	}
+	   	if (esElComando(line, "iniciar")) {
+	  		valor = devolverParteUsable(line, 8);
+    		instruccionIniciarProceso (valor);
 
-	//Abre el archivo recibido por el Planificador
-	FILE *file = fopen ( pcbProg->contextoEjecucion, "r" );
-	if ( file != NULL )  {
-	   char line [ 128 ]; //Largo a definir de la linea
-	   while (fgets ( line, sizeof line, file ) != NULL ) {
-		   //Lee mientras haya lineas para leer en el archivo
+	  	}
+	   	if (esElComando(line, "escribir")) {
+	   		char * resultado;
+	   		resultado = string_substring(line, 9, 1);
+	   		valor = devolverParteUsable(line, 11);
+	   		instruccionEscribirPagina (resultado,valor);
 
-		   //fputs ( line, stdout ); /* write the line */
+	   	}
 
-		   puts("\n estoy por enviar");//TODO Borrar luego!!
-
-		   ////////////////////////////////////////////////////////////
-		   ////////////////////////////////////////////////////////////
-		   ////////////////////////////////////////////////////////////
-		   //Por cada linea leida debe interpretar la instrucción a ejecutar!!
-		   ////////////////////////////////////////////////////////////
-		   ////////////////////////////////////////////////////////////
-		   //////////////////////////////////////////////////////////////
-
-		   //Le envio mensaje al planificador de resultado de cada instruccion
-		   socketEnviarMensaje(socketPlanificador, line);
-		   //Logueo la instruccion
-		   log_info(archivoLog,"envie el archivo a nico");
-		   log_info(archivoLog,line);
-
-		   puts("ya envie");//TODO Borrar luego!!
-	   }
-
-	   //Le envio mensaje al planificador cuando termino de ejecutar el proceso
-	   socketEnviarMensaje(socketPlanificador, "Termine el proceso");
-
-	   fclose ( file );
+    //Logueo la instruccion
+    log_info(archivoLog,"envie el archivo a nico");
+    log_info(archivoLog,line);
+    puts("ya envie");//TODO Borrar luego!!
 	}
-	else {
+   //Le envio mensaje al planificador cuando termino de ejecutar el proceso
+   socketEnviarMensaje(socketPlanificador, "Termine el proceso");
 
-	   log_error(archivoLog,"error leyendo el archivo");
-	   perror ( pcbProg->contextoEjecucion ); /* why didn't the file open? */
-	}
-
-
-	/*strcpy(paquete, "leer 20\0");
-	puts(paquete);
-	puts("antes del if");
-	char * resultado;
-	if (esElComando(paquete, "leer")) {
-
-		resultado = devolverParteUsable(paquete, 5);
-		puts(resultado);
-
-		enviarNumeroDePagina(resultado);
+		   fclose ( file );
 		}
-	if (esElComando(paquete, "finalizar")) {
-		finalizarProcesos();
-	}
-	if (esElComando(paquete, "entrada-salida")) {
-		resultado = devolverParteUsable(paquete, 15);
-		puts(resultado);
-	}
-	if (esElComando(paquete, "iniciar")) {
-		resultado = devolverParteUsable(paquete, 8);
-		puts(resultado);
-	}
-	if (esElComando(paquete, "escribir")) {
-		char * resultado2;
-		resultado = string_substring(paquete, 9, 1);
-		resultado2 = devolverParteUsable(paquete, 11);
+		else {
 
-		puts(resultado);
-		puts(resultado2);
-	}*/
+		   log_error(archivoLog,"error leyendo el archivo");
+		   perror ( archivo ); /* why didn't the file open? */
+		}
 	return 0;
-}
+	}
+
+
+
+
+
+
+
+
+
+
 
 
 
