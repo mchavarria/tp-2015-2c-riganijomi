@@ -66,3 +66,10 @@ char * configObtenerIpSwap(char * ruta) {
 	IP = config_get_string_value(config, "IP_SWAP");
 	return IP;
 }
+char * configObtenerNombreArchivoSwap(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * NOMBRE_ARCHIVO;
+	NOMBRE_ARCHIVO = config_get_string_value(config, "NOMBRE_SWAP");
+	return NOMBRE_ARCHIVO;
+}

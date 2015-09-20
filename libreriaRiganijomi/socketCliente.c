@@ -56,15 +56,10 @@ int socketCrearCliente(char * PUERTO, char * IP){
  *	Es necesario que envíe el mensaje y el temaño del mensaje (tamanioPaquete)
  *
  */
-<<<<<<< HEAD
-int socketEnviarMensaje(int serverSocket, char  * mensaje) {
-	puts("antes");
-	int estado = send(serverSocket, mensaje, PACKAGESIZE , 0);
-=======
+
 int socketEnviarMensaje(int serverSocket, char  * mensaje, int longitudMensaje) {
 	puts("antes");;
 	int estado = send(serverSocket, mensaje, longitudMensaje , 0);
->>>>>>> c15fbecf9abe72d7a33a005603795801672e8654
 	if (estado == -1){
 		//-1 Indica error en el envío
 		puts("error enviando mensaje al servidor");
