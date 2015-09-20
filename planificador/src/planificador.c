@@ -24,10 +24,34 @@
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
 char package[PACKAGESIZE];
-char comando[PACKAGESIZE];
+char comando[100];
+
+static t_pcb *hilo_create(pthread_t thread, char * m, int  r) {
+	t_hilos *nuevo = malloc(sizeof(t_hilos));
+
+	nuevo->thread = thread;
+	nuevo->r = r;
+	strncpy(nuevo->m, m, sizeof(nuevo->m)-1);
+	nuevo->m[sizeof(nuevo->m)-1] = "\0";
+	puts(nuevo->m);
+    return nuevo;
+}
+
+static t_pcb *pcb_create(int processID, char contextoDeEjecucion) {
+	t_pcb *nuevo = malloc(sizeof(t_pcb));
+	nuevo->processID = processID;
+	//nuevo->contextoEjecucion = contextoDeEjecucion;
+    return nuevo;
+}
 
 int main() {
 	listaDeProcesos = list_create();
+	listaDeHilos = malloc(50000);
+	listaDeHilos = list_create();
+	/*listaDeProcesos->elements_count = 0;
+	listaDeProcesos->head = NULL; */
+	printf("%d", listaDeProcesos->elements_count);
+	printf("%d", listaDeHilos->elements_count);
 	pthread_t thr1;
 	char *m1 = "thr1";
 	int  r1;
@@ -55,11 +79,13 @@ char* devolverParteUsable(char * package, int desde) {
 }
 
 void detectarComando(char * comando){
+	sleep(8);
 	puts("Detectar comando"); //BORRAR LINEA
 
 	char * resultado;
 
 	if (esElComando(comando, "correr")) {
+		puts("Entro a correr");
 		resultado = devolverParteUsable(comando, 7);
 		agregarALista(resultado);
 	}
@@ -78,11 +104,13 @@ char *  conseguirRutaArchivo(char * programa, int socketServidor) {
 }
 
 void agregarALista(char * programa) {
+	sleep(5);
 	puts("Crea la lista"); //BORRAR LINEA
+	printf("%d", listaDeProcesos->elements_count);
 
-	t_pcb* proceso1 = malloc(sizeof(t_pcb));
+	t_pcb* pcb = malloc(sizeof(t_pcb));
 
-	proceso1->processID = 1;
+	pcb->processID = 1;
 
 	char rutaArchivo[512];
 	puts("Antes de copiar"); //BORRAR LINEA
@@ -91,14 +119,17 @@ void agregarALista(char * programa) {
 
 	puts(rutaArchivo);
 
-	strcpy(proceso1->contextoEjecucion, rutaArchivo);
+	strcpy(pcb->contextoEjecucion, rutaArchivo);
 
-	list_add(listaDeProcesos, proceso1);
+
+
+	list_add(listaDeProcesos, pcb_create(pcb->processID, pcb->contextoEjecucion));
 
 	puts("Antes de Enviar"); //BORRAR LINEA
+	printf("%d", listaDeProcesos->elements_count);
 
-	puts(proceso1->contextoEjecucion);
-
+	puts(pcb->contextoEjecucion);
+	/*
 	socketEnviarMensaje(servidorPlanificador, rutaArchivo);
 	puts("Despues de enviar");
 	socketRecibirMensaje(servidorPlanificador, package);
@@ -108,14 +139,42 @@ void agregarALista(char * programa) {
 	puts(package);
 	socketRecibirMensaje(servidorPlanificador, package);
 	puts(package);
+	*/
+}
+
+void crearThreadParaComando(char * comando) {
+	printf("%d", listaDeHilos->elements_count);
+	puts("Alocar memoria");
+	t_hilos* hilo = malloc(sizeof(t_hilos));
+	puts("Memoria lista");
+	strncpy(hilo->m, comando, sizeof(hilo->m)-1);
+	hilo->m[sizeof(hilo->m)-1] = "\0";
+	puts(hilo->m);
+	puts("Copiar comando");
+
+	hilo->r = pthread_create( &hilo->thread, NULL, detectarComando, (void*) (hilo->m));
+
+	puts("Thread creado");
+
+	list_add(listaDeHilos, hilo_create(hilo->thread, hilo->m, hilo->r));
+
+	puts("Lista agregada");
 }
 
 int consola() {
 	puts("Llego a la consola"); //BORRAR LINEA
 	fgets(comando, PACKAGESIZE, stdin);
 	puts(comando);
-	sleep(5);
-	detectarComando(comando);
+	/*
+	pthread_t thr2;
+	char *m2 = strcpy(m2, comando);
+	int  r2;
+
+	r2 = pthread_create( &thr2, NULL, detectarComando, (void*) m2);
+*/
+	crearThreadParaComando(comando);
+
+	//detectarComando(comando);
 
 	consola();
 }
