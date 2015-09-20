@@ -5,7 +5,7 @@
  * Reemplazar el contenido dentro de la función en cualquier otro main
  * Emula un servidor a la espera de un mensaje
  */
-int main () {
+int ejemplo () {
 
 	/*char directorioActual[1024];
 	  getcwd(directorioActual, sizeof(directorioActual));

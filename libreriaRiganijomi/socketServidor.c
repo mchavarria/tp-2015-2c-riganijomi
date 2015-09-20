@@ -53,19 +53,6 @@ int socketCrearServidor(char * PUERTO){
 
 
 			listen(listeningSocket, BACKLOG);		// IMPORTANTE: listen() es una syscall BLOQUEANTE.
-
-			//Aceptamos la conexion entrante, y creamos un nuevo socket mediante el cual nos podamos comunicar.
-
-			struct sockaddr_in addr;			// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
-			socklen_t addrlen = sizeof(addr);
-
-			socketCliente = accept(listeningSocket, (struct sockaddr *) &addr, &addrlen);
-			if (socketCliente < 0)
-			{
-				perror("accept failed");
-			} else {
-			    puts("Connection accepted");
-			}
 	}
-	return socketCliente;
+	return listeningSocket;
 }

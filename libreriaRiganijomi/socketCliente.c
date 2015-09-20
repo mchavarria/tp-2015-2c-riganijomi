@@ -57,7 +57,7 @@ int socketCrearCliente(char * PUERTO, char * IP){
  *
  */
 int socketEnviarMensaje(int serverSocket, char  * mensaje) {
-	puts("antes");;
+	puts("antes");
 	int estado = send(serverSocket, mensaje, PACKAGESIZE , 0);
 	if (estado == -1){
 		//-1 Indica error en el envío
@@ -77,7 +77,7 @@ void socketRecibirMensaje(int serverSocket, char * mensaje) {
 /*
  * Cierra la conexión con el servidor
  */
-void socketCerrarSocket(int * serverSocket) {
+void socketCerrarSocket(int serverSocket) {
 	if (close(serverSocket) == -1){
 		//-1 Indica error en el envío
 		puts('error cerrando el socket servidor');
