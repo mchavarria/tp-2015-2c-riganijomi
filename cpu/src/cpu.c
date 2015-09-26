@@ -14,35 +14,40 @@
 #include <unistd.h>
 #include <commons/log.h>
 
+//Variables globales
+char directorioActual[1024];
+char * ipPlanificador;
+char * puertoPlanificador;
+char * ipADM;
+char * puertoADM;
+char * cantidadHilos;
+int a;
 
 int main(void) {
 	//Variables
-	char * IP;
-	char * puerto;
+	int i = 0;
 	char archivo[1024];
-	int socketPlanificador;
     char * valor;
+	int socketPlanificador;
+    int socketADM;
 
 	//Prepara el archivo log al cual va a escribir
 	t_log* archivoLog = log_create("cpu.log", "CPU", false, 2);
 
+	//Levanta su configuracion y se prepara para conectarse al Planificador y al ADM
+	cargarCfgs();
 
-	//Levanta su configuracion y se prepara para conectarse
-	char directorioActual[1024];
-	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/src/config.cfg\0");
+	for (i = 0; i < a; i++) {
+		printf("%d", i);
+	}
 
 
-	puts("Antes de mandar la ruta del archivo");//TODO Borrar luego!!
-
-	IP = configObtenerIpPlanificador(directorioActual);
-	puts(IP);//TODO Borrar luego!!
-
-	puerto = configObtenerPuertoPlanificador(directorioActual);
-
-	puts(puerto);//TODO Borrar luego!!
 	//Se conecta al Planificador
-	socketPlanificador = socketCrearCliente(puerto, IP);
+	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador);
+	socketADM = socketCrearCliente(puertoADM, ipADM);
+	if (socketPlanificador == -1 || socketADM == -1) {
+		log_info(archivoLog, "Alguno de los dos no se pudo conectar");
+	}
 	sleep(10);
 	puts("Se creo el cliente");//TODO Borrar luego!!
 
@@ -53,11 +58,11 @@ int main(void) {
 	puts(archivo);//TODO Borrar luego!!
 	puts("voy a leer el archivo");//TODO Borrar luego!!
     //Abre el archivo recibido por el Planificador
-		FILE *file = fopen ( archivo, "r" );
-		if ( file != NULL )  {
-		   char line [ 128 ]; //Largo a definir de la linea
-		   while (fgets ( line, sizeof line, file ) != NULL ) {
-	//Lee linea y ejecuta
+	FILE *file = fopen ( archivo, "r" );
+	if ( file != NULL )  {
+		char line [ 128 ]; //Largo a definir de la linea
+		while (fgets ( line, sizeof line, file ) != NULL ) {
+		//Lee linea y ejecuta
         if (esElComando(line, "leer")) {
            	valor = devolverParteUsable(line, 5);
            	instruccionLeerPagina (valor);
@@ -83,35 +88,20 @@ int main(void) {
 
 	   	}
 
-    //Logueo la instruccion
-    log_info(archivoLog,"envie el archivo a nico");
-    log_info(archivoLog,line);
-    puts("ya envie");//TODO Borrar luego!!
-	}
-   //Le envio mensaje al planificador cuando termino de ejecutar el proceso
-   socketEnviarMensaje(socketPlanificador, "Termine el proceso");
-
-		   fclose ( file );
+		//Logueo la instruccion
+		log_info(archivoLog,"envie el archivo a nico");
+		log_info(archivoLog,line);
+		puts("ya envie");//TODO Borrar luego!!
 		}
-		else {
-
+		//Le envio mensaje al planificador cuando termino de ejecutar el proceso
+		socketEnviarMensaje(socketPlanificador, "Termine el proceso");
+		fclose ( file );
+		}else {
 		   log_error(archivoLog,"error leyendo el archivo");
 		   perror ( archivo ); /* why didn't the file open? */
 		}
 	return 0;
-	}
-
-
-
-
-
-
-
-
-
-
-
-
+}
 
 /*
 char * obtenerDirectorio(char * nombreArchivo) {
@@ -166,4 +156,25 @@ void instruccionFinalizarProceso() {
 	//puerto = configObtenerPuertoMemoria(directorioActual);
 	strcpy(puerto,"6500");
 	puts(puerto);*/
+}
+
+void cargarCfgs(){
+	getcwd(directorioActual, sizeof(directorioActual));
+	strcat(directorioActual, "/src/config.cfg\0");
+
+	ipPlanificador = configObtenerIpPlanificador(directorioActual);
+	puts(ipPlanificador);//TODO Borrar luego!!
+
+	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);
+	puts(puertoPlanificador);//TODO Borrar luego!!
+
+	cantidadHilos = configObtenerCantidadHilos(directorioActual);
+	a = atoi(cantidadHilos);
+	printf("%d", a);
+
+	ipADM = configObtenerIpADM(directorioActual);
+	puts(ipADM);//TODO Borrar luego!!
+
+	puertoADM = configObtenerPuertoADM(directorioActual);
+	puts(puertoADM);//TODO Borrar luego!!
 }

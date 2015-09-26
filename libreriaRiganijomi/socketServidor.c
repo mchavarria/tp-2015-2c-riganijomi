@@ -56,3 +56,19 @@ int socketCrearServidor(char * PUERTO){
 	}
 	return listeningSocket;
 }
+
+int socketAceptarConexion(int socket){
+	struct sockaddr_in addr;			// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
+	int socketCliente;
+	socklen_t addrlen = sizeof(addr);
+
+	socketCliente = accept(socket, (struct sockaddr *) &addr, &addrlen);
+	if (socketCliente < 0)
+	{
+		perror("accept failed");
+	} else {
+		puts("Connection accepted");
+	}
+
+	return socketCliente;
+}

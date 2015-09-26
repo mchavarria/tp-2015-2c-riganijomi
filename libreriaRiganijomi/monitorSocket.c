@@ -12,12 +12,14 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+extern sem_t sem_mem;
+extern sem_t sem_sockets;
 fd_set coleccion;    // coleccion de sockets
 fd_set coleccionTemp;  // coleccionTemp de sockets temporal
 
+void  *monitorPrepararServidor(void *argumento ){
+	char *puerto = (char *) argumento;
 
-void  *monitorPrepararServidor(char * puerto,sem_t * hilo1Mutex, sem_t * hilo2Mutex, int * socket)
-{
     int colMax;        // maximo num de sockets
 
     int servidor;     // socket Servidor
@@ -79,16 +81,12 @@ void  *monitorPrepararServidor(char * puerto,sem_t * hilo1Mutex, sem_t * hilo2Mu
 
                     }
                 } else {
+                	sem_wait(&sem_sockets);
                 	//ASIGNAR EL SOCKET A LA VARIABLE COMPARTIDA CON EL PADRE
 
-                	                        //LEVANTAR SEMAFOROOOOOO DEL PADRE
-                	                        ///////////////////////////
-                	                        ///////////////////////////
-                	*socket = i;
-                	sem_post(&hilo1Mutex);
-                	sem_wait(&hilo2Mutex);
+					//LEVANTAR SEMAFOROOOOOO DEL PADRE
 
-
+                	sem_post(&sem_mem);
                 } // fin recepcion de mensajes de cliente
             } // fin nuevas conexiones
         } // fin recorrido del set
