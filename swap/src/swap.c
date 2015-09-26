@@ -1,45 +1,55 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <commons/string.h>
-#include <unistd.h>
+
+//valores cfg
+char * puertoEscucha;
+char * nombreSwap;
+char * cantPaginas;
+char * tamanioPaginas;
+char * retardoSwap;
+char * retardoCompactacion;
 
 
 int main() {
 
-	char directorioActual[1024];
-	char * puertoMemoria;
-	char package[1024];
+	levantarCfgInicial();
+	crearParticion();
 
-	getcwd(directorioActual, 1024);
+
+
+	return 0;
+}
+
+void levantarCfgInicial(){
+	//Levanta sus puertos cfg e ip para conectarse
+	char directorioActual[1024];
+	getcwd(directorioActual, sizeof(directorioActual));
 	strcat(directorioActual, "/src/config.cfg");
 
-	//obtener puerto memoria para conectarse
-	puertoMemoria = configObtenerPuertoMemoria(directorioActual);
+	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
+	nombreSwap = configObtenerNombreArchivoSwap(directorioActual);
+	cantPaginas = configObtenerCantPaginasSwap(directorioActual);
+	tamanioPaginas = configObtenerTamPaginasSwap(directorioActual);
+	retardoSwap = configObtenerRetardoSwap(directorioActual);
+	retardoCompactacion = configObtenerRetardoCompactacionSwap(directorioActual);
 
+}
 
-	//creacion archivo particion Swap
-	char directorioSwap[1024];
-	char * nombreArchivo;
-	char comandoDD[100];
-
-	getcwd(directorioSwap, sizeof(directorioSwap));
-	strcat(directorioSwap, "/particion/");
-
-	nombreArchivo = configObtenerNombreArchivoSwap(directorioActual);
-	strcat(directorioSwap, nombreArchivo);
-
-	char * armarStringComandoDD(char * directorio){
-		strcpy(comandoDD, "dd if=/dev/zero of=");
-		strcat(comandoDD, directorioSwap);
-		strcat(comandoDD, " bs=512 count=1");
-		return comandoDD;
+void crearParticion(){
+	FILE *particion;
+	int cantPag = 64;
+	int tamPag = 4;
+	int i;
+	particion=fopen("swap.data","w");
+	for (i = 1; i < cantPag * tamPag; i++){
+		putc('/0',particion);
 	}
+	fclose(particion);
+}
 
-	system(armarStringComandoDD(directorioSwap));
-
-
-
-
+void configurarSocketServer(){
+	/*
 	//conexion con Administrador de memoria
 	int socketMemoria = socketCrearServidor(puertoMemoria);
 	printf("socket devuelto: %d",socketMemoria);
@@ -47,12 +57,5 @@ int main() {
 	recv(socketMemoria,package, 1024, 0);
 
 	puts(package);
-
-
-
-
-
-
-
-	return 0;
+	*/
 }
