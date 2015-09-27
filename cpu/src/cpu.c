@@ -122,12 +122,17 @@ void instruccionIniciarProceso (int * paginas) {
 }
 
 void instruccionLeerPagina (char * resultado) {
-	/*char * directorioActual;
-	char * puerto;
-	directorioActual = obtenerDirectorio("/src/config.cfg");
-	puts(directorioActual);
-	puerto = configObtenerPuertoMemoria(directorioActual);
-	puts(puerto);*/
+    char * contenido;
+    char * texto1;
+    char * texto2;
+    char * texto3;
+   	socketEnviarMensaje(socketADM,resultado);
+   	socketRecibirMensaje(socketADM, contenido);
+   	texto1 = strcat("mProc X - Pagina:",resultado);
+   	texto2 = strcat(texto1,"leida:");
+	texto3 = strcat(texto2,contenido);
+	printf("%s",texto3);
+
 }
 
 void instruccionEscribirPagina (int * pagina, char * texto) {
@@ -139,23 +144,24 @@ void instruccionEscribirPagina (int * pagina, char * texto) {
 	puts(puerto);*/
 }
 
-void instruccionEntradaSalida (int * tiempo) {
-	/*char * directorioActual;
-	char * puerto;
-	directorioActual = obtenerDirectorio("/src/config.cfg");
-	puts(directorioActual);
-	puerto = configObtenerPuertoMemoria(directorioActual);
-	puts(puerto);*/
+void instruccionEntradaSalida (char * tiempo) {
 }
 
 void instruccionFinalizarProceso() {
-	/*char * directorioActual;
-	char * puerto;
-	directorioActual = obtenerDirectorio("/src/config.cfg");
-	puts(directorioActual);
-	//puerto = configObtenerPuertoMemoria(directorioActual);
-	strcpy(puerto,"6500");
-	puts(puerto);*/
+	/*
+	socketEnviarMensaje(socketADM,"finalizar");
+	printf("%s","mProc X finalizado");
+    */
+	puts("finalizar");
+	socketEnviarMensaje(socketPlanificador,"finalizar",1024);
+}
+
+
+void sem_sockets() {
+
+}
+void sem_mem() {
+
 }
 
 void cargarCfgs(){
