@@ -12,8 +12,6 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-extern sem_t sem_mem;
-extern sem_t sem_sockets;
 fd_set coleccion;    // coleccion de sockets
 fd_set coleccionTemp;  // coleccionTemp de sockets temporal
 
@@ -81,12 +79,11 @@ void  *monitorPrepararServidor(void *argumento ){
 
                     }
                 } else {
-                	sem_wait(&sem_sockets);
+
                 	//ASIGNAR EL SOCKET A LA VARIABLE COMPARTIDA CON EL PADRE
 
 					//LEVANTAR SEMAFOROOOOOO DEL PADRE
 
-                	sem_post(&sem_mem);
                 } // fin recepcion de mensajes de cliente
             } // fin nuevas conexiones
         } // fin recorrido del set
