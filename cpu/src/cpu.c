@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -31,13 +32,10 @@ int socketPlanificador;
 
 int esElComando(char * package, char * comando) {
 	string_to_lower(package);
-	puts("Llego"); //BORRAR LINEA
 	if (string_starts_with(package, comando)) {
-		puts("Entro al IF"); //BORRAR LINEA
 		return 1;
 	}
 	return 0;
-	puts("No entro al IF"); //BORRAR LINEA
 }
 
 
@@ -86,43 +84,46 @@ int main(void) {
 
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador);
-		//socketADM = socketCrearCliente(puertoADM, ipADM);
-	if (socketPlanificador == -1 || socketADM == -1) {
-		log_info(archivoLog, "Alguno de los dos no se pudo conectar");
-	}
+    socketADM = socketCrearCliente(puertoADM, ipADM);
+	//if (socketPlanificador == -1 || socketADM == -1) {
+    //		log_info(archivoLog, "Alguno de los dos no se pudo conectar");
+	//}
 
 	puts("Se creo el cliente");//TODO Borrar luego!!
     printf("%s",ipPlanificador);
+    //defino tamaño
+    uint32_t tamanio;
+	socketRecibirMensajeInt(socketPlanificador,tamanio,4);
 	//Recibe un "proceso" para ejecutar
-	//socketRecibirMensaje(socketPlanificador, archivo,1024);
-	puts("despues del receive");//TODO Borrar luego!!
+	socketRecibirMensaje(socketPlanificador, archivo,tamanio+1);
 	printf("%s",archivo);
-	puts(archivo);//TODO Borrar luego!!
-	puts("voy a leer el archivo");//TODO Borrar luego!!
-	char archivo2 [1024];
-	strcpy(archivo2, "/home/utnso/rigonijami/tp-2015-2c-riganijomi/planificador/test/programa1.cod");
 
-	size_t len;
 
-    //Abre el archivo recibido por el Planificador
-	FILE * file = fopen ( archivo2, "r" );
-	puts("pasoooo");
-	if ( file != NULL )  {
 
-		char *line ; //Largo a definir de la linea
-		//while (fgets ( line, sizeof line, file ) != NULL ) {
 
-		while(line = fgetln(file, &len)){
-		//while (fgets ( line, sizeof(line),stdin ) ) {
-			//Lee linea y ejecuta
-			if (esElComando(line, "finalizar")) {
+
+
+	FILE * fp;
+	  char * line = NULL;
+	  size_t len = 0;
+	  ssize_t read;
+
+	  fp = fopen(archivo, "r");
+	  if (fp == NULL)
+	  exit(EXIT_FAILURE);
+
+	  while ((read = getline(&line, &len, fp)) != -1) {
+
+  //Lee linea y ejecuta
+
+		    if (esElComando(line, "finalizar")) {
 				puts("entro al if finalizar");
 				instruccionFinalizarProceso();
 			}
 			if (esElComando(line, "leer")) {
 				puts("entro al if leer");
 				valor = devolverParteUsable(line, 5);
-				instruccionLeerPagina (valor);
+				//instruccionLeerPagina (valor);
 
 			}
 			if (esElComando(line, "entrada-salida")) {
@@ -144,27 +145,22 @@ int main(void) {
 				instruccionEscribirPagina (resultado,valor);
 
 			}
-			sleep(retardo);
-			/*el log por ahora lo hace el planificador
-			//Logueo la instruccion
-			log_info(archivoLog,"envie el archivo a nico");
-			log_info(archivoLog,line);
-			puts("ya envie");//TODO Borrar luego!!
-			}
-			//Le envio mensaje al planificador cuando termino de ejecutar el proceso
-			socketEnviarMensaje(socketPlanificador, "Termine el proceso");
 
-			fclose ( file );
-			}else {
-			   log_error(archivoLog,"error leyendo el archivo");
-			   perror ( archivo ); /* why didn't the file open? */
 
-		}
-	}else{
-		puts("ES NULL");
-	}
-	return 0;
+
+	  }
+
+	  fclose(fp);
+	  if (line)
+	  free(line);
+	  exit(EXIT_SUCCESS);
+
+
+
+	  return 0;
 }
+
+
 
 /*
 char * obtenerDirectorio(char * nombreArchivo) {
@@ -176,33 +172,22 @@ char * obtenerDirectorio(char * nombreArchivo) {
 }*/
 
 void instruccionIniciarProceso (char * paginas) {
-	/*
-	char* respuesta;
-	socketEnviarMensaje(socketADM,paginas);
-	socketRecibirMensaje(socketADM, respuesta);
-	char * texto1;
-	char * texto2;
-	char * texto3;
-	socketEnviarMensaje(socketPlanificador,respuesta);
-	texto1 = strcat("mProc X - ",respuesta);
-	printf("%s",texto3);
-	*/
-	puts("inicia");
-	socketEnviarMensaje(socketPlanificador,paginas,1024);
+
+	char respuesta[1024];
+	socketEnviarMensaje(socketADM,paginas,1024);
+	socketRecibirMensaje(socketADM, respuesta,1024);
+	socketEnviarMensaje(socketPlanificador,respuesta,1024);
+	printf("mProc X - %s",&respuesta);
+
 
 }
 
 void instruccionLeerPagina (char * resultado) {
-    char * contenido;
-    char * texto1;
-    char * texto2;
-    char * texto3;
+    char contenido[1024];
    	socketEnviarMensaje(socketADM,resultado);
    	socketRecibirMensaje(socketADM, contenido);
-   	texto1 = strcat("mProc X - Pagina:",resultado);
-   	texto2 = strcat(texto1,"leida:");
-	texto3 = strcat(texto2,contenido);
-	printf("%s",texto3);
+	printf("mProc X - Pagina:%s leida:%s",&resultado,&contenido);
+
 
 }
 
@@ -219,12 +204,10 @@ void instruccionEntradaSalida (char * tiempo) {
 }
 
 void instruccionFinalizarProceso() {
-	/*
-	socketEnviarMensaje(socketADM,"finalizar");
-	printf("%s","mProc X finalizado");
-    */
-	puts("finalizar");
 	socketEnviarMensaje(socketPlanificador,"finalizar",1024);
+
+	socketEnviarMensaje(socketADM,"finalizar",1024);
+	printf("%s","mProc X finalizado");
 
 }
 
