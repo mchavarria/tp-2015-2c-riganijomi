@@ -126,3 +126,10 @@ char * configObtenerPuertoADM(char * ruta) {
 	NOMBRE_ARCHIVO = config_get_string_value(config, "PUERTO_ADM");
 	return NOMBRE_ARCHIVO;
 }
+char * configObtenerRetardo(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * NOMBRE_ARCHIVO;
+	NOMBRE_ARCHIVO = config_get_string_value(config, "RETARDO");
+	return NOMBRE_ARCHIVO;
+}

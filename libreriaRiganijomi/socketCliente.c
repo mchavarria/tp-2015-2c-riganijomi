@@ -75,6 +75,13 @@ void socketRecibirMensaje(int serverSocket, char * mensaje, int longitudMensaje)
 	}
 }
 
+void socketRecibirMensaje2(int serverSocket, char mensaje, int longitudMensaje) {
+
+	if (recv(serverSocket , mensaje , longitudMensaje , 0) == -1){
+		puts('error recibiendo mensaje');
+	}
+}
+
 /*
  * Cierra la conexión con el servidor
  */
