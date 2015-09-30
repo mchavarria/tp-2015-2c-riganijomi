@@ -18,13 +18,25 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <semaphore.h>
+
+#include <sys/socket.h>
 
 #define PACKAGESIZE 1024
 
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
+int socketCPU = -1;
+int sem_CPU_conectada = 0;
 char package[PACKAGESIZE];
 char comando[100];
+
+void sem_sockets() {
+
+}
+void sem_mem() {
+
+}
 
 static t_pcb *hilo_create(pthread_t thread, char * m, int  r) {
 	t_hilos *nuevo = malloc(sizeof(t_hilos));
@@ -37,14 +49,15 @@ static t_pcb *hilo_create(pthread_t thread, char * m, int  r) {
     return nuevo;
 }
 
-static t_pcb *pcb_create(int processID, char contextoDeEjecucion) {
+static t_pcb *pcb_create(int processID, char * contextoDeEjecucion) {
 	t_pcb *nuevo = malloc(sizeof(t_pcb));
 	nuevo->processID = processID;
-	//nuevo->contextoEjecucion = contextoDeEjecucion;
+	strcpy(nuevo->contextoEjecucion, contextoDeEjecucion);
     return nuevo;
 }
 
 int main() {
+	archivoLog = log_create("planificador.log", "Planificador", false, 2);
 	listaDeProcesos = list_create();
 	listaDeHilos = malloc(50000);
 	listaDeHilos = list_create();
@@ -56,9 +69,58 @@ int main() {
 	char *m1 = "thr1";
 	int  r1;
 
-	r1 = pthread_create( &thr1, NULL, servidor, (void*) m1);
-	consola();
+	pthread_t thr2;
+	char *m2 = "thr2";
+	int  r2;
 
+	r1 = pthread_create( &thr1, NULL, (void * )servidor, (void*) m1);
+
+	r2 = pthread_create( &thr2, NULL, enviarPCBSegunFIFO, (void*) m2);
+	consola();
+}
+
+void assert_pcb(t_pcb * pcb, int processID, char * contextoDeEjecucion) {
+      processID = pcb->processID;
+      puts("en el assert");
+      puts(pcb->contextoEjecucion);
+      strcpy(contextoDeEjecucion, pcb->contextoEjecucion);
+}
+
+void enviarPCBSegunFIFO() {
+	while(1) {
+		char mensaje[1024];
+		int processID;
+		char contextoDeEjecucion[1024];
+		if (listaDeProcesos->elements_count > 0) {
+			//sem_wait(sem_CPU_conectada);
+
+			while (socketCPU < 0) {
+				puts("esperando a la CPU");
+				sleep(2);
+			}
+			puts("antes de enviarrrrrrrrrrrr");
+			assert_pcb(list_get(listaDeProcesos, 0), &processID, contextoDeEjecucion);
+
+			puts("directo");
+			puts(contextoDeEjecucion);
+			//socketEnviarMensaje(socketCPU, contextoDeEjecucion, 1024);
+			puts("despues de enviar");
+			//socketRecibirMensaje(servidorPlanificador, mensaje);
+			puts("antes de finalizar");
+			socketRecibirMensaje(socketCPU, mensaje, 1024);
+			puts(mensaje);
+			log_info(archivoLog, mensaje);
+			while (!string_equals_ignore_case(mensaje, "finalizar")) {
+				puts("entro al while");
+				socketRecibirMensaje(socketCPU, mensaje, 1024);
+				puts(mensaje);
+				puts("despues del receive");
+				log_info(archivoLog, mensaje);
+			}
+			puts("despues de finalizar");
+			list_remove(listaDeProcesos, 0);
+		}
+	}
 }
 
 int esElComando(char * package, char * comando) {
@@ -78,8 +140,7 @@ char* devolverParteUsable(char * package, int desde) {
 	return cosaUsable;
 }
 
-void detectarComando(char * comando){
-	sleep(8);
+void detectarComando(char * comando) {
 	puts("Detectar comando"); //BORRAR LINEA
 
 	char * resultado;
@@ -92,7 +153,7 @@ void detectarComando(char * comando){
 }
 
 char *  conseguirRutaArchivo(char * programa, int socketServidor) {
-	t_log* archivoLog = log_create("planificador.log", "Planificador", false, 2);
+	//t_log* archivoLog = log_create("planificador.log", "Planificador", false, 2);
 	char directorioActual[1024];
 	char directorioActualConArchivo[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
@@ -112,16 +173,17 @@ void agregarALista(char * programa) {
 
 	pcb->processID = 1;
 
-	char rutaArchivo[512];
+	char rutaArchivo[1024];
 	puts("Antes de copiar"); //BORRAR LINEA
 	strcpy(rutaArchivo, conseguirRutaArchivo(programa, servidorPlanificador));
-
 
 	puts(rutaArchivo);
 
 	strcpy(pcb->contextoEjecucion, rutaArchivo);
 
+	strcat(pcb->contextoEjecucion, "\0");
 
+	puts("despues del strcpy");
 
 	list_add(listaDeProcesos, pcb_create(pcb->processID, pcb->contextoEjecucion));
 
@@ -129,6 +191,7 @@ void agregarALista(char * programa) {
 	printf("%d", listaDeProcesos->elements_count);
 
 	puts(pcb->contextoEjecucion);
+
 	/*
 	socketEnviarMensaje(servidorPlanificador, rutaArchivo);
 	puts("Despues de enviar");
@@ -179,7 +242,7 @@ int consola() {
 	consola();
 }
 
-void servidor(){
+void * servidor(){
 	char * puerto;
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
@@ -188,4 +251,6 @@ void servidor(){
 	puerto = configObtenerPuertoEscucha(directorioActual);
 
 	servidorPlanificador = socketCrearServidor(puerto);
+	socketCPU = socketAceptarConexion(servidorPlanificador);
+	puts("despues del connect");
 }

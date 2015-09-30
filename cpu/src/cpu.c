@@ -225,14 +225,11 @@ void instruccionFinalizarProceso() {
     */
 	puts("finalizar");
 	socketEnviarMensaje(socketPlanificador,"finalizar",1024);
-}
-
-
-void sem_sockets() {
 
 }
-void sem_mem() {
 
-}
+
+
+
 
 
