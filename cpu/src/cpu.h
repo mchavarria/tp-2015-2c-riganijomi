@@ -1,8 +1,10 @@
 #ifndef CPU_H_
 #define CPU_H_
 
+#include <stdint.h>
+
 typedef struct PCB {
-	int processID;
+	uint32_t processID;
 	//int estado;
 	//int programCounter;
 	char contextoEjecucion[100];
@@ -11,12 +13,14 @@ typedef struct PCB {
 //char * obtenerDirectorio(char * nombreArchivo);
 
 void ejecutarInstrucciones();
+void cargarCfgs();
 
 void instruccionIniciarProceso (char * paginas);
 void instruccionLeerPagina (char * resultado);
 void instruccionEscribirPagina (int * pagina, char * texto);
 void instruccionEntradaSalida (char * tiempo);
 void instruccionFinalizarProceso();
+void interpretarLinea(char * line);
 /*
 void cargarCfgs();
 */
