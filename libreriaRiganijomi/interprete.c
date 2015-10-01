@@ -1,4 +1,4 @@
-
+#include <string.h>
 #include "interprete.h"
 
 
@@ -13,6 +13,7 @@ int esElComando(char * linea, char * comando) {
 char* devolverParteUsable(char * linea, int desde) {
 	char * cosaUsable;
 	cosaUsable = string_substring_from(linea, desde);
+	strtok(cosaUsable, "\n");
 	return cosaUsable;
 }
 

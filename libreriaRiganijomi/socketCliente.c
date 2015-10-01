@@ -58,29 +58,40 @@ int socketCrearCliente(char * PUERTO, char * IP){
  */
 
 int socketEnviarMensaje(int serverSocket, char  * mensaje, int longitudMensaje) {
-	puts("antes");;
 	int estado = send(serverSocket, mensaje, longitudMensaje , 0);
-	if (estado == -1){
-		//-1 Indica error en el envío
-		puts("error enviando mensaje al servidor");
+	if (estado == 0) {
+		///////////////////////////
+		//LOGUEAR conexion cerrada
+		printf("servidor MEM: socket %d desconectado\n", serverSocket);
+		///////////////////////////
+		///////////////////////////
 	}
-	puts("despues");
+	if (estado == -1){
+		perror("error enviando mensaje al servidor");
+	}
 	return estado;
 }
 
-void socketRecibirMensaje(int serverSocket, char * mensaje, int longitudMensaje) {
-
-	if (recv(serverSocket , mensaje , longitudMensaje , 0) == -1){
+int socketRecibirMensaje(int serverSocket, char * mensaje, int longitudMensaje) {
+	int nbytes;
+	if ((nbytes = recv(serverSocket , mensaje , longitudMensaje , 0)) <= 0){
 		puts('error recibiendo mensaje');
+		// Error o conexion cerrada por el cliente
+		if (nbytes == 0) {
+			///////////////////////////
+			//LOGUEAR conexion cerrada
+			printf("servidor MEM: socket %d desconectado\n", serverSocket);
+			///////////////////////////
+			///////////////////////////
+		} else {
+			///////////////////////////
+			perror("recepcion error");
+			///////////////////////////
+		}
 	}
+	return nbytes;
 }
 
-void socketRecibirMensaje2(int serverSocket, char mensaje, int longitudMensaje) {
-
-	if (recv(serverSocket , mensaje , longitudMensaje , 0) == -1){
-		puts('error recibiendo mensaje');
-	}
-}
 
 /*
  * Cierra la conexión con el servidor

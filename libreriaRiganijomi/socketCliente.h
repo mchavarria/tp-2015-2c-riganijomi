@@ -3,8 +3,7 @@
 
 int socketCrearCliente(char * PUERTO, char * IP);
 int socketEnviarMensaje(int serverSocket, char * mensaje,int longitud);
-void socketRecibirMensaje(int serverSocket, char * mensaje, int longitud);
-void socketRecibirMensaje2(int serverSocket, char mensaje, int longitud);
+int socketRecibirMensaje(int serverSocket, char * mensaje, int longitud);
 void socketCerrarSocket(int serverSocket);
 
 
