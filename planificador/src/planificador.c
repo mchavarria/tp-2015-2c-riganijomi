@@ -14,6 +14,7 @@
 #include "commons/log.h"
 #include <commons/string.h>
 
+#include <stdlib.h>
 #include "planificador.h"
 #include <pthread.h>
 #include <stdio.h>
@@ -22,21 +23,17 @@
 
 #include <sys/socket.h>
 
+#include <stdint.h>
+
 #define PACKAGESIZE 1024
 
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
 int socketCPU = -1;
-int sem_CPU_conectada = 0;
+sem_t semProgramas;
+sem_t mutexCPU;
 char package[PACKAGESIZE];
 char comando[100];
-
-void sem_sockets() {
-
-}
-void sem_mem() {
-
-}
 
 static t_pcb *hilo_create(pthread_t thread, char * m, int  r) {
 	t_hilos *nuevo = malloc(sizeof(t_hilos));
@@ -45,7 +42,6 @@ static t_pcb *hilo_create(pthread_t thread, char * m, int  r) {
 	nuevo->r = r;
 	strncpy(nuevo->m, m, sizeof(nuevo->m)-1);
 	nuevo->m[sizeof(nuevo->m)-1] = "\0";
-	puts(nuevo->m);
     return nuevo;
 }
 
@@ -61,10 +57,12 @@ int main() {
 	listaDeProcesos = list_create();
 	listaDeHilos = malloc(50000);
 	listaDeHilos = list_create();
+	sem_init(&semProgramas, 0, 0);
+	sem_init(&mutexCPU, 0, 0);
 	/*listaDeProcesos->elements_count = 0;
-	listaDeProcesos->head = NULL; */
+	listaDeProcesos->head = NULL; *//*
 	printf("%d", listaDeProcesos->elements_count);
-	printf("%d", listaDeHilos->elements_count);
+	printf("%d", listaDeHilos->elements_count);*/
 	pthread_t thr1;
 	char *m1 = "thr1";
 	int  r1;
@@ -81,81 +79,51 @@ int main() {
 
 void assert_pcb(t_pcb * pcb, int processID, char * contextoDeEjecucion) {
       processID = pcb->processID;
-      puts("en el assert");
-      puts(pcb->contextoEjecucion);
       strcpy(contextoDeEjecucion, pcb->contextoEjecucion);
 }
 
 void enviarPCBSegunFIFO() {
+	sem_wait(&mutexCPU);
 	while(1) {
+		sem_wait(&semProgramas);
 		char mensaje[1024];
 		int processID;
 		char contextoDeEjecucion[1024];
 		if (listaDeProcesos->elements_count > 0) {
 			//sem_wait(sem_CPU_conectada);
-
-			while (socketCPU < 0) {
-				puts("esperando a la CPU");
-				sleep(2);
-			}
-			puts("antes de enviarrrrrrrrrrrr");
-			assert_pcb(list_get(listaDeProcesos, 0), &processID, contextoDeEjecucion);
-
-			puts("directo");
-			puts(contextoDeEjecucion);
-			//socketEnviarMensaje(socketCPU, contextoDeEjecucion, 1024);
-			puts("despues de enviar");
+			assert_pcb(list_get(listaDeProcesos, 0), &processID, &contextoDeEjecucion);
+			t_pcb * nodoPCB =  malloc(sizeof(t_pcb));
+			nodoPCB->processID = processID;
+			strcpy(nodoPCB->contextoEjecucion, contextoDeEjecucion);
+			socketEnviarMensaje(socketCPU, list_get(listaDeProcesos, 0), sizeof(t_pcb));
 			//socketRecibirMensaje(servidorPlanificador, mensaje);
-			puts("antes de finalizar");
 			socketRecibirMensaje(socketCPU, mensaje, 1024);
-			puts(mensaje);
-			log_info(archivoLog, mensaje);
 			while (!string_equals_ignore_case(mensaje, "finalizar")) {
-				puts("entro al while");
-				socketRecibirMensaje(socketCPU, mensaje, 1024);
-				puts(mensaje);
-				puts("despues del receive");
 				log_info(archivoLog, mensaje);
+				socketRecibirMensaje(socketCPU, mensaje, 1024);
 			}
-			puts("despues de finalizar");
+			log_info(archivoLog, mensaje);
 			list_remove(listaDeProcesos, 0);
 		}
 	}
 }
 
-int esElComando(char * package, char * comando) {
-	string_to_lower(package);
-	puts("Llego"); //BORRAR LINEA
-	if (string_starts_with(package, comando)) {
-		puts("Entro al IF"); //BORRAR LINEA
-		return 1;
-	}
-	return 0;
-	puts("No entro al IF"); //BORRAR LINEA
-}
-
-char* devolverParteUsable(char * package, int desde) {
-	char * cosaUsable;
-	cosaUsable = string_substring_from(package, desde);
-	return cosaUsable;
-}
-
 void detectarComando(char * comando) {
-	puts("Detectar comando"); //BORRAR LINEA
 
 	char * resultado;
 
 	if (esElComando(comando, "correr")) {
-		puts("Entro a correr");
 		resultado = devolverParteUsable(comando, 7);
 		agregarALista(resultado);
+	} else {
+		puts("Comando no valido.");
 	}
 }
 
 char *  conseguirRutaArchivo(char * programa, int socketServidor) {
 	//t_log* archivoLog = log_create("planificador.log", "Planificador", false, 2);
-	char directorioActual[1024];
-	char directorioActualConArchivo[1024];
+	char directorioActual[100];
+	char directorioActualConArchivo[100];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcpy(directorioActualConArchivo, directorioActual);
 	strcat(directorioActualConArchivo, "/test/");
@@ -165,8 +133,6 @@ char *  conseguirRutaArchivo(char * programa, int socketServidor) {
 }
 
 void agregarALista(char * programa) {
-	sleep(5);
-	puts("Crea la lista"); //BORRAR LINEA
 	printf("%d", listaDeProcesos->elements_count);
 
 	t_pcb* pcb = malloc(sizeof(t_pcb));
@@ -174,60 +140,38 @@ void agregarALista(char * programa) {
 	pcb->processID = 1;
 
 	char rutaArchivo[1024];
-	puts("Antes de copiar"); //BORRAR LINEA
 	strcpy(rutaArchivo, conseguirRutaArchivo(programa, servidorPlanificador));
-
-	puts(rutaArchivo);
 
 	strcpy(pcb->contextoEjecucion, rutaArchivo);
 
 	strcat(pcb->contextoEjecucion, "\0");
-
-	puts("despues del strcpy");
-
+	int antesDeAgregar = listaDeProcesos->elements_count;
 	list_add(listaDeProcesos, pcb_create(pcb->processID, pcb->contextoEjecucion));
+	int despuesDeAgregar = listaDeProcesos->elements_count;
+	if (despuesDeAgregar > antesDeAgregar) {
+		sem_post(&semProgramas);
+	} else {
+		perror("Lista no agregada.");
+	}
 
-	puts("Antes de Enviar"); //BORRAR LINEA
-	printf("%d", listaDeProcesos->elements_count);
 
-	puts(pcb->contextoEjecucion);
-
-	/*
-	socketEnviarMensaje(servidorPlanificador, rutaArchivo);
-	puts("Despues de enviar");
-	socketRecibirMensaje(servidorPlanificador, package);
-	puts("Despues del primer recibir");
-	puts(package);
-	socketRecibirMensaje(servidorPlanificador, package);
-	puts(package);
-	socketRecibirMensaje(servidorPlanificador, package);
-	puts(package);
-	*/
 }
 
 void crearThreadParaComando(char * comando) {
 	printf("%d", listaDeHilos->elements_count);
-	puts("Alocar memoria");
 	t_hilos* hilo = malloc(sizeof(t_hilos));
-	puts("Memoria lista");
 	strncpy(hilo->m, comando, sizeof(hilo->m)-1);
 	hilo->m[sizeof(hilo->m)-1] = "\0";
-	puts(hilo->m);
-	puts("Copiar comando");
 
 	hilo->r = pthread_create( &hilo->thread, NULL, detectarComando, (void*) (hilo->m));
 
-	puts("Thread creado");
-
 	list_add(listaDeHilos, hilo_create(hilo->thread, hilo->m, hilo->r));
 
-	puts("Lista agregada");
 }
 
 int consola() {
-	puts("Llego a la consola"); //BORRAR LINEA
 	fgets(comando, PACKAGESIZE, stdin);
-	puts(comando);
+	strtok(comando, "\n");
 	/*
 	pthread_t thr2;
 	char *m2 = strcpy(m2, comando);
@@ -252,5 +196,9 @@ void * servidor(){
 
 	servidorPlanificador = socketCrearServidor(puerto);
 	socketCPU = socketAceptarConexion(servidorPlanificador);
-	puts("despues del connect");
+	if (socketCPU < 0)	{
+		perror("accept failed");
+	} else {
+		sem_post(&mutexCPU);
+	}
 }

@@ -8,6 +8,7 @@
 #ifndef PLANIFICADOR_H_
 #define PLANIFICADOR_H_
 
+#include <stdint.h>
 
 void * servidor();
 int consola();
@@ -17,10 +18,10 @@ void detectarComando(char * comando);
 void enviarPCBSegunFIFO();
 
 typedef struct PCB {
-	int processID;
+	uint32_t processID;
 	//int estado;
 	//int programCounter;
-	char contextoEjecucion[1024];;
+	char contextoEjecucion[100];
 } __attribute__((packed)) t_pcb;
 
 void assert_pcb(t_pcb * pcb, int processID, char * contextoDeEjecucion);
