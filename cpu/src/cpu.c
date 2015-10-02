@@ -126,9 +126,8 @@ void instruccionIniciarProceso (char * instruccion) {
 		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 		nodoInstruccion->pid = pcbProc->processID;
 		strcpy(nodoInstruccion->instruccion,instruccion);
-		socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
 		//El socket está linkeado
-		if (socketEnviarMensaje(socketADM,instruccion,1024) > 0){
+		if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
 			//Envíe el packete.. espero respuesta
 			if (socketRecibirMensaje(socketADM, respuesta,1024) > 0){
 				printf("mProc X - %s",respuesta);
@@ -138,6 +137,7 @@ void instruccionIniciarProceso (char * instruccion) {
 				}
 			}
 		}
+		free(nodoInstruccion);
 	}
 }
 
@@ -145,13 +145,12 @@ void instruccionLeerPagina (char * instruccion) {
     char contenido[20];
     t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 	nodoInstruccion->pid = pcbProc->processID;
-	strcat(nodoInstruccion->instruccion,instruccion);
+	strcpy(nodoInstruccion->instruccion,instruccion);
 	socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
    	socketRecibirMensaje(socketADM, contenido,sizeof(contenido));
     socketEnviarMensaje(socketPlanificador,contenido, sizeof(contenido));
 	printf("mProc X - Pagina:%s leida:%s",instruccion,contenido);
-
-
+	free(nodoInstruccion);
 }
 
 void instruccionEscribirPagina (char * instruccion) {
@@ -170,7 +169,7 @@ void instruccionFinalizarProceso(char * instruccion) {
 	char respuesta[20];
 	t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 	nodoInstruccion->pid = pcbProc->processID;
-	strcat(nodoInstruccion->instruccion,instruccion);
+	strcpy(nodoInstruccion->instruccion,instruccion);
 	socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
 
    	socketRecibirMensaje(socketADM, respuesta,sizeof(respuesta));
