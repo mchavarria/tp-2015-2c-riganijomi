@@ -1,117 +1,149 @@
-
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <string.h>
 #include "memoria.h"
-#include <semaphore.h>
-#include <signal.h>
 
-//valores cfg
-char * puertoSwap;
-char * ipSwap;
-char * puertoEscucha;
-char * maxMarcosProceso;
-char * cantMarcos;
-char * tamanioMarco;
-char * entradasTLB;
-char * TLBHabilitada;
-char * retardoMemoria;
-//sockets
-int socketCliente;
-int socketSwap;
-//comandos de consola
-char comandoConsola[50];
 //para mensajes recibidos
-char buf[1024];
+char instruccion[20];
+char respuesta[30];
 int nbytes;
 
-sem_t sem_mem;
-sem_t sem_sockets;
 
-int main () {
-	sem_init(&sem_mem, 0, 0);
-	sem_init(&sem_sockets, 0, 1);
-	//Inicia los parametros
-	levantarCfgInicial();
+int main(int argc, char* argv[]) {
+	RETARDO_MEMORIA=0;
+	PUERTO_ESCUCHA=0;
+	PUERTO_SWAP=0;
 
-	pthread_t hiloMonitorSockets;
-	char *arg1 = "memoria";
-	int r1;
+	char cfgFin[] ="/src/config.cfg";
 
-	//Tratamiento de la señan enviada por el SO
-	signal(SIGINT, rutina);
-	signal(SIGUSR1, rutina);
+	char *dir = getcwd(NULL, 0);
 
-	r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
+	char *directorioActual = malloc(strlen(dir)+strlen(cfgFin)+1);
 
-	for(;;){
-		sem_wait(&sem_mem);
-		// tengo un mensaje de algun cliente
-		if ((nbytes = recv(socketCliente, buf, sizeof buf, 0)) <= 0) {
-			// Error o conexion cerrada por el cliente
-			if (nbytes == 0) {
-				///////////////////////////
-				//LOGUEAR conexion cerrada
-				printf("servidor MEM: socket %d desconectado\n", socketCliente);
-				///////////////////////////
-				///////////////////////////
-			} else {
-				///////////////////////////
-				perror("recepcion error");
-				///////////////////////////
+	strcat(directorioActual,dir);
+	strcat(directorioActual,cfgFin);
+
+    int resultado = 1;
+
+	puts(directorioActual);
+
+	archConfig = malloc(sizeof(t_config));
+	archivoLog = log_create("mem.log", "MEM", false, 2);
+	archConfig = config_create(directorioActual);
+	resultado = levantarCfgInicial(archConfig);
+
+	if (resultado == -1 ){
+		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
+		return -1;
+	}else{
+		puts(IP_SWAP);
+		log_info(archivoLog,"MEM: Archivo de configuracion levantado correctamente");
+		configurarSockets();
+		//sem_init(&sem_mem, 0, 0);
+			//sem_init(&sem_sockets, 0, 1);
+			//Inicia los parametros
+
+			/*pthread_t hiloMonitorSockets;
+			char *arg1 = "memoria";
+			int r1;*/
+
+			//Tratamiento de la señan enviada por el SO
+			signal(SIGINT, rutina);
+			signal(SIGUSR1, rutina);
+			t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+
+			//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
+			for(;(socketCpu > 0);){
+				//sem_wait(&sem_mem);
+				nbytes = socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem));
+				// tengo un mensaje de algun cliente
+				if (nbytes <= 0) {
+					// Error o conexion cerrada por el cliente
+					if (nbytes == 0) {
+						printf("servidor MEM: socket %d desconectado\n", socketCpu);
+					} else {
+						perror("recepcion error");
+					}
+					//monitorEliminarSocket(socketCpu);
+				} else {
+					// Hay dato para leer. Enviarlo a alguien
+					if (socketSwap > 0){
+						/*nbytes = socketEnviarMensaje(socketSwap, instruccion, sizeof(instruccion));
+						if (nbytes <= 0) {
+							if (nbytes == 0) {
+								printf("servidor MEM: socket %d desconectado\n", socketSwap);
+							} else {
+								perror("envio error");
+							}
+						} else {
+							//envio el mensaje.. recibo respuesta
+							nbytes = socketRecibirMensaje(socketSwap, respuesta,sizeof(respuesta));
+							nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
+						}*/
+						//sem_post(&sem_sockets);
+					} else {
+						interpretarLinea(nodoInstruccion);
+						nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
+						//perror("no hay swap");
+					}
+				}
 			}
-			monitorEliminarSocket(socketCliente);
-		} else {
-			// Hay dato para leer. Enviarlo a alguien
-			///////////////////////////
-			puts(buf);
-			if (socketEnviarMensaje(socketCliente, "RECIBI ALGO") == -1) {
-				perror("send");
-			}
-			sem_post(&sem_sockets);
-			///////////////////////////
-			///////////////////////////
-		}
 	}
 
-	return 0;
+	free(directorioActual);
+	return 1;
 }
 
+/*
 void levantarCfgInicial() {
 	//Levanta sus puertos cfg e ip para conectarse
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcat(directorioActual, "/src/config.cfg");
 
-	puertoSwap = configObtenerPuertoSwap(directorioActual);
-	ipSwap = configObtenerIpSwap(directorioActual);
-	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
+	//puertoSwap = configObtenerPuertoSwap(directorioActual);
+	//ipSwap = configObtenerIpSwap(directorioActual);
+	//puertoEscucha = configObtenerPuertoEscucha(directorioActual);
 	maxMarcosProceso = configObtenerMaxMarcosProceso(directorioActual);
 	cantMarcos = configObtenerCantMarcos(directorioActual);
 	tamanioMarco = configObtenerTamanioMarco(directorioActual);
 	entradasTLB = configObtenerEntradasTLB(directorioActual);
 	TLBHabilitada = configObtenerTLBHabilitada(directorioActual);
-	retardoMemoria = configObtenerRetardoMemoria(directorioActual);
+	//retardoMemoria = configObtenerRetardoMemoria(directorioActual);
 
-	configurarSocketSwap();
+}*/
+
+
+int levantarCfgInicial(t_config* archConfig){
+	int retorno = 1;
+	int largo = strlen(config_get_string_value(archConfig, "PUERTO_SWAP"));
+	PUERTO_SWAP=malloc(largo + 1);
+	memset(PUERTO_SWAP,'\0',largo + 1);
+	PUERTO_SWAP=config_get_string_value(archConfig,"PUERTO_SWAP");
+
+	largo = strlen(config_get_string_value(archConfig, "IP_SWAP"));
+	IP_SWAP=malloc(largo + 1);
+	memset(IP_SWAP,'\0',largo + 1);
+	IP_SWAP = config_get_string_value(archConfig, "IP_SWAP");
+
+	largo = strlen(config_get_string_value(archConfig, "PUERTO_ESCUCHA"));
+	PUERTO_ESCUCHA=malloc(largo + 1);
+	memset(PUERTO_ESCUCHA,'\0',largo + 1);
+	PUERTO_ESCUCHA=config_get_string_value(archConfig,"PUERTO_ESCUCHA");
+
+	RETARDO_MEMORIA =config_get_long_value(archConfig,"RETARDO_MEMORIA");
+
+
+	if(RETARDO_MEMORIA == 0 || PUERTO_SWAP == 0 || PUERTO_ESCUCHA==0 || IP_SWAP == NULL ){
+		retorno = -1;
+	}
+	return retorno;
 }
 
-void configurarSocketSwap(){
+void configurarSockets(){
 	//se conecta con el swap que tiene un servidor escuchando
-	socketSwap = socketCrearCliente(puertoSwap,ipSwap);
-	printf("socket devuelto: %d",socketSwap);
-
-	//prepara y envía un mensaje
-	/*char mensaje[1024];
-	strcpy(mensaje,"HOLAAMIGUEDEMIALMAAA");
-	int estado = socketEnviarMensaje(socketSwap,mensaje); 	// Solo envio si el usuario no quiere salir.
-
-	if (estado != -1){
-		sleep(30);
-		printf("respuesta: %s",socketRecibirMensaje(socketServidor);
-	}*/
+	//socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP);
+	socketServidor = socketCrearServidor(PUERTO_ESCUCHA);
+	if (socketServidor > 0){
+		socketCpu = socketAceptarConexion(socketServidor);
+	}
 }
 
 void rutina (int n) {
@@ -125,6 +157,28 @@ void rutina (int n) {
 		case SIGUSR2:
 			printf("LLEGO SIGUSR2\n");
 		break;
+	}
+}
+
+
+void interpretarLinea(t_nodo_mem * nodoInstruccion) {
+
+    char * valor;
+    if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
+		valor = devolverParteUsable(nodoInstruccion->instruccion, 8);
+		strcpy(respuesta,"iniciar");
+	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
+		valor = devolverParteUsable(nodoInstruccion->instruccion, 5);
+		strcpy(respuesta,"AFX");
+	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
+		char * rta;
+		rta = string_substring(nodoInstruccion->instruccion, 9, 1);
+		valor = devolverParteUsable(nodoInstruccion->instruccion, 11);
+		strcpy(respuesta,"escribir");
+	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
+		strcpy(respuesta,"finalizar");
+	} else {
+		perror("comando invaaaalido");
 	}
 }
 
