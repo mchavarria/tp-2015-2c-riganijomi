@@ -32,6 +32,12 @@ static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProces
 //En todos los casos genera un MENSAJE de aviso.
 void recibirProceso();
 
+//cuando finaliza el proceso, lo elimina.
+//En la lista de libres agrega el indice y el tamaño del nodo eliminado
+void eliminarProceso(int idProc);
+
+
+void leerPaginaProceso(int idProc, int pagina);
 //Condicion para el list_find en nodos libres
 
 t_list * listaLibres;
