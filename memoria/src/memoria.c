@@ -2,7 +2,7 @@
 
 //para mensajes recibidos
 char instruccion[20];
-char respuesta[30];
+char *respuesta;
 int nbytes;
 
 
@@ -47,10 +47,10 @@ int main(int argc, char* argv[]) {
 			//Tratamiento de la señan enviada por el SO
 			signal(SIGINT, rutina);
 			signal(SIGUSR1, rutina);
-			t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 
 			//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
 			for(;(socketCpu > 0);){
+				t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 				//sem_wait(&sem_mem);
 				nbytes = socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem));
 				// tengo un mensaje de algun cliente
@@ -84,6 +84,8 @@ int main(int argc, char* argv[]) {
 						//perror("no hay swap");
 					}
 				}
+				free(respuesta);
+				free(nodoInstruccion);
 			}
 	}
 
@@ -164,6 +166,7 @@ void rutina (int n) {
 void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
     char * valor;
+    respuesta = malloc(sizeof(char[30]));
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
 		valor = devolverParteUsable(nodoInstruccion->instruccion, 8);
 		strcpy(respuesta,"iniciar");
@@ -178,7 +181,8 @@ void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
 		strcpy(respuesta,"finalizar");
 	} else {
-		perror("comando invaaaalido");
+		strcpy(respuesta,"error");
+		perror("comando invalido");
 	}
 }
 
