@@ -10,6 +10,7 @@
 #include <commons/collections/dictionary.h>
 #include <commons/config.h>
 #include <commons/string.h>
+#include "socketServidor.h"
 
 //Puede ser del cfg
 #define PACKAGESIZE 1024	// Define cual va a ser el size maximo del paquete a enviar

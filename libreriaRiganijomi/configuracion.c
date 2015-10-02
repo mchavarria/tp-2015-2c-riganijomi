@@ -1,4 +1,5 @@
 #include <commons/config.h>
+#include "configuracion.h"
 
 /*
  * Esta linea es la que necesita cada proceso antes de enviar la ruta
@@ -152,5 +153,12 @@ char * configObtenerPuertoADM(char * ruta) {
 	config = config_create(ruta);
 	char * NOMBRE_ARCHIVO;
 	NOMBRE_ARCHIVO = config_get_string_value(config, "PUERTO_ADM");
+	return NOMBRE_ARCHIVO;
+}
+char * configObtenerRetardo(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * NOMBRE_ARCHIVO;
+	NOMBRE_ARCHIVO = config_get_string_value(config, "RETARDO");
 	return NOMBRE_ARCHIVO;
 }
