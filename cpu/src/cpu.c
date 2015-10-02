@@ -39,18 +39,21 @@ int main(void) {
 
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador);
-    //socketADM = socketCrearCliente(puertoADM, ipADM);
-	//if (socketPlanificador == -1 || socketADM == -1) {
-    //		log_info(archivoLog, "Alguno de los dos no se pudo conectar");
-	//}
+    socketADM = socketCrearCliente(puertoADM, ipADM);
+	if (socketADM == -1) {
+    log_info(archivoLog, "Memoria no se pudo conectar");
+	}
+	if (socketPlanificador == -1) {
+	    log_info(archivoLog, "Planificador no se pudo conectar");
+	}
 
 	//Voy a recibir la pcb
-	t_pcb * pcbProc = malloc(sizeof(t_pcb));
+	pcbProc = malloc(sizeof(t_pcb));
 
 	while ((socketRecibirMensaje(socketPlanificador, pcbProc,sizeof(t_pcb))) > 0){
 
 		FILE * fp;
-		char * line = NULL;
+		char * linea = NULL;
 		size_t len = 0;
 		ssize_t read;
 
@@ -58,49 +61,49 @@ int main(void) {
 		if (fp == NULL){
 		  exit(EXIT_FAILURE);
 		}
-		while ((read = getline(&line, &len, fp)) != -1) {
+		while ((read = getline(&linea, &len, fp)) != -1) {
 
 		  //Lee linea y ejecuta
-		  interpretarLinea(line);
+		  interpretarLinea(linea);
 		  //sleep(retardo);
 		}
 
 		fclose(fp);
-		if (line){
-		  free(line);
+		if (linea){
+		  free(linea);
 		}
 	}
 
 	  return 0;
 }
 
-void interpretarLinea(char * line) {
+void interpretarLinea(char * linea) {
 
     char * valor;
-    if (esElComando(line, "iniciar")) {
+    if (esElComando(linea, "iniciar")) {
 		puts("entro al if iniciar");
-		valor = devolverParteUsable(line, 8);
-		instruccionIniciarProceso (valor);
+		//valor = devolverParteUsable(line, 8);
+		instruccionIniciarProceso (linea);
 
-	} else if (esElComando(line, "leer")) {
+	} else if (esElComando(linea, "leer")) {
 		puts("entro al if leer");
-		valor = devolverParteUsable(line, 5);
-		instruccionLeerPagina (valor);
+		//valor = devolverParteUsable(linea, 5);
+		instruccionLeerPagina (linea);
 
-	} else if (esElComando(line, "entrada-salida")) {
+	} else if (esElComando(linea, "entrada-salida")) {
 		puts("entro al if entrada-salida");
-		valor= devolverParteUsable(line, 15);
-		instruccionEntradaSalida (valor);
-	} else if (esElComando(line, "escribir")) {
+		//valor= devolverParteUsable(linea, 15);
+		instruccionEntradaSalida (linea);
+	} else if (esElComando(linea, "escribir")) {
 		puts("entro al if escribir");
 		char * resultado;
-		resultado = string_substring(line, 9, 1);
-		valor = devolverParteUsable(line, 11);
-		instruccionEscribirPagina (resultado,valor);
+		//resultado = string_substring(linea, 9, 1);
+		//valor = devolverParteUsable(linea, 11);
+		instruccionEscribirPagina (linea);
 
-	} else if (esElComando(line, "finalizar")) {
+	} else if (esElComando(linea, "finalizar")) {
 		puts("entro al if finalizar");
-		instruccionFinalizarProceso();
+		instruccionFinalizarProceso(linea);
 	} else {
 		perror("comando invaaaalido");
 	}
@@ -116,35 +119,42 @@ char * obtenerDirectorio(char * nombreArchivo) {
 
 }*/
 
-void instruccionIniciarProceso (char * paginas) {
+void instruccionIniciarProceso (char * instruccion) {
 
 	char respuesta[1024];
 	if (socketADM > 0){
+		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+		nodoInstruccion->pid = pcbProc->processID;
+		strcpy(nodoInstruccion->instruccion,instruccion);
+		socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
 		//El socket está linkeado
-		if (socketEnviarMensaje(socketADM,paginas,1024) > 0){
+		if (socketEnviarMensaje(socketADM,instruccion,1024) > 0){
 			//Envíe el packete.. espero respuesta
 			if (socketRecibirMensaje(socketADM, respuesta,1024) > 0){
 				printf("mProc X - %s",respuesta);
 				if (socketPlanificador > 0){
 					//El socket está linkeado
-					socketEnviarMensaje(socketPlanificador,paginas,1024);
+					socketEnviarMensaje(socketPlanificador,instruccion,1024);
 				}
 			}
 		}
 	}
 }
 
-void instruccionLeerPagina (char * resultado) {
-    char contenido[] = "las bolas";
-   	//socketEnviarMensaje(socketADM,resultado);
-   	//socketRecibirMensaje(socketADM, contenido);
+void instruccionLeerPagina (char * instruccion) {
+    char contenido[20];
+    t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+	nodoInstruccion->pid = pcbProc->processID;
+	strcat(nodoInstruccion->instruccion,instruccion);
+	socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
+   	socketRecibirMensaje(socketADM, contenido,sizeof(contenido));
     socketEnviarMensaje(socketPlanificador,contenido, sizeof(contenido));
-	printf("mProc X - Pagina:%s leida:%s",resultado,contenido);
+	printf("mProc X - Pagina:%s leida:%s",instruccion,contenido);
 
 
 }
 
-void instruccionEscribirPagina (int * pagina, char * texto) {
+void instruccionEscribirPagina (char * instruccion) {
 	/*char * directorioActual;
 	char * puerto;
 	directorioActual = obtenerDirectorio("/src/config.cfg");
@@ -156,12 +166,16 @@ void instruccionEscribirPagina (int * pagina, char * texto) {
 void instruccionEntradaSalida (char * tiempo) {
 }
 
-void instruccionFinalizarProceso() {
-	char respuesta[] = "finalizar";
-	socketEnviarMensaje(socketPlanificador,respuesta,sizeof(respuesta));
+void instruccionFinalizarProceso(char * instruccion) {
+	char respuesta[20];
+	t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+	nodoInstruccion->pid = pcbProc->processID;
+	strcat(nodoInstruccion->instruccion,instruccion);
+	socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
 
-	//socketEnviarMensaje(socketADM,"finalizar",1024);
-	printf("%s","mProc X finalizado");
+   	socketRecibirMensaje(socketADM, respuesta,sizeof(respuesta));
+	socketEnviarMensaje(socketPlanificador,respuesta,sizeof(respuesta));
+	printf("mProc %d finalizado",pcbProc->processID);
 
 }
 

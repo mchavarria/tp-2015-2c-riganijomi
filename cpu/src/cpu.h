@@ -3,6 +3,13 @@
 
 #include <stdint.h>
 
+
+typedef struct NODO_MEM {
+	uint32_t pid;
+	char instruccion[20];
+} __attribute__ ((packed)) t_nodo_mem;
+
+
 typedef struct PCB {
 	uint32_t processID;
 	//int estado;
@@ -10,16 +17,18 @@ typedef struct PCB {
 	char contextoEjecucion[100];
 } __attribute__ ((packed)) t_pcb;
 
+
+t_pcb * pcbProc;
 //char * obtenerDirectorio(char * nombreArchivo);
 
 void ejecutarInstrucciones();
 void cargarCfgs();
 
-void instruccionIniciarProceso (char * paginas);
-void instruccionLeerPagina (char * resultado);
-void instruccionEscribirPagina (int * pagina, char * texto);
+void instruccionIniciarProceso (char * instruccion);
+void instruccionLeerPagina (char * instruccion);
+void instruccionEscribirPagina (char * instruccion);
 void instruccionEntradaSalida (char * tiempo);
-void instruccionFinalizarProceso();
+void instruccionFinalizarProceso(char * instruccion);
 void interpretarLinea(char * line);
 /*
 void cargarCfgs();
