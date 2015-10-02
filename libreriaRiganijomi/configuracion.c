@@ -1,4 +1,5 @@
 #include <commons/config.h>
+#include "configuracion.h"
 
 /*
  * Esta linea es la que necesita cada proceso antes de enviar la ruta

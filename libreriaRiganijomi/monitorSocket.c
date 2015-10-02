@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include "monitorSocket.h"
 fd_set coleccion;    // coleccion de sockets
 fd_set coleccionTemp;  // coleccionTemp de sockets temporal
 

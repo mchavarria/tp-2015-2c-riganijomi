@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include "socketCliente.h"
 
 #define PACKAGESIZE 1024
 
