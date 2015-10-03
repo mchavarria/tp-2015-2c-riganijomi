@@ -9,6 +9,7 @@
 #define PLANIFICADOR_H_
 
 #include <stdint.h>
+#include "commons/log.h"
 
 void * servidor();
 int consola();

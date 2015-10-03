@@ -23,7 +23,7 @@ char * puertoPlanificador;
 char * ipADM;
 char * puertoADM;
 char * cantidadHilos;
-char * retardo;
+int retardo;
 
 int socketADM;
 int socketPlanificador = 0;
@@ -65,6 +65,7 @@ int main(void) {
 
 		  //Lee linea y ejecuta
 		  interpretarLinea(linea);
+		  sleep(retardo);
 		  //sleep(retardo);
 		}
 
@@ -172,9 +173,9 @@ void instruccionFinalizarProceso(char * instruccion) {
 	strcpy(nodoInstruccion->instruccion,instruccion);
 	socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
 
-   	socketRecibirMensaje(socketADM, respuesta,sizeof(respuesta));
-	socketEnviarMensaje(socketPlanificador,respuesta,sizeof(respuesta));
-	printf("mProc %d finalizado",pcbProc->processID);
+   	//socketRecibirMensaje(socketADM, respuesta,sizeof(respuesta));
+	socketEnviarMensaje(socketPlanificador,nodoInstruccion->instruccion,sizeof(nodoInstruccion->instruccion));
+	printf("mProc %d finalizado\n",pcbProc->processID);
 
 }
 
@@ -191,7 +192,7 @@ void cargarCfgs() {
 
 	ipADM = configObtenerIpADM(directorioActual);
 	puertoADM = configObtenerPuertoADM(directorioActual);
-	retardo = configObtenerRetardo(directorioActual);
+	retardo = 2;//configObtenerRetardo(directorioActual);
 }
 
 
