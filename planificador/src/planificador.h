@@ -9,13 +9,14 @@
 #define PLANIFICADOR_H_
 
 #include <stdint.h>
+#include "commons/log.h"
 
 void * servidor();
 int consola();
 char * conseguirRutaArchivo(char * programa, int socketServidor);
 void agregarALista(char * programa);
 void detectarComando(char * comando);
-void enviarPCBSegunFIFO();
+void * enviarPCBSegunFIFO();
 
 typedef struct PCB {
 	uint32_t processID;
