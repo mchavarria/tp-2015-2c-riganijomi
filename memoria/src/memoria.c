@@ -37,54 +37,55 @@ int main(int argc, char* argv[]) {
 		log_info(archivoLog,"MEM: Archivo de configuracion levantado correctamente");
 		configurarSockets();
 		//sem_init(&sem_mem, 0, 0);
-			//sem_init(&sem_sockets, 0, 1);
-			//Inicia los parametros
+		//sem_init(&sem_sockets, 0, 1);
+		//Inicia los parametros
 
-			/*pthread_t hiloMonitorSockets;
-			char *arg1 = "memoria";
-			int r1;*/
+		/*pthread_t hiloMonitorSockets;
+		char *arg1 = "memoria";
+		int r1;*/
 
-			//Tratamiento de la señan enviada por el SO
-			signal(SIGINT, rutina);
-			signal(SIGUSR1, rutina);
-			t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+		//Tratamiento de la señan enviada por el SO
+		signal(SIGINT, rutina);
+		signal(SIGUSR1, rutina);
+		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 
-			//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
-			for(;(socketCpu > 0);){
-				//sem_wait(&sem_mem);
-				nbytes = socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem));
-				// tengo un mensaje de algun cliente
-				if (nbytes <= 0) {
-					// Error o conexion cerrada por el cliente
-					if (nbytes == 0) {
-						printf("servidor MEM: socket %d desconectado\n", socketCpu);
-					} else {
-						perror("recepcion error");
-					}
-					//monitorEliminarSocket(socketCpu);
+		//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
+		for(;(socketCpu > 0);){
+			//sem_wait(&sem_mem);
+			nbytes = socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem));
+			// tengo un mensaje de algun cliente
+			if (nbytes <= 0) {
+				// Error o conexion cerrada por el cliente
+				if (nbytes == 0) {
+					printf("servidor MEM: socket %d desconectado\n", socketCpu);
 				} else {
-					// Hay dato para leer. Enviarlo a alguien
-					if (socketSwap > 0){
-						/*nbytes = socketEnviarMensaje(socketSwap, instruccion, sizeof(instruccion));
-						if (nbytes <= 0) {
-							if (nbytes == 0) {
-								printf("servidor MEM: socket %d desconectado\n", socketSwap);
-							} else {
-								perror("envio error");
-							}
+					perror("recepcion error");
+				}
+				//monitorEliminarSocket(socketCpu);
+			} else {
+				// Hay dato para leer. Enviarlo a alguien
+				if (socketSwap > 0){
+					nbytes = socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem));
+					if (nbytes <= 0) {
+						if (nbytes == 0) {
+							printf("servidor MEM: socket %d desconectado\n", socketSwap);
 						} else {
-							//envio el mensaje.. recibo respuesta
-							nbytes = socketRecibirMensaje(socketSwap, respuesta,sizeof(respuesta));
-							nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
-						}*/
-						//sem_post(&sem_sockets);
+							perror("envio error");
+						}
 					} else {
-						interpretarLinea(nodoInstruccion);
+						//envio el mensaje.. recibo respuesta
+						nbytes = socketRecibirMensaje(socketSwap, respuesta,sizeof(respuesta));
+						//TODO falta hacer que interprete la respuesta.
 						nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
-						//perror("no hay swap");
 					}
+					//sem_post(&sem_sockets);
+				} else {
+					//interpretarLinea(nodoInstruccion);
+					//nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
+					perror("no hay swap");
 				}
 			}
+		}
 	}
 
 	free(directorioActual);
@@ -139,7 +140,7 @@ int levantarCfgInicial(t_config* archConfig){
 
 void configurarSockets(){
 	//se conecta con el swap que tiene un servidor escuchando
-	//socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP);
+	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP);
 	socketServidor = socketCrearServidor(PUERTO_ESCUCHA);
 	if (socketServidor > 0){
 		socketCpu = socketAceptarConexion(socketServidor);
