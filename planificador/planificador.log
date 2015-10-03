@@ -138,3 +138,31 @@
 [INFO] 11:57:43:287 Planificador/(5372:5374): A
 [INFO] 11:57:45:290 Planificador/(5372:5374): 
 [INFO] 11:57:47:291 Planificador/(5372:5374): finalizar
+[INFO] 12:21:36:280 Planificador/(5705:5715): 
+[INFO] 12:21:36:331 Planificador/(5705:5707): iniciar 20
+[INFO] 12:21:38:332 Planificador/(5705:5707): A
+[INFO] 12:21:40:338 Planificador/(5705:5707): 
+[INFO] 12:21:42:341 Planificador/(5705:5707): A
+[INFO] 12:21:44:346 Planificador/(5705:5707): 
+[INFO] 12:21:45:288 Planificador/(5705:5716): 
+[INFO] 12:21:46:350 Planificador/(5705:5707): finalizar
+[INFO] 12:21:48:356 Planificador/(5705:5707): iniciar 20
+[INFO] 12:21:50:359 Planificador/(5705:5707): A
+[INFO] 12:21:52:361 Planificador/(5705:5707): 
+[INFO] 12:21:54:366 Planificador/(5705:5707): A
+[INFO] 12:21:56:370 Planificador/(5705:5707): 
+[INFO] 12:21:58:372 Planificador/(5705:5707): finalizar
+[INFO] 12:22:04:329 Planificador/(5705:5717): 
+[INFO] 12:22:04:339 Planificador/(5705:5707): iniciar 20
+[INFO] 12:22:06:347 Planificador/(5705:5707): A
+[INFO] 12:22:06:588 Planificador/(5705:5718): 
+[INFO] 12:22:08:350 Planificador/(5705:5707): 
+[INFO] 12:22:10:354 Planificador/(5705:5707): A
+[INFO] 12:22:12:355 Planificador/(5705:5707): 
+[INFO] 12:22:14:356 Planificador/(5705:5707): finalizar
+[INFO] 12:22:16:366 Planificador/(5705:5707): iniciar 20
+[INFO] 12:22:18:370 Planificador/(5705:5707): A
+[INFO] 12:22:20:375 Planificador/(5705:5707): 
+[INFO] 12:22:22:376 Planificador/(5705:5707): ito
+[INFO] 12:22:24:378 Planificador/(5705:5707): A
+[INFO] 12:22:26:381 Planificador/(5705:5707): finalizar

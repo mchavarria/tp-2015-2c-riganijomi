@@ -27,7 +27,7 @@
 
 #define PACKAGESIZE 1024
 
-int cantidadProgramas = 0;
+int contadorProcessID = 0;
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
 int socketCPU = -1;
@@ -74,7 +74,7 @@ int main() {
 
 	r1 = pthread_create( &thr1, NULL, (void * )servidor, (void*) m1);
 
-	r2 = pthread_create( &thr2, NULL, enviarPCBSegunFIFO, (void*) m2);
+	r2 = pthread_create( &thr2, NULL, (void * )enviarPCBSegunFIFO, (void*) m2);
 	consola();
 }
 
@@ -83,7 +83,7 @@ void assert_pcb(t_pcb * pcb, int processID, char * contextoDeEjecucion) {
       strcpy(contextoDeEjecucion, pcb->contextoEjecucion);
 }
 
-void enviarPCBSegunFIFO() {
+void * enviarPCBSegunFIFO() {
 	sem_wait(&mutexCPU);
 	//sem_wait(&semProgramas);
 	while(1) {
@@ -137,7 +137,8 @@ void agregarALista(char * programa) {
 
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 
-	pcb->processID = 1;
+	pcb->processID = contadorProcessID;
+	contadorProcessID++;
 
 	char rutaArchivo[1024];
 	strcpy(rutaArchivo, conseguirRutaArchivo(programa, servidorPlanificador));
@@ -150,7 +151,6 @@ void agregarALista(char * programa) {
 	int despuesDeAgregar = listaDeProcesos->elements_count;
 	if (despuesDeAgregar > antesDeAgregar) {
 		//sem_post(&semProgramas);
-		cantidadProgramas++;
 	} else {
 		perror("Lista no agregada.");
 	}

@@ -16,7 +16,7 @@ int consola();
 char * conseguirRutaArchivo(char * programa, int socketServidor);
 void agregarALista(char * programa);
 void detectarComando(char * comando);
-void enviarPCBSegunFIFO();
+void * enviarPCBSegunFIFO();
 
 typedef struct PCB {
 	uint32_t processID;
