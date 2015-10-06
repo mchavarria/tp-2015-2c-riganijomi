@@ -1,8 +1,8 @@
 #include "memoria.h"
 
 //para mensajes recibidos
-char instruccion[20];
-char *respuesta;
+char instruccion[30];
+char respuesta[30];
 int nbytes;
 
 
@@ -33,7 +33,6 @@ int main(int argc, char* argv[]) {
 		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
 		return -1;
 	}else{
-		puts(IP_SWAP);
 		log_info(archivoLog,"MEM: Archivo de configuracion levantado correctamente");
 		configurarSockets();
 		//sem_init(&sem_mem, 0, 0);
@@ -50,42 +49,31 @@ int main(int argc, char* argv[]) {
 
 		//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
 		for(;(socketCpu > 0);){
-			t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+			nodoInstruccion = malloc(sizeof(t_nodo_mem));
 			//sem_wait(&sem_mem);
-			nbytes = socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem));
+
+			if (socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem)) > 0) {
 			// tengo un mensaje de algun cliente
-			if (nbytes <= 0) {
-				// Error o conexion cerrada por el cliente
-				if (nbytes == 0) {
-					printf("servidor MEM: socket %d desconectado\n", socketCpu);
-				} else {
-					perror("recepcion error");
-				//monitorEliminarSocket(socketCpu);
-				}
-			} else {
-				// Hay dato para leer. Enviarlo a alguien
 				if (socketSwap > 0){
-					nbytes = socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem));
-					if (nbytes <= 0) {
-						if (nbytes == 0) {
-							printf("servidor MEM: socket %d desconectado\n", socketSwap);
-						} else {
-							perror("envio error");
-						}
-					} else {
-						//envio el mensaje.. recibo respuesta
-						nbytes = socketRecibirMensaje(socketSwap, respuesta,sizeof(respuesta));
-						//TODO falta hacer que interprete la respuesta.
+					if (socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem)) > 0) {
+						//envio el nodoInstruccion.. recibo respuesta
+						t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
+						nbytes = socketRecibirMensaje(socketSwap, nodoRespuesta,sizeof(t_resp_swap_mem));
+						//Interpreta la respuesta
+						interpretarLinea(nodoRespuesta);
+						//La envia
 						nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
+					} else {
+						log_debug(archivoLog,"error envio mensaje swap: %d",socketSwap);
 					}
 					//sem_post(&sem_sockets);
 				} else {
-					//interpretarLinea(nodoInstruccion);
-					//nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
-					perror("no hay swap");
+					log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
+					perror("no hay swap disponible");
 				}
-				free(respuesta);
 				free(nodoInstruccion);
+			} else {
+				log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
 			}
 		}
 	}
@@ -153,38 +141,59 @@ void rutina (int n) {
 	switch (n) {
 		case SIGINT:
 			printf("En tu cara, no salgo nada…\n");
+			log_info(archivoLog,"ingreso el mensaje rutina SIGINT: %d",SIGINT);
 		break;
 		case SIGUSR1:
 			printf("LLEGO SIGUSR1\n");
+			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR1: %d",SIGUSR1);
 		break;
 		case SIGUSR2:
 			printf("LLEGO SIGUSR2\n");
+			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR2: %d",SIGUSR2);
 		break;
 	}
 }
 
 
-void interpretarLinea(t_nodo_mem * nodoInstruccion) {
+void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
 
-    char * valor;
-    respuesta = malloc(sizeof(char[30]));
-    if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 8);
-		strcpy(respuesta,"iniciar");
-	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 5);
-		strcpy(respuesta,"AFX");
-	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
-		char * rta;
-		rta = string_substring(nodoInstruccion->instruccion, 9, 1);
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 11);
-		strcpy(respuesta,"escribir");
-	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
-		strcpy(respuesta,"finalizar");
-	} else {
-		strcpy(respuesta,"error");
-		perror("comando invalido");
-	}
+    int tipoResp = nodoRespuesta->tipo;
+    int exito = nodoRespuesta->exito;
+    switch (tipoResp) {
+    		case INICIAR:
+    			int paginas = atoi(devolverParteUsable(nodoInstruccion->instruccion, 8));
+				if (exito){
+					strcpy(respuesta,"exito");
+					log_info(archivoLog,"Proceso mProc %d creado, cantidad de paginas: %d",nodoInstruccion->pid,paginas);
+				} else {
+					strcpy(respuesta,"fallo");
+					log_debug(archivoLog,"Proceso mProc %d NO creado, cantidad de paginas: %d",nodoInstruccion->pid,paginas);
+				}
+			break;
+    		case LEER:
+    			if (exito){
+    				socketRecibirMensaje(socketSwap, respuesta,nodoRespuesta->largo);
+				} else {
+					strcpy(respuesta,"fallo");
+				}
+    		break;
+    		case ESCRIBIR:
+    			if (exito){
+					strcpy(respuesta,"exito");
+				} else {
+					strcpy(respuesta,"fallo");
+				}
+    		break;
+    		case FINALIZAR:
+    			if (exito){
+					strcpy(respuesta,"exito");
+				} else {
+					strcpy(respuesta,"fallo");
+				}
+			break;
+    		default:
+    		    perror("mensaje erroneo.");
+    	}
 }
 
 
