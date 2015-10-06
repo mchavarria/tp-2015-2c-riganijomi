@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 	PUERTO_ESCUCHA=0;
 	PUERTO_SWAP=0;
 
-	char cfgFin[] ="/src/config.cfg";
+	char cfgFin[] ="/memoria/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 	puts(directorioActual);
 
 	archConfig = malloc(sizeof(t_config));
-	archivoLog = log_create("mem.log", "MEM", false, 2);
+	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
 	archConfig = config_create(directorioActual);
 	resultado = levantarCfgInicial(archConfig);
 
@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
 		//Tratamiento de la señan enviada por el SO
 		signal(SIGINT, rutina);
 		signal(SIGUSR1, rutina);
+		signal(SIGUSR2, rutina);
 
 		//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
 		for(;(socketCpu > 0);){
@@ -161,23 +162,26 @@ void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
     int exito = nodoRespuesta->exito;
     switch (tipoResp) {
     		case INICIAR:
-    			int paginas = atoi(devolverParteUsable(nodoInstruccion->instruccion, 8));
 				if (exito){
-					strcpy(respuesta,"exito");
-					log_info(archivoLog,"Proceso mProc %d creado, cantidad de paginas: %d",nodoInstruccion->pid,paginas);
+					strcpy(respuesta,"exito-inicio");
+					log_info(archivoLog,"Proceso mProc %d creado, cantidad de paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 8));
 				} else {
-					strcpy(respuesta,"fallo");
-					log_debug(archivoLog,"Proceso mProc %d NO creado, cantidad de paginas: %d",nodoInstruccion->pid,paginas);
+					strcpy(respuesta,"fallo-inicio");
+					log_debug(archivoLog,"Proceso mProc %d NO creado, cantidad de paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 8));
 				}
 			break;
     		case LEER:
     			if (exito){
+    				log_info(archivoLog,"Proceso mProc %d leido, paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 5));
     				socketRecibirMensaje(socketSwap, respuesta,nodoRespuesta->largo);
 				} else {
-					strcpy(respuesta,"fallo");
+					log_debug(archivoLog,"Proceso mProc %d NO leido, paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 5));
+					strcpy(respuesta,"fallo-lectura");
 				}
     		break;
     		case ESCRIBIR:
+    			//No necesita avisarle al cpu
+				//TODO Solo loguear y actualizar las estructuras necesarias
     			if (exito){
 					strcpy(respuesta,"exito");
 				} else {
@@ -185,6 +189,8 @@ void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
 				}
     		break;
     		case FINALIZAR:
+    			//No necesita avisarle al cpu
+    			//TODO Solo loguear y limpiar las estructuras necesarias
     			if (exito){
 					strcpy(respuesta,"exito");
 				} else {

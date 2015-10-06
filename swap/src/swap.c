@@ -53,7 +53,7 @@ void levantarCfgInicial(){
 	//Levanta sus puertos cfg e ip para conectarse
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/src/config.cfg");
+	strcat(directorioActual, "/swap/src/config.cfg");
 
 	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
 	nombreSwap = configObtenerNombreArchivoSwap(directorioActual);
@@ -137,6 +137,8 @@ void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
 void recibirProceso(int idProc, int cantPagProceso){
 
+	nodoRespuesta->tipo = INICIAR;
+	nodoRespuesta->largo = 0;//No devuelde nada mas
 	//Salvo en la auxiliar para poder usarla en condicion
 	bool condicionRecibir(t_nodoLibre * nodoLibre) {
 
@@ -151,16 +153,12 @@ void recibirProceso(int idProc, int cantPagProceso){
 		list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
 		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
 		//TODO MODIFICAR LA LISTA DE DISPONIBLES
-		nodoRespuesta->tipo = INICIAR;
 		nodoRespuesta->exito = 1;
-		nodoRespuesta->largo = 0;
 		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
 
 	} else {
 		//No hay elementos libres, no puedo alojar.. Rechazo
-		nodoRespuesta->tipo = INICIAR;
 		nodoRespuesta->exito = 0;
-		nodoRespuesta->largo = 0;
 		perror("no hay espacio para el proceso");
 		log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
 		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
@@ -171,6 +169,8 @@ void recibirProceso(int idProc, int cantPagProceso){
 
 void eliminarProceso(int idProc){
 
+	nodoRespuesta->tipo = FINALIZAR;
+	nodoRespuesta->largo = 0;//No devuelve nada mas
 	bool condicionProcAEliminar(t_nodoProceso * nodoProceso) {
 		return (nodoProceso->idProc == idProc);
 	}
@@ -185,15 +185,11 @@ void eliminarProceso(int idProc){
 		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, nodoProceso->tamanio);
 		list_remove_by_condition(listaProcesos,(void*) condicionProcAEliminar);
 		//TODO falta eliminar el nodo de memoria!!!!
-		nodoRespuesta->tipo = FINALIZAR;
 		nodoRespuesta->exito = 1;
-		nodoRespuesta->largo = 0;
 		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
 	} else {
 		//no encontro el proceso indicado
-		nodoRespuesta->tipo = FINALIZAR;
 		nodoRespuesta->exito = 0;
-		nodoRespuesta->largo = 0;
 		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
 		log_info(archivoLog, "No se pudo eliminar el proceso PID: %d", idProc);
 		perror("no se encontró el proceso indicado");

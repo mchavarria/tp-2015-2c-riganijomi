@@ -9,7 +9,29 @@
 #define PLANIFICADOR_H_
 
 #include <stdint.h>
-#include "commons/log.h"
+#include <commons/log.h>
+#include <commons/collections/list.h>
+#include <commons/log.h>
+#include <commons/string.h>
+#include <string.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <semaphore.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+
+
+#define PACKAGESIZE 1024
+
+int contadorProcessID = 0;
+int clientePlanificador = 0;
+int servidorPlanificador = 0;
+int socketCPU = -1;
+sem_t semProgramas;
+sem_t mutexCPU;
+char package[PACKAGESIZE];
+char comando[100];
 
 void * servidor();
 int consola();
