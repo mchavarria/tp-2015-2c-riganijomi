@@ -27,6 +27,7 @@
 
 #define PACKAGESIZE 1024
 
+int contadorProcessID = 0;
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
 int socketCPU = -1;
@@ -73,7 +74,7 @@ int main() {
 
 	r1 = pthread_create( &thr1, NULL, (void * )servidor, (void*) m1);
 
-	r2 = pthread_create( &thr2, NULL, enviarPCBSegunFIFO, (void*) m2);
+	r2 = pthread_create( &thr2, NULL, (void * )enviarPCBSegunFIFO, (void*) m2);
 	consola();
 }
 
@@ -82,10 +83,10 @@ void assert_pcb(t_pcb * pcb, int processID, char * contextoDeEjecucion) {
       strcpy(contextoDeEjecucion, pcb->contextoEjecucion);
 }
 
-void enviarPCBSegunFIFO() {
+void * enviarPCBSegunFIFO() {
 	sem_wait(&mutexCPU);
+	//sem_wait(&semProgramas);
 	while(1) {
-		sem_wait(&semProgramas);
 		char mensaje[1024];
 		int processID;
 		char contextoDeEjecucion[1024];
@@ -93,7 +94,6 @@ void enviarPCBSegunFIFO() {
 			//sem_wait(sem_CPU_conectada);
 			assert_pcb(list_get(listaDeProcesos, 0), &processID, &contextoDeEjecucion);
 			t_pcb * nodoPCB =  malloc(sizeof(t_pcb));
-			nodoPCB->processID = processID;
 			strcpy(nodoPCB->contextoEjecucion, contextoDeEjecucion);
 			socketEnviarMensaje(socketCPU, list_get(listaDeProcesos, 0), sizeof(t_pcb));
 			//socketRecibirMensaje(servidorPlanificador, mensaje);
@@ -137,7 +137,8 @@ void agregarALista(char * programa) {
 
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 
-	pcb->processID = 1;
+	pcb->processID = contadorProcessID;
+	contadorProcessID++;
 
 	char rutaArchivo[1024];
 	strcpy(rutaArchivo, conseguirRutaArchivo(programa, servidorPlanificador));
@@ -149,7 +150,7 @@ void agregarALista(char * programa) {
 	list_add(listaDeProcesos, pcb_create(pcb->processID, pcb->contextoEjecucion));
 	int despuesDeAgregar = listaDeProcesos->elements_count;
 	if (despuesDeAgregar > antesDeAgregar) {
-		sem_post(&semProgramas);
+		//sem_post(&semProgramas);
 	} else {
 		perror("Lista no agregada.");
 	}

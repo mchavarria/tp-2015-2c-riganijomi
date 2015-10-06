@@ -1,5 +1,6 @@
 #include "swap.h"
 
+
 //valores cfg
 char * puertoEscucha;
 char * nombreSwap;
@@ -14,6 +15,8 @@ int nbytes;
 char respuesta[30];
 
 int main() {
+
+	archivoLog = log_create("swap.log", "Swap", false, 2);
 
 	//Creación de listas
 	listaLibres = list_create();
@@ -41,20 +44,9 @@ int main() {
 		} else {
 			//Mensaje
 			interpretarLinea(nodoInstruccion);
-			nbytes = socketEnviarMensaje(socketMemoria, respuesta,sizeof(respuesta));
+			//nbytes = socketEnviarMensaje(socketMemoria, respuesta,sizeof(respuesta));
 		}
 	}
-	/*
-	//Funciona.. deberia ser a partir de un mensaje de iniciar.
-	recibirProceso(1,5);
-	puts("dps recibir proceso");
-	leerPaginaProceso(1,1);
-	puts("dps consultarParticion");
-
-	eliminarProceso(1);
-	puts("dps eliminar proceso");
-	 */
-	return 0;
 }
 
 void levantarCfgInicial(){
@@ -121,6 +113,7 @@ static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProces
 
 void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
+	nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
     int valor;
     int pid = nodoInstruccion->pid;
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
@@ -156,12 +149,22 @@ void recibirProceso(int idProc, int cantPagProceso){
 	if (nodoLibre != NULL){
 		//hay lugar para alojarlo
 		list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
+		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
 		//TODO MODIFICAR LA LISTA DE DISPONIBLES
-		strcpy(respuesta,"iniciar-exito");
+		nodoRespuesta->tipo = INICIAR;
+		nodoRespuesta->exito = 1;
+		nodoRespuesta->largo = 0;
+		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+
 	} else {
 		//No hay elementos libres, no puedo alojar.. Rechazo
+		nodoRespuesta->tipo = INICIAR;
+		nodoRespuesta->exito = 0;
+		nodoRespuesta->largo = 0;
 		perror("no hay espacio para el proceso");
-		strcpy(respuesta,"iniciar-error");
+		log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
+		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+
 	}
 	printf("lista procesos (elementos) : %d \n",listaProcesos->elements_count);
 }
@@ -169,9 +172,7 @@ void recibirProceso(int idProc, int cantPagProceso){
 void eliminarProceso(int idProc){
 
 	bool condicionProcAEliminar(t_nodoProceso * nodoProceso) {
-
 		return (nodoProceso->idProc == idProc);
-
 	}
 
 	t_nodoProceso * nodoProceso = NULL;
@@ -181,11 +182,20 @@ void eliminarProceso(int idProc){
 		//encontro el nodo a eliminar
 		//TODO crear el nodo libre correspondiente al espacio liberado
 		list_add(listaLibres, crearNodoLibre(nodoProceso->indice, nodoProceso->tamanio));
+		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, nodoProceso->tamanio);
 		list_remove_by_condition(listaProcesos,(void*) condicionProcAEliminar);
 		//TODO falta eliminar el nodo de memoria!!!!
-		strcpy(respuesta,"finalizar-exito");
+		nodoRespuesta->tipo = FINALIZAR;
+		nodoRespuesta->exito = 1;
+		nodoRespuesta->largo = 0;
+		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
 	} else {
 		//no encontro el proceso indicado
+		nodoRespuesta->tipo = FINALIZAR;
+		nodoRespuesta->exito = 0;
+		nodoRespuesta->largo = 0;
+		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+		log_info(archivoLog, "No se pudo eliminar el proceso PID: %d", idProc);
 		perror("no se encontró el proceso indicado");
 		strcpy(respuesta,"finalizar-fallo");
 	}
@@ -226,7 +236,12 @@ void leerPaginaProceso(int idProc, int pagina){
 				//enviar mensaje
 				strcat(resp,"\0");
 				strcpy(respuesta,resp);
-
+				nodoRespuesta->tipo = LEER;
+				nodoRespuesta->exito = 1;
+				nodoRespuesta->largo = sizeof(respuesta);
+				nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+				nbytes = socketEnviarMensaje(socketMemoria, respuesta,sizeof(respuesta));
+				log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, pagTam);
 			}
 
 			fclose(particion);
@@ -234,10 +249,13 @@ void leerPaginaProceso(int idProc, int pagina){
 	}else{
 
 		perror("no se encontró el proceso indicado");
-		strcpy(respuesta,"lectura-error");
+		nodoRespuesta->tipo = LEER;
+		nodoRespuesta->exito = 0;
+		nodoRespuesta->largo = 0;
+		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
 	}
-
 }
+
 /*
 void escribirPagina () {
 	particion=fopen("swap.data","w+");
