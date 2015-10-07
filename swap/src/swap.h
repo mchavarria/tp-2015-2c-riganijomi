@@ -7,7 +7,28 @@
 #include <stdint.h>
 #include <commons/collections/list.h>
 #include <stdbool.h>
+#include <commons/log.h>
 
+#define INICIAR 1
+#define LEER 2
+#define ESCRIBIR 3
+#define FINALIZAR 4
+
+/*
+ * Tipo indica la operación que se realiza
+ * [INICIAR | LEER | ESCRIBIR | FINALIZAR]
+ * Largo indica el tamaño a recibir en el proximo mensaje
+ * [ 0 | sizeof(rta) | 0 | 0 ]
+ *
+ * ej: | 1 - 1 - 0 |
+ */
+typedef struct NODO_RTA_SWAP_MEM {
+ uint32_t tipo;
+ uint32_t exito;
+ uint32_t largo;
+} __attribute__ ((packed)) t_resp_swap_mem;
+
+t_resp_swap_mem * nodoRespuesta;
 
 typedef struct NODO_MEM {
 	uint32_t pid;
@@ -34,6 +55,9 @@ typedef struct nodoEspera {
 //sockets
 int socketMemoria;
 int socketServidor;
+
+//Log
+t_log* archivoLog;
 
 void levantarCfgInicial();
 void crearParticion();

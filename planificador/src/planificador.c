@@ -10,31 +10,9 @@
  *  Created on: 3/9/2015
  *      Author: utnso
  */
-#include "commons/collections/list.h"
-#include "commons/log.h"
-#include <commons/string.h>
 
-#include <stdlib.h>
 #include "planificador.h"
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <semaphore.h>
 
-#include <sys/socket.h>
-
-#include <stdint.h>
-
-#define PACKAGESIZE 1024
-
-int contadorProcessID = 0;
-int clientePlanificador = 0;
-int servidorPlanificador = 0;
-int socketCPU = -1;
-sem_t semProgramas;
-sem_t mutexCPU;
-char package[PACKAGESIZE];
-char comando[100];
 
 static t_pcb *hilo_create(pthread_t thread, char * m, int  r) {
 	t_hilos *nuevo = malloc(sizeof(t_hilos));
@@ -126,9 +104,9 @@ char *  conseguirRutaArchivo(char * programa, int socketServidor) {
 	char directorioActualConArchivo[100];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcpy(directorioActualConArchivo, directorioActual);
-	strcat(directorioActualConArchivo, "/test/");
+	strcat(directorioActualConArchivo, "/mProgs/");
 	strcat(directorioActualConArchivo, programa);
-	log_info(archivoLog, package);
+	log_info(archivoLog, "mProg recibido con ubicación %s.",directorioActual);
 	return directorioActualConArchivo;
 }
 
@@ -191,7 +169,7 @@ void * servidor(){
 	char * puerto;
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/src/config.cfg\0");
+	strcat(directorioActual, "/planificador/src/config.cfg\0");
 
 	puerto = configObtenerPuertoEscucha(directorioActual);
 

@@ -82,28 +82,23 @@ void interpretarLinea(char * linea) {
 
     char * valor;
     if (esElComando(linea, "iniciar")) {
-		puts("entro al if iniciar");
 		//valor = devolverParteUsable(line, 8);
 		instruccionIniciarProceso (linea);
 
 	} else if (esElComando(linea, "leer")) {
-		puts("entro al if leer");
 		//valor = devolverParteUsable(linea, 5);
 		instruccionLeerPagina (linea);
 
 	} else if (esElComando(linea, "entrada-salida")) {
-		puts("entro al if entrada-salida");
 		//valor= devolverParteUsable(linea, 15);
 		instruccionEntradaSalida (linea);
 	} else if (esElComando(linea, "escribir")) {
-		puts("entro al if escribir");
 		char * resultado;
 		//resultado = string_substring(linea, 9, 1);
 		//valor = devolverParteUsable(linea, 11);
 		instruccionEscribirPagina (linea);
 
 	} else if (esElComando(linea, "finalizar")) {
-		puts("entro al if finalizar");
 		instruccionFinalizarProceso(linea);
 	} else {
 		perror("comando invaaaalido");
@@ -131,7 +126,7 @@ void instruccionIniciarProceso (char * instruccion) {
 		if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
 			//Envíe el packete.. espero respuesta
 			if (socketRecibirMensaje(socketADM, respuesta,1024) > 0){
-				printf("mProc X - %s",respuesta);
+				printf("mProc X - %s\n",respuesta);
 				if (socketPlanificador > 0){
 					//El socket está linkeado
 					socketEnviarMensaje(socketPlanificador,instruccion,1024);
@@ -150,7 +145,7 @@ void instruccionLeerPagina (char * instruccion) {
 	socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem));
    	socketRecibirMensaje(socketADM, contenido,sizeof(contenido));
     socketEnviarMensaje(socketPlanificador,contenido, sizeof(contenido));
-	printf("mProc X - Pagina:%s leida:%s",instruccion,contenido);
+	printf("mProc X - Pagina:%s leida:%s\n",instruccion,contenido);
 	free(nodoInstruccion);
 }
 
@@ -183,7 +178,7 @@ void instruccionFinalizarProceso(char * instruccion) {
 void cargarCfgs() {
 	int a;
 	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/src/config.cfg");
+	strcat(directorioActual, "/cpu/src/config.cfg");
 
 	ipPlanificador = configObtenerIpPlanificador(directorioActual);
 	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);
