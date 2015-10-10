@@ -1,7 +1,9 @@
 #include "memoria.h"
 
 //para mensajes recibidos
+
 char instruccion[30];
+
 char respuesta[30];
 int nbytes;
 
@@ -156,6 +158,7 @@ void rutina (int n) {
 }
 
 
+
 void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
 
     int tipoResp = nodoRespuesta->tipo;
@@ -200,6 +203,7 @@ void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
     		default:
     		    perror("mensaje erroneo.");
     	}
+
 }
 
 
