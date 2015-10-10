@@ -1,32 +1,4 @@
 #include "cpu.h"
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
-#include <sys/stat.h>
-#include <commons/collections/dictionary.h>
-#include <commons/collections/list.h>
-#include <commons/config.h>
-#include <commons/string.h>
-
-#include <unistd.h>
-#include <commons/log.h>
-
-//Variables globales
-char directorioActual[1024];
-char * ipPlanificador;
-char * puertoPlanificador;
-char * ipADM;
-char * puertoADM;
-char * cantidadHilos;
-int retardo;
-
-int socketADM;
-int socketPlanificador = 0;
 
 int main(void) {
 
