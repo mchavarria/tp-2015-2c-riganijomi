@@ -17,8 +17,14 @@
 
 #include <unistd.h>
 #include <commons/log.h>
+#include <sys/types.h>
 
-
+#define INICIAR 1
+#define LEER 2
+#define ESCRIBIR 3
+#define ENTRADA_SALIDA 4
+#define QUANTUM_ACABADO 5
+#define FINALIZAR 6
 
 typedef struct NODO_MEM {
 	uint32_t pid;
@@ -41,23 +47,28 @@ typedef struct NODO_MEM {
 typedef struct NODO_RTA_CPU_PLAN {
  uint32_t tipo;
  uint32_t exito;
- uint32_t largo;
+ uint32_t valor;
  uint32_t idCPU;
  uint32_t PID;
+ uint32_t pc;
 } __attribute__ ((packed)) t_resp_cpu_plan;
 
+t_resp_cpu_plan * nodoRespuesta;
 
 typedef struct PCB {
 	uint32_t PID;
-	int estado;
-	int pc;
-	int quantum;
+	uint32_t estado;
+	uint32_t pc;
+	uint32_t quantum;
 	char contextoEjecucion[100];
 } __attribute__ ((packed)) t_pcb;
 
 
 t_pcb * pcbProc;
 //char * obtenerDirectorio(char * nombreArchivo);
+
+//Log
+t_log* archivoLog;
 
 void ejecutarInstrucciones();
 void cargarCfgs();
@@ -80,7 +91,8 @@ int retardo;
 
 int socketADM;
 int socketPlanificador = 0;
-
+int continuarLeyendo = 1;
+int pc;
 
 /*
 void cargarCfgs();
