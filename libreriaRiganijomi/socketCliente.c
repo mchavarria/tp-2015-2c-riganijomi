@@ -59,18 +59,23 @@ int socketCrearCliente(char * PUERTO, char * IP){
  */
 
 int socketEnviarMensaje(int serverSocket, char  * mensaje, int longitudMensaje) {
-	int estado = send(serverSocket, mensaje, longitudMensaje , 0);
-	if (estado == 0) {
-		///////////////////////////
-		//LOGUEAR conexion cerrada
-		printf("servidor MEM: socket %d desconectado\n", serverSocket);
-		///////////////////////////
-		///////////////////////////
-	}
-	if (estado == -1){
-		perror("error enviando mensaje al servidor");
-	}
-	return estado;
+	int nbytes;
+		if ((nbytes = send(serverSocket, mensaje, longitudMensaje , 0)) <= 0){
+			puts('error enviando mensaje');
+			// Error o conexion cerrada por el cliente
+			if (nbytes == 0) {
+				///////////////////////////
+				//LOGUEAR conexion cerrada
+				printf("servidor socket %d desconectado\n", serverSocket);
+				///////////////////////////
+				///////////////////////////
+			} else {
+				///////////////////////////
+				perror("envio al servidor error");
+				///////////////////////////
+			}
+		}
+		return nbytes;
 }
 
 int socketRecibirMensaje(int serverSocket, char * mensaje, int longitudMensaje) {

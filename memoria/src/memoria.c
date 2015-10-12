@@ -1,7 +1,7 @@
 #include "memoria.h"
 
 //para mensajes recibidos
-char instruccion[20];
+char instruccion[30];
 char respuesta[30];
 int nbytes;
 
@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 	PUERTO_ESCUCHA=0;
 	PUERTO_SWAP=0;
 
-	char cfgFin[] ="/src/config.cfg";
+	char cfgFin[] ="/memoria/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 	puts(directorioActual);
 
 	archConfig = malloc(sizeof(t_config));
-	archivoLog = log_create("mem.log", "MEM", false, 2);
+	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
 	archConfig = config_create(directorioActual);
 	resultado = levantarCfgInicial(archConfig);
 
@@ -33,7 +33,6 @@ int main(int argc, char* argv[]) {
 		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
 		return -1;
 	}else{
-		puts(IP_SWAP);
 		log_info(archivoLog,"MEM: Archivo de configuracion levantado correctamente");
 		configurarSockets();
 		//sem_init(&sem_mem, 0, 0);
@@ -47,46 +46,36 @@ int main(int argc, char* argv[]) {
 		//Tratamiento de la señan enviada por el SO
 		signal(SIGINT, rutina);
 		signal(SIGUSR1, rutina);
+		signal(SIGUSR2, rutina);
 
 		//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
 		for(;(socketCpu > 0);){
-			t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+			nodoInstruccion = malloc(sizeof(t_nodo_mem));
 			//sem_wait(&sem_mem);
-			nbytes = socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem));
+
+			if (socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem)) > 0) {
 			// tengo un mensaje de algun cliente
-			if (nbytes <= 0) {
-				// Error o conexion cerrada por el cliente
-				if (nbytes == 0) {
-					printf("servidor MEM: socket %d desconectado\n", socketCpu);
-				} else {
-					perror("recepcion error");
-				//monitorEliminarSocket(socketCpu);
-				}
-			} else {
-				// Hay dato para leer. Enviarlo a alguien
 				if (socketSwap > 0){
-					nbytes = socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem));
-					if (nbytes <= 0) {
-						if (nbytes == 0) {
-							printf("servidor MEM: socket %d desconectado\n", socketSwap);
-						} else {
-							perror("envio error");
-						}
-					} else {
-						//envio el mensaje.. recibo respuesta
-						nbytes = socketRecibirMensaje(socketSwap, respuesta,sizeof(respuesta));
-						//TODO falta hacer que interprete la respuesta.
+					if (socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem)) > 0) {
+						//envio el nodoInstruccion.. recibo respuesta
+						t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
+						nbytes = socketRecibirMensaje(socketSwap, nodoRespuesta,sizeof(t_resp_swap_mem));
+						//Interpreta la respuesta
+						interpretarRespuestaSwap(nodoRespuesta);
+						//La envia
 						nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
+					} else {
+						log_debug(archivoLog,"error envio mensaje swap: %d",socketSwap);
 					}
 					//sem_post(&sem_sockets);
-				} else {
-					//interpretarLinea(nodoInstruccion);
-					//nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
-					perror("no hay swap");
-				}
-				//free(respuesta);
-				free(nodoInstruccion);
-			}
+			} else {
+				log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
+				perror("no hay swap disponible");
+			}//If socketSwap
+			free(nodoInstruccion);
+		} else {
+			log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
+		}//Enviar mensaje CPU
 		}
 	}
 
@@ -153,12 +142,15 @@ void rutina (int n) {
 	switch (n) {
 		case SIGINT:
 			printf("En tu cara, no salgo nada…\n");
+			log_info(archivoLog,"ingreso el mensaje rutina SIGINT: %d",SIGINT);
 		break;
 		case SIGUSR1:
 			printf("LLEGO SIGUSR1\n");
+			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR1: %d",SIGUSR1);
 		break;
 		case SIGUSR2:
 			printf("LLEGO SIGUSR2\n");
+			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR2: %d",SIGUSR2);
 		break;
 	}
 }
@@ -185,6 +177,52 @@ void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		strcpy(respuesta,"error");
 		perror("comando invalido");
 	}
+}
+
+void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta) {
+
+    int tipoResp = nodoRespuesta->tipo;
+    int exito = nodoRespuesta->exito;
+    switch (tipoResp) {
+    		case INICIAR:
+				if (exito){
+					strcpy(respuesta,"exito-inicio");
+					log_info(archivoLog,"Proceso mProc %d creado, cantidad de paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 8));
+				} else {
+					strcpy(respuesta,"fallo-inicio");
+					log_debug(archivoLog,"Proceso mProc %d NO creado, cantidad de paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 8));
+				}
+			break;
+    		case LEER:
+    			if (exito){
+    				log_info(archivoLog,"Proceso mProc %d leido, paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 5));
+    				socketRecibirMensaje(socketSwap, respuesta,nodoRespuesta->largo);
+				} else {
+					log_debug(archivoLog,"Proceso mProc %d NO leido, paginas: %s",nodoInstruccion->pid,devolverParteUsable(nodoInstruccion->instruccion, 5));
+					strcpy(respuesta,"fallo-lectura");
+				}
+    		break;
+    		case ESCRIBIR:
+    			//No necesita avisarle al cpu
+				//TODO Solo loguear y actualizar las estructuras necesarias
+    			if (exito){
+					strcpy(respuesta,"exito");
+				} else {
+					strcpy(respuesta,"fallo");
+				}
+    		break;
+    		case FINALIZAR:
+    			//No necesita avisarle al cpu
+    			//TODO Solo loguear y limpiar las estructuras necesarias
+    			if (exito){
+					strcpy(respuesta,"exito");
+				} else {
+					strcpy(respuesta,"fallo");
+				}
+			break;
+    		default:
+    		    perror("mensaje erroneo.");
+    	}
 }
 
 

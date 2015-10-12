@@ -33,13 +33,15 @@
 
 # Metadata files
 .metadata/*
-swap/tests
-swap/tests/*
 memoria/.project
 memoria/.cpproject
+memoria/src/cpu.log
 swap/.cpproject
 swap/.project
+swap/src/cpu.log
 cpu/.project
 cpu/.cpproject
+cpu/src/cpu.log
 planificador/.cpproject
 planificador/.project
+planificador/src/cpu.log

@@ -159,6 +159,6 @@ char * configObtenerRetardo(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
 	char * NOMBRE_ARCHIVO;
-	NOMBRE_ARCHIVO = config_get_string_value(config, "RETARDO");
+	NOMBRE_ARCHIVO = config_get_int_value(config, "RETARDO");
 	return NOMBRE_ARCHIVO;
 }
