@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <commons/config.h>
 #include <commons/log.h>
+#include <commons/collections/list.h>
 
 #define INICIAR 1
 #define LEER 2
@@ -22,6 +23,12 @@ char* PUERTO_SWAP;
 char* IP_SWAP;
 int PUERTO_ESCUCHA;
 float RETARDO_MEMORIA;
+int TAMANIO_MARCO;
+int CANTIDAD_MARCOS;
+int MAXIMO_MARCOS_POR_PROCESO;
+int ENTRADAS_TLB;
+char TLB_HABILITADA[3];
+char ALGORITMO_REEMPLAZO[50];
 t_config* archConfig;
 //LOG
 t_log* archivoLog;
@@ -60,6 +67,10 @@ void configurarSockets();
 void interpretarLinea(t_resp_swap_mem * nodoRespuesta);
 #endif /* MEMORIA_H_ */
 
+typedef struct TLB{
+	char * datos;
+}__attribute__ ((packed)) t_tlb;
 
+t_list * listaTLB;
 
-
+void iniciarTLB();

@@ -7,11 +7,7 @@ char instruccion[30];
 char respuesta[30];
 int nbytes;
 
-
 int main(int argc, char* argv[]) {
-	RETARDO_MEMORIA=0;
-	PUERTO_ESCUCHA=0;
-	PUERTO_SWAP=0;
 
 	char cfgFin[] ="/memoria/src/config.cfg";
 
@@ -46,7 +42,7 @@ int main(int argc, char* argv[]) {
 		int r1;*/
 
 		//Tratamiento de la señan enviada por el SO
-		signal(SIGINT, rutina);
+	}nal(SIGINT, rutina);
 		signal(SIGUSR1, rutina);
 		signal(SIGUSR2, rutina);
 
@@ -124,6 +120,12 @@ int levantarCfgInicial(t_config* archConfig){
 
 	RETARDO_MEMORIA =config_get_long_value(archConfig,"RETARDO_MEMORIA");
 
+	CANTIDAD_MARCOS = config_get_long_value(archConfig,"CANTIDAD_MARCOS");
+	TAMANIO_MARCO = config_get_long_value(archConfig,"TAMANIO_MARCO");
+	ENTRADAS_TLB = config_get_long_value(archConfig,"ENTRADAS_TLB");
+	TLB_HABILITADA = config_get_string_value(archConfig,"TLB_HABILITADA");
+	ALGORITMO_REEMPLAZO = config_get_string_value(archConfig,"ALGORITMO_REEMPLAZO");
+
 
 	if(RETARDO_MEMORIA == 0 || PUERTO_SWAP == 0 || PUERTO_ESCUCHA==0 || IP_SWAP == NULL ){
 		retorno = -1;
@@ -183,7 +185,8 @@ void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
 				}
     		break;
     		case ESCRIBIR:
-    			//No necesita avisarle al cpu
+    			t_tlb * nodoTLB = malloc(sizeof(t_tlb));
+    			nodoTLB->datos = malloc(TAMANIO_MARCO);
 				//TODO Solo loguear y actualizar las estructuras necesarias
     			if (exito){
 					strcpy(respuesta,"exito");
@@ -205,5 +208,4 @@ void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
     	}
 
 }
-
 
