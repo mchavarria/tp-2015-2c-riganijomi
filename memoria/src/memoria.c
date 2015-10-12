@@ -2,7 +2,7 @@
 
 //para mensajes recibidos
 char instruccion[20];
-char *respuesta;
+char respuesta[30];
 int nbytes;
 
 
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 					//nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
 					perror("no hay swap");
 				}
-				free(respuesta);
+				//free(respuesta);
 				free(nodoInstruccion);
 			}
 		}
@@ -167,7 +167,7 @@ void rutina (int n) {
 void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
     char * valor;
-    respuesta = malloc(sizeof(char[30]));
+    //respuesta = malloc(sizeof(char[30]));
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
 		valor = devolverParteUsable(nodoInstruccion->instruccion, 8);
 		strcpy(respuesta,"iniciar");
