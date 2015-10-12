@@ -1,9 +1,7 @@
 #include "memoria.h"
 
 //para mensajes recibidos
-
 char instruccion[30];
-
 char respuesta[30];
 int nbytes;
 
@@ -59,21 +57,21 @@ int main(int argc, char* argv[]) {
 						t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
 						nbytes = socketRecibirMensaje(socketSwap, nodoRespuesta,sizeof(t_resp_swap_mem));
 						//Interpreta la respuesta
-						interpretarLinea(nodoRespuesta);
+						interpretarRespuestaSwap(nodoRespuesta);
 						//La envia
 						nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
 					} else {
 						log_debug(archivoLog,"error envio mensaje swap: %d",socketSwap);
 					}
 					//sem_post(&sem_sockets);
-				} else {
-					log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
-					perror("no hay swap disponible");
-				}
-				free(nodoInstruccion);
 			} else {
-				log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
-			}
+				log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
+				perror("no hay swap disponible");
+			}//If socketSwap
+			free(nodoInstruccion);
+		} else {
+			log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
+		}//Enviar mensaje CPU
 		}
 	}
 
@@ -160,8 +158,30 @@ void rutina (int n) {
 }
 
 
+void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
-void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
+    char * valor;
+    //respuesta = malloc(sizeof(char[30]));
+    if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
+		valor = devolverParteUsable(nodoInstruccion->instruccion, 8);
+		strcpy(respuesta,"iniciar");
+	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
+		valor = devolverParteUsable(nodoInstruccion->instruccion, 5);
+		strcpy(respuesta,"AFX");
+	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
+		char * rta;
+		rta = string_substring(nodoInstruccion->instruccion, 9, 1);
+		valor = devolverParteUsable(nodoInstruccion->instruccion, 11);
+		strcpy(respuesta,"escribir");
+	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
+		strcpy(respuesta,"finalizar");
+	} else {
+		strcpy(respuesta,"error");
+		perror("comando invalido");
+	}
+}
+
+void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta) {
 
     int tipoResp = nodoRespuesta->tipo;
     int exito = nodoRespuesta->exito;
@@ -206,6 +226,5 @@ void interpretarLinea(t_resp_swap_mem * nodoRespuesta) {
     		default:
     		    perror("mensaje erroneo.");
     	}
-
 }
 
