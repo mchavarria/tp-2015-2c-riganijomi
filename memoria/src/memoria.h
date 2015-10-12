@@ -64,7 +64,7 @@ void rutina (int n);
 int levantarCfgInicial(t_config* archConfig);
 void configurarSockets();
 
-void interpretarLinea(t_resp_swap_mem * nodoRespuesta);
+void interpretarLinea(t_nodo_mem * nodoInstruccion);
 #endif /* MEMORIA_H_ */
 
 typedef struct TLB{
