@@ -118,14 +118,14 @@ int levantarCfgInicial(t_config* archConfig){
 	PUERTO_ESCUCHA=config_get_string_value(archConfig,"PUERTO_ESCUCHA");
 
 	RETARDO_MEMORIA =config_get_long_value(archConfig,"RETARDO_MEMORIA");
-
+/*
 	CANTIDAD_MARCOS = config_get_long_value(archConfig,"CANTIDAD_MARCOS");
 	TAMANIO_MARCO = config_get_long_value(archConfig,"TAMANIO_MARCO");
 	ENTRADAS_TLB = config_get_long_value(archConfig,"ENTRADAS_TLB");
 	strcpy(TLB_HABILITADA,config_get_string_value(archConfig,"TLB_HABILITADA"));
 	strcpy(ALGORITMO_REEMPLAZO,config_get_string_value(archConfig,"ALGORITMO_REEMPLAZO"));
 
-
+*/
 	if(RETARDO_MEMORIA == 0 || PUERTO_SWAP == 0 || PUERTO_ESCUCHA==0 || IP_SWAP == NULL ){
 		retorno = -1;
 	}

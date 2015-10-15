@@ -28,7 +28,7 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.1571277434" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.295095706" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.619956182" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libreriaRiganijomi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bibliotecaRiganijomi}&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.misc.other.862704888" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -pthread" valueType="string"/>
 								<option id="gnu.c.compiler.option.dialect.std.1078277406" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
@@ -36,10 +36,10 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1903476711" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug">
 								<option id="gnu.c.link.option.paths.682826372" name="Library search path (-L)" superClass="gnu.c.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libreriaRiganijomi/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bibliotecaRiganijomi/Debug}&quot;"/>
 								</option>
 								<option id="gnu.c.link.option.libs.1831387938" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="libreriaRiganijomi"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="bibliotecaRiganijomi"/>
 									<listOptionValue builtIn="false" value="commons"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.691421729" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
@@ -50,7 +50,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1561674046" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.1449537422" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
 								<option id="gnu.both.asm.option.include.paths.1381133066" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libreriaRiganijomi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bibliotecaRiganijomi}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1146220286" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -59,11 +59,11 @@
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
-				<externalSettings containerId="libreriaRiganijomi;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+				<externalSettings containerId="bibliotecaRiganijomi;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/libreriaRiganijomi"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/libreriaRiganijomi/Debug"/>
-						<entry flags="RESOLVED" kind="libraryFile" name="libreriaRiganijomi" srcPrefixMapping="" srcRootPath=""/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/bibliotecaRiganijomi"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/bibliotecaRiganijomi/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="bibliotecaRiganijomi" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
 			</storageModule>
@@ -127,4 +127,5 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

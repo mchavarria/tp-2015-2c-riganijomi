@@ -1,11 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <sys/stat.h>
 #include "socketCliente.h"
 
 #define PACKAGESIZE 1024
@@ -61,7 +53,7 @@ int socketCrearCliente(char * PUERTO, char * IP){
 int socketEnviarMensaje(int serverSocket, char  * mensaje, int longitudMensaje) {
 	int nbytes;
 		if ((nbytes = send(serverSocket, mensaje, longitudMensaje , 0)) <= 0){
-			puts('error enviando mensaje');
+			puts("error enviando mensaje");
 			// Error o conexion cerrada por el cliente
 			if (nbytes == 0) {
 				///////////////////////////
@@ -81,7 +73,7 @@ int socketEnviarMensaje(int serverSocket, char  * mensaje, int longitudMensaje) 
 int socketRecibirMensaje(int serverSocket, char * mensaje, int longitudMensaje) {
 	int nbytes;
 	if ((nbytes = recv(serverSocket , mensaje , longitudMensaje , 0)) <= 0){
-		puts('error recibiendo mensaje');
+		puts("error recibiendo mensaje");
 		// Error o conexion cerrada por el cliente
 		if (nbytes == 0) {
 			///////////////////////////
@@ -105,6 +97,6 @@ int socketRecibirMensaje(int serverSocket, char * mensaje, int longitudMensaje) 
 void socketCerrarSocket(int serverSocket) {
 	if (close(serverSocket) == -1){
 		//-1 Indica error en el envío
-		puts('error cerrando el socket servidor');
+		puts("error cerrando el socket servidor");
 	}
 }

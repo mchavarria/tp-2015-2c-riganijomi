@@ -209,8 +209,8 @@ void instruccionFinalizarProceso(char * instruccion) {
 void cargarCfgs() {
 	int a;
 	getcwd(directorioActual, sizeof(directorioActual));
-	//strcat(directorioActual, "/cpu/src/config.cfg");//para consola
-	strcat(directorioActual, "/src/config.cfg"); //para eclipse
+	strcat(directorioActual, "/cpu/src/config.cfg");//para consola
+	//strcat(directorioActual, "/src/config.cfg"); //para eclipse
 
 	ipPlanificador = configObtenerIpPlanificador(directorioActual);
 	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);

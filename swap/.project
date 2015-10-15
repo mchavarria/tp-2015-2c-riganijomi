@@ -3,7 +3,7 @@
 	<name>swap</name>
 	<comment></comment>
 	<projects>
-		<project>libreriaRiganijomi</project>
+		<project>bibliotecaRiganijomi</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
