@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-int socketCrearCliente(char * PUERTO, char * IP);
+int socketCrearCliente(char * PUERTO, char * IP, char * procesoNombre, char * procesoServidor);
 int socketEnviarMensaje(int serverSocket, char * mensaje,int longitud);
 int socketRecibirMensaje(int serverSocket, char * mensaje, int longitud);
 void socketCerrarSocket(int serverSocket);

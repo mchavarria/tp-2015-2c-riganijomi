@@ -10,8 +10,8 @@ int main(void) {
 
 
 	//Se conecta al Planificador
-	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador);
-    socketADM = socketCrearCliente(puertoADM, ipADM);
+	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
+    socketADM = socketCrearCliente(puertoADM, ipADM,"CPU","Memoria");
 	if (socketADM == -1) {
 		log_error(archivoLog, "Memoria no se pudo conectar");
 

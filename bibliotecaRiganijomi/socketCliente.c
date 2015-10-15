@@ -7,7 +7,7 @@
  * antes de solicitar deben definir la variable donde alojan al servidor
  * int serverSocket;
  */
-int socketCrearCliente(char * PUERTO, char * IP){
+int socketCrearCliente(char * PUERTO, char * IP, char * procesoNombre, char * procesoServidor){
 
 	int serverSocket;
 	//Obtiene los datos de la direccion de red y lo guarda en serverInfo.
@@ -26,16 +26,17 @@ int socketCrearCliente(char * PUERTO, char * IP){
 	serverSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
 	if (serverSocket == -1)
 	{
-		puts("Could not create socket");
+		printf("%s: No se puede crear el socket para conectar a %s\n", procesoNombre,procesoServidor);
 	} else {
-		puts("Socket created");
+		printf("%s: Socket creado para conectar a %s\n", procesoNombre,procesoServidor);
 		//Ahora me conecto!
 		if (connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen))
 		{
-			perror("connect failed. Error");
+			printf("%s: Conexión fallida con\n", procesoNombre,procesoServidor);
+			perror("Error - Conexión Fallida");
 			serverSocket = 0;
 		} else {
-			puts("Connected\n");
+			printf("%s: Contectado con %s\n", procesoNombre,procesoServidor);
 		}
 	}
 

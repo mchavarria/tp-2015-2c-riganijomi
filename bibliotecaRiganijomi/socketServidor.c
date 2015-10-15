@@ -5,7 +5,7 @@
 #define BACKLOG 5 // Define cuantas conexiones vamos a mantener pendientes al mismo tiempo
 
 
-int socketCrearServidor(char * PUERTO){
+int socketCrearServidor(char * PUERTO, char * procesoNombre){
 
 	//Obtiene los datos de la direccion de red y lo guarda en serverInfo.
 	struct addrinfo hints;
@@ -26,16 +26,18 @@ int socketCrearServidor(char * PUERTO){
 	listeningSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
 	if (listeningSocket == -1)
 	{
-		printf("Could not create socket");
+		printf("%s: No puede crear socket server.\n",procesoNombre);
+		perror("Error - Creando servidor.");
 	} else {
-		puts("Socket created");
+		printf("%s: Socket server  creado.\n",procesoNombre);
 
 		if(bind(listeningSocket,serverInfo->ai_addr, serverInfo->ai_addrlen) < 0)
 		{
 			//print the error message
-			perror("bind failed. Error");
+			printf("%s: No puede bindear socket server.\n",procesoNombre);
+			perror("Error - Bindeando servidor.");
 		} else {
-			puts("bind done");
+			printf("%s: Socket server  bindeado.\n",procesoNombre);
 			freeaddrinfo(serverInfo); // Ya no lo vamos a necesitar
 		}
 
@@ -45,7 +47,7 @@ int socketCrearServidor(char * PUERTO){
 	return listeningSocket;
 }
 
-int socketAceptarConexion(int socket){
+int socketAceptarConexion(int socket, char * procesoNombre, char * procesoCliente){
 	struct sockaddr_in addr;			// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
 	int socketCliente;
 	socklen_t addrlen = sizeof(addr);
@@ -53,9 +55,10 @@ int socketAceptarConexion(int socket){
 	socketCliente = accept(socket, (struct sockaddr *) &addr, &addrlen);
 	if (socketCliente < 0)
 	{
-		perror("accept failed");
+		printf("%s: Error aceptando conexión a %s.\n",procesoNombre, procesoCliente);
+		perror("Error - Aceptando conexión.");
 	} else {
-		puts("Connection accepted");
+		printf("%s: Conexión aceptada a %s.\n",procesoNombre, procesoCliente);
 	}
 
 	return socketCliente;

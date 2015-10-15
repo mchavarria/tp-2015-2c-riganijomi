@@ -14,7 +14,7 @@
 #include <commons/config.h>
 #include <commons/string.h>
 
-int socketCrearServidor(char * PUERTO);
-int socketAceptarConexion(int socket);
+int socketCrearServidor(char * PUERTO, char * procesoNombre);
+int socketAceptarConexion(int socket, char * procesoNombre, char * procesoCliente);
 
 #endif /* SOCKETSERVIDOR_H_ */

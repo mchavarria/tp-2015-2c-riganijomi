@@ -22,13 +22,13 @@ int main() {
 	listaLibres = list_create();
 	listaProcesos = list_create();
 	listaEspera = list_create();
-
+	int continuar = 1;
 	//carga Cfgs
 	levantarCfgInicial();
 
 	//creacion archivo particion
 	crearParticion();
-	for(;(socketMemoria > 0);){
+	for(;(socketMemoria > 0) && continuar;){
 		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 		//sem_wait(&sem_mem);
 		nbytes = socketRecibirMensaje(socketMemoria, nodoInstruccion,sizeof(t_nodo_mem));
@@ -40,6 +40,7 @@ int main() {
 			} else {
 				perror("recepcion error");
 			}
+			continuar = 0;
 			//monitorEliminarSocket(socketCpu);
 		} else {
 			//Mensaje
@@ -84,9 +85,9 @@ void crearParticion(){
 
 void configurarSocketServer(){
 	//se conecta con el swap que tiene un servidor escuchando
-	socketServidor = socketCrearServidor(puertoEscucha);
+	socketServidor = socketCrearServidor(puertoEscucha,"Swap");
 	if (socketServidor > 0){
-		socketMemoria = socketAceptarConexion(socketServidor);
+		socketMemoria = socketAceptarConexion(socketServidor,"Swap","Memoria");
 	}
 }
 
