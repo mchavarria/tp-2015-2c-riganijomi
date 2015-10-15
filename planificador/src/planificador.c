@@ -13,129 +13,99 @@
 
 #include "planificador.h"
 
-
-static t_pcb *hilo_create(pthread_t thread, char * m, int  r) {
-	t_hilos *nuevo = malloc(sizeof(t_hilos));
-
-	nuevo->thread = thread;
-	nuevo->r = r;
-	strncpy(nuevo->m, m, sizeof(nuevo->m)-1);
-	nuevo->m[sizeof(nuevo->m)-1] = "\0";
-    return nuevo;
-}
-
-static t_pcb *pcb_create(int PID, char * contextoDeEjecucion) {
-	t_pcb *nuevo = malloc(sizeof(t_pcb));
-	nuevo->PID = PID;
-	nuevo->estado = LISTO;
-	nuevo->pc = 0;
-	nuevo->quantum = quantumcfg;
-
-	strcpy(nuevo->contextoEjecucion, contextoDeEjecucion);
-    return nuevo;
-}
-
-
 int main() {
-	archivoLog = log_create("planificador.log", "Planificador", false, 2);
+	sem_init(&mutexCPU, 0, 0);
+	sem_init(&semProgramas,0,0);
+	levantarCfg();
+
 	listaDeBloqueado = malloc(50000);
 	listaDeBloqueado = list_create();
 	listaDeEjecutado = malloc(50000);
 	listaDeEjecutado = list_create();
 	listaDeListo = malloc(50000);
 	listaDeListo = list_create();
-	sem_init(&semProgramas, 0, 0);
-	sem_init(&mutexCPU, 0, 0);
-	/*listaDeListo->elements_count = 0;
-	listaDeProcesos->head = NULL; *//*
-	printf("%d", listaDeListo->elements_count);
-	printf("%d", listaDeHilos->elements_count);*/
-	pthread_t thr1;
-	char *m1 = "thr1";
-	int  r1;
 
-	pthread_t thr2;
-	char *m2 = "thr2";
-	int  r2;
+	pthread_t thread1;
+	char *m1 = "consola";
+	int r1;
 
-	r1 = pthread_create( &thr1, NULL, (void * )servidor, (void*) m1);
+	pthread_t thread2;
+	char *m2 = "despachador";
+	int r2;
 
-	r2 = pthread_create( &thr2, NULL, (void * )enviarPCBSegunFIFO, (void*) m2);
-	consola();
+	r1 = pthread_create( &thread1, NULL, &consola, (void*) m1);
+
+	r2 = pthread_create( &thread2, NULL, &enviarPCBaCPU, (void*) m2);
+
+	pthread_join( thread1, NULL);
+	pthread_join( thread2, NULL);
+	return 1;
 }
 
-void assert_pcb(t_pcb * pcb, int PID, char * contextoDeEjecucion) {
-      PID = pcb->PID;
-      strcpy(contextoDeEjecucion, pcb->contextoEjecucion);
-}
+void* enviarPCBaCPU() {
 
-void * enviarPCBSegunFIFO() {
 	sem_wait(&mutexCPU);
-	//sem_wait(&semProgramas);
 	while(1) {
+		sem_wait(&semProgramas);
+
 		if (listaDeListo->elements_count > 0) {
 			//sem_wait(sem_CPU_conectada);
 			t_pcb * nodoPCB =  list_get(listaDeListo, 0);
-			socketEnviarMensaje(socketCPU, nodoPCB, sizeof(t_pcb));
-			//saca de lista ready
-			list_remove(listaDeListo, 0);
-			//se agrega a la lista de ejecucion
-			list_add(listaDeEjecutado,nodoPCB );
+			int err = enviarMensajeDePCBaCPU(socketCPU, nodoPCB);
+			if (err <= 0){
+				//Error en el envío
+				printf("No se pudo enviar el PCB %d",nodoPCB->PID);
+			} else {
+				//Enviado correctamente
+				//saca de lista ready
+				list_remove(listaDeListo, 0);
+				//se agrega a la lista de ejecucion
+				list_add(listaDeEjecutado,nodoPCB );
 
-			t_resp_cpu_plan * nodoRespuesta;
-			int nbytes;
-			nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
-			while ((nbytes = socketRecibirMensaje(socketCPU, nodoRespuesta,sizeof(t_nodo_mem)) > 0)){
-				interpretarLinea(nodoRespuesta);
+				t_resp_cpu_plan * nodoRespuesta;
+				int nbytes;
+				nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
+				while ((nbytes = socketRecibirMensaje(socketCPU, nodoRespuesta,sizeof(t_nodo_mem)) > 0)){
+					interpretarLinea(nodoRespuesta);
 
-			}//fin while recibir rta
+				}//fin while recibir rta
+			}//Cierra el err
 		}//cierra if cantidad de elementos
 	}//cierra while
 }
 
-void detectarComando(char * comando) {
-
-	char * resultado;
-
-	if (esElComando(comando, "correr")) {
-		resultado = devolverParteUsable(comando, 7);
-		agregarALista(resultado);
-		//agrega en variable global el nombre del archivo para usar en pcb
-		strcpy(nombreArchivo,resultado);
-
+/*
+ * Verifica que el programa dado esté en la PC
+ */
+int programaValido(char * programa){
+	FILE * fp;
+	int resultado = 1;
+	char* mprog = malloc(strlen(programa)+8+1);
+	strcpy(mprog,"/mProgs/");
+	strcat(mprog,programa);
+	char *dir = getcwd(NULL, 0);
+	char *directorioActual = malloc(strlen(dir)+strlen(mprog)+1);
+	strcat(directorioActual,dir);
+	strcat(directorioActual,mprog);
+	fp = fopen(directorioActual, "r");
+	if (fp == NULL){
+		resultado = 0;
 	} else {
-		puts("Comando no valido.");
+		fclose(fp);
 	}
-}
-
-char *  conseguirRutaArchivo(char * programa, int socketServidor) {
-	//t_log* archivoLog = log_create("planificador.log", "Planificador", false, 2);
-	//char directorioActual[100];
-	char directorioActualConArchivo[100];
-	//getcwd(directorioActual, sizeof(directorioActual));
-	//strcpy(directorioActualConArchivo, directorioActual);
-	strcat(directorioActualConArchivo, "/mProgs/");
-	strcat(directorioActualConArchivo, programa);
-	//log_info(archivoLog, "mProg recibido con ubicación %s.",directorioActual);
-	return directorioActualConArchivo;
+	return resultado;
 }
 
 void agregarALista(char * programa) {
-	printf("%d", listaDeListo->elements_count);
 
 	t_pcb * pcb = malloc(sizeof(t_pcb));
 
 	pcb->PID = contadorPID;
 	contadorPID++;
+	strcat(programa, "\0");
+	pcb->contextoEjecucion = programa;
 
-	char rutaArchivo[100];
-	strcat(rutaArchivo,"/mProgs/");
-	strcat(rutaArchivo,programa);
-	//strcpy(rutaArchivo, conseguirRutaArchivo(programa, servidorPlanificador));
 
-	strcpy(pcb->contextoEjecucion, rutaArchivo);
-
-	strcat(pcb->contextoEjecucion, "\0");
 	pcb->pc=0;
 	pcb->estado=LISTO;
 	pcb->quantum=quantumcfg;
@@ -145,13 +115,15 @@ void agregarALista(char * programa) {
 	int despuesDeAgregar = listaDeListo->elements_count;
 	if (despuesDeAgregar > antesDeAgregar) {
 		//sem_post(&semProgramas);
+		//incrementar buffer de pcbs a consumir
+		sem_post(&semProgramas);
 	} else {
 		perror("Lista no agregada.");
 	}
 
 
 }
-
+ /*
 void crearThreadParaComando(char * comando) {
 	printf("Procesos listos: %d\n", listaDeListo->elements_count);
 	t_hilos* hilo = malloc(sizeof(t_hilos));
@@ -160,31 +132,59 @@ void crearThreadParaComando(char * comando) {
 
 	hilo->r = pthread_create( &hilo->thread, NULL, detectarComando, (void*) (hilo->m));
 
-	list_add(listaDeListo, hilo_create(hilo->thread, hilo->m, hilo->r));
+	//list_add(listaDeListo, hilo_create(hilo->thread, hilo->m, hilo->r));
 
 }
-
-int consola() {
-	fgets(comando, PACKAGESIZE, stdin);
+*/
+void* consola() {
+	char * resultado;
+	puts("Ingrese 'correr xxxx.cod' para ejecutar.");
+	puts("Ingrese 'exit' para salir");
+	fgets(comando, 100, stdin);
 	strtok(comando, "\n");
-
-	crearThreadParaComando(comando);
-	consola();
+	int continuar = 1;
+	while (continuar){
+		//crearThreadParaComando(comando);
+		if (!strcmp(comando,"exit")) {
+			continuar = 0;
+			break;
+		} else if (esElComando(comando, "correr")) {
+			resultado = devolverParteUsable(comando, 7);
+			if (programaValido(resultado)){
+				agregarALista(resultado);
+			} else {
+				perror("Programa invalido");
+			}
+		} else {
+			perror("Comando no valido.");
+		}
+		fgets(comando, 100, stdin);
+		strtok(comando, "\n");
+	}
+	//pasos para cerrar el programa
+	puts("Cerrando el proceso Planificador...");
 }
 
-void * servidor(){
+void levantarCfg(){
+
+	archivoLog = log_create("planificador.log", "Planificador", false, 2);
+
+	//char cfgFin[] ="/planificador/src/config.cfg";//Para consola
+	char cfgFin[] ="/src/config.cfg";//Para eclipse
+	char *dir = getcwd(NULL, 0);
+
+	char *directorioActual = malloc(strlen(dir)+strlen(cfgFin)+1);
+
+	strcat(directorioActual,dir);
+	strcat(directorioActual,cfgFin);
+	puts(directorioActual);
 	char * puerto;
-	char directorioActual[1024];
-	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/src/config.cfg\0");//Para eclipse
-	//strcat(directorioActual, "/planificador/src/config.cfg\0");//Para consola
 	puerto = configObtenerPuertoEscucha(directorioActual);
     quantumcfg = configObtenerQuantum(directorioActual);
-	servidorPlanificador = socketCrearServidor(puerto);
-	socketCPU = socketAceptarConexion(servidorPlanificador);
-	if (socketCPU < 0)	{
-		perror("accept failed");
-	} else {
+	servidorPlanificador = socketCrearServidor(puerto,"Planificador");
+	puts("Cfg iniciada... esperando CPU...");
+	socketCPU = socketAceptarConexion(servidorPlanificador,"Planificador","CPU");
+	if (socketCPU > 0)	{
 		sem_post(&mutexCPU);
 	}
 }
@@ -208,10 +208,10 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     switch (tipoResp) {
     		case INICIAR:
 				if (exito){
-					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) creado",idCPU,PID,nombreArchivo);
+					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) creado",idCPU,PID,nodoPCB->contextoEjecucion);
 				} else {
 					//saco de la lista de ejecutando
-					log_debug(archivoLog,"CPU %d: Proceso mProc %d (%s) fallo",idCPU,PID,nombreArchivo);
+					log_debug(archivoLog,"CPU %d: Proceso mProc %d (%s) fallo",idCPU,PID,nodoPCB->contextoEjecucion);
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPorPID);
 					free(nodoPCB);
 				}
@@ -265,9 +265,9 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 				break;
     		case FINALIZAR:
     			if (exito){
-    				log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) finalizado",idCPU,PID,nombreArchivo);
+    				log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
 				} else {
-					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) no finalizado",idCPU,PID,nombreArchivo);
+					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) no finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
 				}
     			list_remove_by_condition(listaDeEjecutado,(void*)buscarPorPID);
     			free(nodoPCB);
@@ -275,4 +275,91 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     		default:
     		    perror("mensaje erroneo.");
     	}
+}
+
+
+static t_hilos *hilo_create(pthread_t thread, char * m, int  r) {
+	t_hilos *nuevo = malloc(sizeof(t_hilos));
+
+	nuevo->thread = thread;
+	nuevo->r = r;
+	strncpy(nuevo->m, m, sizeof(nuevo->m)-1);
+	nuevo->m[sizeof(nuevo->m)-1] = "\0";
+    return nuevo;
+}
+
+static t_pcb *pcb_create(int PID, char * contextoDeEjecucion) {
+	t_pcb *nuevo = malloc(sizeof(t_pcb));
+	nuevo->PID = PID;
+	nuevo->estado = LISTO;
+	nuevo->pc = 0;
+	nuevo->quantum = quantumcfg;
+
+	strcpy(nuevo->contextoEjecucion, contextoDeEjecucion);
+    return nuevo;
+}
+
+
+int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB) {
+	int nbytes;
+	unsigned char buffer[1024];
+	empaquetarPCB(buffer,nodoPCB);
+	nbytes = send(socketCPU, buffer, sizeof(buffer) , 0);
+	if (nbytes < 0) {
+		printf("Planificador: Socket CPU %d desconectado.\n", socketCPU);
+	} else {
+		printf("Planificador: Socket CPU %d envío de mensaje fallido.\n", socketCPU);
+		perror("Error - Enviando mensaje");
+	}
+	return nbytes;
+}
+
+void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB)
+{
+	unsigned int tamanioBuffer;
+	/*
+	t_pcb * pcb1 = malloc(sizeof(t_pcb));
+	pcb1->PID = 0;
+	pcb1->contextoEjecucion = malloc(strlen("programa3.cod"));
+	strcpy(pcb1->contextoEjecucion,"programa3.cod");
+	pcb1->pc=3;
+	pcb1->estado=LISTO;
+	pcb1->quantum=5;
+	*/
+	printf("PCB a enviar: PID: %d,  Estado: %d, PC: %d, Quantum: %d, Archivo: %s\n",
+			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
+
+	tamanioBuffer = pack(buffer,SECUENCIA_PCB,
+			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
+
+	packi16(buffer+1, tamanioBuffer); // store packet size in packet for kicks
+	printf("Tamaño del PCB serializado es %u bytes\n", tamanioBuffer);
+}
+
+void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB){
+
+	//t_pcb * pcb = malloc(sizeof(t_pcb));
+
+	char programa[50];
+	unpack(buffer,SECUENCIA_PCB,&nodoPCB->PID,&nodoPCB->estado,&nodoPCB->pc,&nodoPCB->quantum,programa);
+
+	nodoPCB->contextoEjecucion = programa;
+	printf("PCB recibido: PID: %d,  Estado: %d, PC: %d, Quantum: %d, Archivo: %s\n",
+			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
+
+	/* EJEMPLO DE ENVIO / RECEPCION PARA PROBAR EN MAIN
+	 t_pcb * pcb1 = malloc(sizeof(t_pcb));
+	pcb1->PID = 0;
+	pcb1->contextoEjecucion = malloc(strlen("programa3.cod"));
+	strcpy(pcb1->contextoEjecucion,"programa3.cod");
+	pcb1->pc=3;
+	pcb1->estado=LISTO;
+	pcb1->quantum=5;
+	unsigned char buffer[1024];
+	empaquetarPCB(buffer,pcb1);
+	puts("pcb enviado.");
+
+	t_pcb * pcb = malloc(sizeof(t_pcb));
+	desempaquetarPCB(buffer,pcb);
+	 */
 }
