@@ -7,7 +7,7 @@ int nbytes;
 
 int main(int argc, char* argv[]) {
 
-	char cfgFin[] ="/memoria/src/config.cfg";
+	char cfgFin[] ="/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -24,6 +24,8 @@ int main(int argc, char* argv[]) {
 	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
 	archConfig = config_create(directorioActual);
 	resultado = levantarCfgInicial(archConfig);
+	inicializarMemoria(); //se inicializan los marcos
+	inicializarTLB();
 
 	if (resultado == -1 ){
 		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
@@ -51,6 +53,7 @@ int main(int argc, char* argv[]) {
 
 			if (socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem)) > 0) {
 			// tengo un mensaje de algun cliente
+				interpretarLinea(nodoInstruccion->instruccion);
 				if (socketSwap > 0){
 					if (socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem)) > 0) {
 						//envio el nodoInstruccion.. recibo respuesta
@@ -75,10 +78,30 @@ int main(int argc, char* argv[]) {
 		}
 
 		free(directorioActual);
+		free(array);
 		return 1;
 }
 
+void inicializarTLB() {
+	int i = 0;
+	int * arrayTLB = malloc(ENTRADAS_TLB * sizeof(t_tlb));
+	TLB = &arrayTLB[0];
+	for (i=0; i<ENTRADAS_TLB; i++) {
+		*(TLB+(sizeof(t_tlb)) * i) = malloc(sizeof(t_tlb));
+	}
+}
 
+void inicializarMemoria() {
+	int i = 0;
+	int * array = malloc(CANTIDAD_MARCOS * TAMANIO_MARCO);
+	memoria = &array[0];
+	for(; i<CANTIDAD_MARCOS; i++) {
+		*(memoria+(TAMANIO_MARCO* i)) = malloc(TAMANIO_MARCO);
+		strcpy(*(memoria+(TAMANIO_MARCO * i)), "NULL");
+		strcat(*(memoria+(TAMANIO_MARCO * i)), "\0");
+		printf("%s\n, ", memoria[TAMANIO_MARCO * i]);
+	}
+}
 
 /*
 void levantarCfgInicial() {
@@ -158,13 +181,24 @@ void rutina (int n) {
 	}
 }
 
+void inicializarTablaDePaginas(int cantidadPaginas) {
+	t_tablasPaginas * nodoTablaPaginas = malloc(sizeof(t_tablasPaginas));
+	nodoTablaPaginas->processID = indicePagina;
+	nodoTablaPaginas->tablaPagina = malloc(sizeof(t_tablaPaginasProceso));
+	nodoTablaPaginas->tablaPagina->paginas = malloc(cantidadPaginas * TAMANIO_MARCO);
+	list_add(listaTablasPaginas, nodoTablaPaginas);
+	indicePagina++;
+}
+
 
 void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
     char * valor;
     //respuesta = malloc(sizeof(char[30]));
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 8);
+    	int cantidadPaginasProceso;
+    	cantidadPaginasProceso = devolverParteUsable(nodoInstruccion->instruccion, 8);
+    	inicializarTablaDePaginas(cantidadPaginasProceso);
 		strcpy(respuesta,"iniciar");
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
 		valor = devolverParteUsable(nodoInstruccion->instruccion, 5);
