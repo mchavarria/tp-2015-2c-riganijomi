@@ -1,4 +1,3 @@
-#include <commons/config.h>
 #include "configuracion.h"
 
 /*
@@ -13,7 +12,6 @@ char * configObtenerIpPlanificador(char * ruta) {
 	config = config_create(ruta);
 	char * IP;
 	IP = config_get_string_value(config, "IP_PLANIFICADOR");
-	puts("despues de IP");
 	return IP;
 }
 
@@ -161,4 +159,12 @@ char * configObtenerRetardo(char * ruta) {
 	char * NOMBRE_ARCHIVO;
 	NOMBRE_ARCHIVO = config_get_int_value(config, "RETARDO");
 	return NOMBRE_ARCHIVO;
+}
+
+int configObtenerQuantum(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * QUANTUM;
+	QUANTUM = config_get_int_value(config, "QUANTUM");
+	return QUANTUM;
 }

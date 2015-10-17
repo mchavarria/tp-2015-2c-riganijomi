@@ -27,6 +27,7 @@ int main(int argc, char* argv[]) {
 	inicializarMemoria(); //se inicializan los marcos
 	inicializarTLB();
 
+	int continuar = 1;
 	if (resultado == -1 ){
 		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
 		return -1;
@@ -47,7 +48,7 @@ int main(int argc, char* argv[]) {
 		signal(SIGUSR2, rutina);
 
 		//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
-		for(;(socketCpu > 0);){
+		for(;(socketCpu > 0) && continuar;){
 			nodoInstruccion = malloc(sizeof(t_nodo_mem));
 			//sem_wait(&sem_mem);
 
@@ -67,14 +68,15 @@ int main(int argc, char* argv[]) {
 						log_debug(archivoLog,"error envio mensaje swap: %d",socketSwap);
 					}
 					//sem_post(&sem_sockets);
+				} else {
+					log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
+					perror("no hay swap disponible");
+				}//If socketSwap
+				free(nodoInstruccion);
 			} else {
-				log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
-				perror("no hay swap disponible");
-			}//If socketSwap
-			free(nodoInstruccion);
-		} else {
-			log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
-		}//Enviar mensaje CPU
+				log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
+				continuar = 0;
+			}//Enviar mensaje CPU
 		}
 
 		free(directorioActual);
@@ -141,15 +143,15 @@ int levantarCfgInicial(t_config* archConfig){
 	PUERTO_ESCUCHA=config_get_string_value(archConfig,"PUERTO_ESCUCHA");
 
 	RETARDO_MEMORIA =config_get_long_value(archConfig,"RETARDO_MEMORIA");
-
+/*
 	CANTIDAD_MARCOS = config_get_long_value(archConfig,"CANTIDAD_MARCOS");
 	TAMANIO_MARCO = config_get_long_value(archConfig,"TAMANIO_MARCO");
 	ENTRADAS_TLB = config_get_long_value(archConfig,"ENTRADAS_TLB");
 	strcpy(TLB_HABILITADA,config_get_string_value(archConfig,"TLB_HABILITADA"));
 	strcpy(ALGORITMO_REEMPLAZO,config_get_string_value(archConfig,"ALGORITMO_REEMPLAZO"));
 
-
-	if(RETARDO_MEMORIA == 0 || PUERTO_SWAP == 0 || PUERTO_ESCUCHA==0 || IP_SWAP == NULL ){
+*/
+	if(RETARDO_MEMORIA == 0 || PUERTO_SWAP == 0 || IP_SWAP == NULL ){
 		retorno = -1;
 	}
 	return retorno;
@@ -157,10 +159,10 @@ int levantarCfgInicial(t_config* archConfig){
 
 void configurarSockets(){
 	//se conecta con el swap que tiene un servidor escuchando
-	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP);
-	socketServidor = socketCrearServidor(PUERTO_ESCUCHA);
+	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP,"Memoria","Swap");
+	socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
 	if (socketServidor > 0){
-		socketCpu = socketAceptarConexion(socketServidor);
+		socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
 	}
 }
 

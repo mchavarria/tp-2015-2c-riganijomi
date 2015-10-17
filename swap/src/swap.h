@@ -8,6 +8,10 @@
 #include <commons/collections/list.h>
 #include <stdbool.h>
 #include <commons/log.h>
+#include "socketServidor.h"
+#include "socketCliente.h"
+#include "interprete.h"
+#include "configuracion.h"
 
 #define INICIAR 1
 #define LEER 2

@@ -1,6 +1,8 @@
 #ifndef CONFIGURACION_H_
 #define CONFIGURACION_H_
 
+#include <commons/config.h>
+
 char * configObtenerIpPlanificador(char * ruta);
 char * configObtenerPuertoEscucha(char * ruta);
 char * configObtenerPuertoMemoria(char * ruta);
@@ -21,5 +23,6 @@ char * configObtenerRetardoMemoria(char * ruta);
 char * configObtenerPuertoADM(char * ruta);
 char * configObtenerIpADM(char * ruta);
 char * configObtenerCantidadHilos(char * ruta);
+int configObtenerQuantum(char * ruta);
 
 #endif /* CONFIGURACION_H_ */

@@ -10,8 +10,8 @@ int main(void) {
 
 
 	//Se conecta al Planificador
-	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador);
-    socketADM = socketCrearCliente(puertoADM, ipADM);
+	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
+    socketADM = socketCrearCliente(puertoADM, ipADM,"CPU","Memoria");
 	if (socketADM == -1) {
 		log_error(archivoLog, "Memoria no se pudo conectar");
 
@@ -209,8 +209,8 @@ void instruccionFinalizarProceso(char * instruccion) {
 void cargarCfgs() {
 	int a;
 	getcwd(directorioActual, sizeof(directorioActual));
-	//strcat(directorioActual, "/cpu/src/config.cfg");//para consola
-	strcat(directorioActual, "/src/config.cfg"); //para eclipse
+	strcat(directorioActual, "/cpu/src/config.cfg");//para consola
+	//strcat(directorioActual, "/src/config.cfg"); //para eclipse
 
 	ipPlanificador = configObtenerIpPlanificador(directorioActual);
 	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);

@@ -1,18 +1,7 @@
 //Monitorea multiples sockets
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <pthread.h>
-#include <semaphore.h>
-
 #include "monitorSocket.h"
+
 fd_set coleccion;    // coleccion de sockets
 fd_set coleccionTemp;  // coleccionTemp de sockets temporal
 
@@ -33,7 +22,7 @@ void  *monitorPrepararServidor(void *argumento ){
     ///////////////////////////
     ///////////////////////////
     //Crear el socket servidor
-    servidor = socketCrearServidor(puerto);
+    servidor = crearServidor(puerto);
     ///////////////////////////
     ///////////////////////////
 
@@ -91,7 +80,51 @@ void  *monitorPrepararServidor(void *argumento ){
     } // fin del for(;;)
 }
 
+
+int crearServidor(char * PUERTO){
+
+	//Obtiene los datos de la direccion de red y lo guarda en serverInfo.
+	struct addrinfo hints;
+	struct addrinfo *serverInfo;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;		// No importa si uso IPv4 o IPv6
+	hints.ai_flags = AI_PASSIVE;		// Asigna el address del localhost: 127.0.0.1
+	hints.ai_socktype = SOCK_STREAM;	// Indica que usaremos el protocolo TCP
+
+	getaddrinfo(NULL, PUERTO, &hints, &serverInfo); // Notar que le pasamos NULL como IP, ya que le indicamos que use localhost en AI_PASSIVE
+
+
+	//Mediante socket(), obtengo el File Descriptor que me proporciona el sistema (un integer identificador).
+
+	/* Necesitamos un socket que escuche las conecciones entrantes */
+	int listeningSocket;
+	listeningSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
+	if (listeningSocket == -1)
+	{
+		printf("Could not create socket");
+	} else {
+		puts("Socket created");
+
+		if(bind(listeningSocket,serverInfo->ai_addr, serverInfo->ai_addrlen) < 0)
+		{
+			//print the error message
+			perror("bind failed. Error");
+		} else {
+			puts("bind done");
+			freeaddrinfo(serverInfo); // Ya no lo vamos a necesitar
+		}
+
+
+			listen(listeningSocket, BACKLOG);		// IMPORTANTE: listen() es una syscall BLOQUEANTE.
+	}
+	return listeningSocket;
+}
+
 void monitorEliminarSocket(int socket){
 	FD_CLR(socket, &coleccion); // eliminarlo de la coleccion de sockets
-	socketCerrarSocket(socket);
+	if (close(socket) == -1){
+			//-1 Indica error en el envío
+			puts("error cerrando el socket");
+		}
 }
