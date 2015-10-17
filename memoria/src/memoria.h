@@ -68,7 +68,7 @@ void rutina (int n);
 //int levantarCfgInicial(t_config* ar[]chConfig);
 void configurarSockets();
 
-void interpretarLinea(t_nodo_mem * nodoInstruccion);
+int interpretarLinea(t_nodo_mem * nodoInstruccion);
 void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta);
 void inicializarMemoria();
 #endif /* MEMORIA_H_ */
@@ -77,7 +77,7 @@ typedef struct TLB{
 	uint32_t processID;
 	uint32_t numeroPagina;
 	uint32_t fueModificado;
-	uint32_t * marco;
+	uint32_t marco;
 } __attribute__ ((packed)) t_tlb;
 
 typedef struct tablaPaginasProceso {
@@ -88,15 +88,17 @@ typedef struct tablaPaginasProceso {
 typedef struct tablasPaginas {
 	uint32_t processID;
 	t_tablaPaginasProceso * tablaPagina;
-} __attribute__ ((packed)) t_tablasPaginas;;
+} __attribute__ ((packed)) t_tablasPaginas;
 
+typedef struct nodoMemoria {
+	uint32_t processID;
+	char * valor;
+} __attribute__ ((packed)) t_memoria;
 
 int indicePagina = 0;
 
 t_list * listaTablasPaginas;
 
-int * memoria;
-int * array;
+t_list * listaMemoria;
 
-int * TLB;
-int * arrayTLB;
+t_list * listaTLB;
