@@ -65,7 +65,7 @@ void* enviarPCBaCPU() {
 				t_resp_cpu_plan * nodoRespuesta;
 				int nbytes;
 				nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
-				while ((nbytes = socketRecibirMensaje(socketCPU, nodoRespuesta,sizeof(t_nodo_mem)) > 0)){
+				while ((nbytes = recibirRtadeCPU(socketCPU, nodoRespuesta) > 0)){
 					interpretarLinea(nodoRespuesta);
 
 				}//fin while recibir rta
@@ -85,7 +85,7 @@ int programaValido(char * programa){
 	strcat(mprog,programa);
 	char *dir = getcwd(NULL, 0);
 	char *directorioActual = malloc(strlen(dir)+strlen(mprog)+1);
-	strcat(directorioActual,dir);
+	strcpy(directorioActual,dir);
 	strcat(directorioActual,mprog);
 	fp = fopen(directorioActual, "r");
 	if (fp == NULL){
@@ -99,9 +99,7 @@ int programaValido(char * programa){
 void agregarALista(char * programa) {
 
 	t_pcb * pcb = malloc(sizeof(t_pcb));
-
-	pcb->PID = contadorPID;
-	contadorPID++;
+	pcb->PID = ++contadorPID;
 	strcat(programa, "\0");
 	pcb->contextoEjecucion = programa;
 
@@ -192,10 +190,12 @@ void levantarCfg(){
 
 void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
+	int PID = nodoRespuesta ->PID;
+	int idCPU = nodoRespuesta ->idCPU;
     int tipoResp = nodoRespuesta->tipo;
     int exito = nodoRespuesta->exito;
-    int PID = nodoRespuesta ->PID;
-    int idCPU = nodoRespuesta ->idCPU;
+    int pagRW = nodoRespuesta->pagRW;
+    int pc = nodoRespuesta->pc;
 
     bool buscarPorPID(t_pcb * nodoPCB) {
     		return (nodoPCB->PID == PID);
@@ -218,13 +218,9 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 			break;
     		case LEER:
     			if (exito){
-    				char respuesta[nodoRespuesta->valor];
-    				socketRecibirMensaje(socketCPU, respuesta,nodoRespuesta->valor);
-    				int numPagina;
-    				socketRecibirMensaje(socketCPU, numPagina,sizeof(numPagina));
-    				log_info(archivoLog,"CPU %d: Proceso mProc %d - pagina %d leida: %s",idCPU,PID,numPagina);
+    				log_info(archivoLog,"CPU %d: Proceso mProc %d - pagina %d leida: %s",idCPU,PID,pagRW,nodoRespuesta->respuesta);
 				} else {
-					log_debug(archivoLog,"CPU %d:Proceso mProc %d NO leido",idCPU,PID);
+					log_debug(archivoLog,"CPU %d: Proceso mProc %d - pagina %d No leida.",idCPU,PID,pagRW);
 				}
     		break;
     		case ESCRIBIR:
@@ -288,26 +284,15 @@ static t_hilos *hilo_create(pthread_t thread, char * m, int  r) {
     return nuevo;
 }
 
-static t_pcb *pcb_create(int PID, char * contextoDeEjecucion) {
-	t_pcb *nuevo = malloc(sizeof(t_pcb));
-	nuevo->PID = PID;
-	nuevo->estado = LISTO;
-	nuevo->pc = 0;
-	nuevo->quantum = quantumcfg;
-
-	strcpy(nuevo->contextoEjecucion, contextoDeEjecucion);
-    return nuevo;
-}
-
 
 int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB) {
 	int nbytes;
 	unsigned char buffer[1024];
 	empaquetarPCB(buffer,nodoPCB);
 	nbytes = send(socketCPU, buffer, sizeof(buffer) , 0);
-	if (nbytes < 0) {
+	if (nbytes == 0) {
 		printf("Planificador: Socket CPU %d desconectado.\n", socketCPU);
-	} else {
+	} else if (nbytes < 0){
 		printf("Planificador: Socket CPU %d envío de mensaje fallido.\n", socketCPU);
 		perror("Error - Enviando mensaje");
 	}
@@ -325,41 +310,36 @@ void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB)
 	pcb1->pc=3;
 	pcb1->estado=LISTO;
 	pcb1->quantum=5;
-	*/
+
 	printf("PCB a enviar: PID: %d,  Estado: %d, PC: %d, Quantum: %d, Archivo: %s\n",
 			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
-
+	 */
 	tamanioBuffer = pack(buffer,SECUENCIA_PCB,
 			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
 
-	packi16(buffer+1, tamanioBuffer); // store packet size in packet for kicks
-	printf("Tamaño del PCB serializado es %u bytes\n", tamanioBuffer);
+	//packi16(buffer+1, tamanioBuffer); // store packet size in packet for kicks
+	//printf("Tamaño del PCB serializado es %u bytes\n", tamanioBuffer);
 }
 
-void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB){
+void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta){
+	char respuesta[50];
+	unpack(buffer,SECUENCIA_NODO_RTA_CPU_PLAN,
+			&nodoRta->PID,&nodoRta->idCPU,&nodoRta->tipo,&nodoRta->exito,
+			&nodoRta->pagRW,&nodoRta->pc,respuesta);
 
-	//t_pcb * pcb = malloc(sizeof(t_pcb));
+	nodoRta->respuesta = respuesta;
+}
 
-	char programa[50];
-	unpack(buffer,SECUENCIA_PCB,&nodoPCB->PID,&nodoPCB->estado,&nodoPCB->pc,&nodoPCB->quantum,programa);
-
-	nodoPCB->contextoEjecucion = programa;
-	printf("PCB recibido: PID: %d,  Estado: %d, PC: %d, Quantum: %d, Archivo: %s\n",
-			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
-
-	/* EJEMPLO DE ENVIO / RECEPCION PARA PROBAR EN MAIN
-	 t_pcb * pcb1 = malloc(sizeof(t_pcb));
-	pcb1->PID = 0;
-	pcb1->contextoEjecucion = malloc(strlen("programa3.cod"));
-	strcpy(pcb1->contextoEjecucion,"programa3.cod");
-	pcb1->pc=3;
-	pcb1->estado=LISTO;
-	pcb1->quantum=5;
+int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta){
 	unsigned char buffer[1024];
-	empaquetarPCB(buffer,pcb1);
-	puts("pcb enviado.");
-
-	t_pcb * pcb = malloc(sizeof(t_pcb));
-	desempaquetarPCB(buffer,pcb);
-	 */
+	int nbytes;
+	if ((nbytes = recv(socketCPU , buffer , sizeof(buffer) , 0)) < 0){
+		printf("Planificador: Error recibiendo mensaje de CPU");
+	} else if (nbytes == 0) {
+		printf("Planificador: Socket CPU desconectado");
+		//CERRAR LA CPU
+	}
+	desempaquetarNodoRtaCpuPlan(buffer,nodoRta);
+	return nbytes;
 }
+
