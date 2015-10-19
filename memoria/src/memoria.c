@@ -7,7 +7,7 @@ int nbytes;
 
 int main(int argc, char* argv[]) {
 
-	char cfgFin[] ="/memoria/src/config.cfg";
+	char cfgFin[] ="/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -24,6 +24,9 @@ int main(int argc, char* argv[]) {
 	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
 	archConfig = config_create(directorioActual);
 	resultado = levantarCfgInicial(archConfig);
+	inicializarMemoria(); //se inicializan los marcos
+	inicializarTLB();
+
 	int continuar = 1;
 	if (resultado == -1 ){
 		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
@@ -51,23 +54,25 @@ int main(int argc, char* argv[]) {
 
 			if (socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem)) > 0) {
 			// tengo un mensaje de algun cliente
-				if (socketSwap > 0){
-					if (socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem)) > 0) {
-						//envio el nodoInstruccion.. recibo respuesta
-						t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
-						nbytes = socketRecibirMensaje(socketSwap, nodoRespuesta,sizeof(t_resp_swap_mem));
-						//Interpreta la respuesta
-						interpretarRespuestaSwap(nodoRespuesta);
-						//La envia
-						nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
+				if (interpretarLinea(nodoInstruccion->instruccion) < 0) {
+					if (socketSwap > 0){
+						if (socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem)) > 0) {
+							//envio el nodoInstruccion.. recibo respuesta
+							t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
+							nbytes = socketRecibirMensaje(socketSwap, nodoRespuesta,sizeof(t_resp_swap_mem));
+							//Interpreta la respuesta
+							interpretarRespuestaSwap(nodoRespuesta);
+							//La envia
+							nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
+						} else {
+							log_debug(archivoLog,"error envio mensaje swap: %d",socketSwap);
+						}
+						//sem_post(&sem_sockets);
 					} else {
-						log_debug(archivoLog,"error envio mensaje swap: %d",socketSwap);
-					}
-					//sem_post(&sem_sockets);
-				} else {
-					log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
-					perror("no hay swap disponible");
-				}//If socketSwap
+						log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
+						perror("no hay swap disponible");
+					}//If socketSwap
+				}
 				free(nodoInstruccion);
 			} else {
 				log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
@@ -79,7 +84,33 @@ int main(int argc, char* argv[]) {
 		return 1;
 }
 
+void inicializarTLB() {
+	int i = 0;
+	t_tlb * nodoTLB;
+	for (i=0; i<ENTRADAS_TLB; i++) {
+		nodoTLB = malloc(sizeof(t_tlb));
+		list_add(listaTLB, nodoTLB);
+		free(nodoTLB);
+	}
+}
 
+void inicializarMemoria() {
+	int i = 0;
+	t_memoria * nodoMemoria;
+	for(i=0; i<CANTIDAD_MARCOS; i++) {
+		nodoMemoria = malloc(sizeof(t_memoria));
+		list_add(listaMemoria, nodoMemoria);
+		free(nodoMemoria);
+	}
+	/*int * array = malloc(CANTIDAD_MARCOS * TAMANIO_MARCO);
+	memoria = &array[0];
+	for(; i<CANTIDAD_MARCOS; i++) {
+		*(memoria+(TAMANIO_MARCO* i)) = malloc(TAMANIO_MARCO);
+		strcpy(*(memoria+(TAMANIO_MARCO * i)), "NULL");
+		strcat(*(memoria+(TAMANIO_MARCO * i)), "\0");
+		printf("%s\n, ", memoria[TAMANIO_MARCO * i]);
+	}*/
+}
 
 /*
 void levantarCfgInicial() {
@@ -159,16 +190,73 @@ void rutina (int n) {
 	}
 }
 
+void inicializarTablaDePaginas(int cantidadPaginas) {
+	t_tablasPaginas * nodoTablaPaginas = malloc(sizeof(t_tablasPaginas));
+	nodoTablaPaginas->processID = indicePagina;
+	nodoTablaPaginas->tablaPagina = malloc(sizeof(t_tablaPaginasProceso));
+	nodoTablaPaginas->tablaPagina->paginas = malloc(cantidadPaginas * TAMANIO_MARCO);
+	list_add(listaTablasPaginas, nodoTablaPaginas);
+	indicePagina++;
+}
 
-void interpretarLinea(t_nodo_mem * nodoInstruccion) {
+void assert_valorTLB(t_tlb * nodoTLB, int processID, int numeroPagina, int fueModificado, int marco) {
+	processID = nodoTLB->processID;
+	numeroPagina = nodoTLB->numeroPagina;
+	fueModificado = nodoTLB->fueModificado;
+	marco = nodoTLB->marco;
+}
+
+int buscarEnTLB(int processID) {
+	int pid;
+	int numeroPagina;
+	int fueModificado;
+	int marco;
+
+	int devolverValorDeTLB(t_tlb * nodo) {
+		return (nodo->processID == processID);
+	}
+
+	assert_valorTLB(list_find(listaTLB, (void *) devolverValorDeTLB), &pid, &numeroPagina, &fueModificado, &marco);
+
+	return marco;
+}
+
+void assert_valor(t_memoria * nodoMemoria, int processID, char * valor) {
+	processID = nodoMemoria->processID;
+	valor = nodoMemoria->valor;
+}
+
+int interpretarLinea(t_nodo_mem * nodoInstruccion) {
+
+	char * devolverValor(t_memoria * nodo) {
+		return (nodo->processID == nodoInstruccion->pid);
+	}
 
     char * valor;
+    int processID;
     //respuesta = malloc(sizeof(char[30]));
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 8);
+    	int cantidadPaginasProceso;
+    	cantidadPaginasProceso = devolverParteUsable(nodoInstruccion->instruccion, 8);
+    	inicializarTablaDePaginas(cantidadPaginasProceso);
 		strcpy(respuesta,"iniciar");
+		return 1;
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 5);
+		int resultadoBusqueda;
+		resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid);
+		if (resultadoBusqueda < 0) {
+			//resultadoBusqueda = buscarTablaPaginas(nodoInstruccion->pid);
+			if (resultadoBusqueda < 0) {
+				//resultadoBusqueda = buscarEnMarcos(nodoInstruccion->pid);
+			} else {
+				assert_valor(list_find(listaMemoria, (void*) devolverValor), &processID, &valor);
+			}
+		} else {
+			assert_valor(list_find(listaMemoria, (void*) devolverValor), &processID, &valor);
+		}
+
+
+		//valor = devolverParteUsable(nodoInstruccion->instruccion, 5);
 		strcpy(respuesta,"AFX");
 	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
 		char * rta;
@@ -181,6 +269,8 @@ void interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		strcpy(respuesta,"error");
 		perror("comando invalido");
 	}
+
+    return 0;
 }
 
 void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta) {
