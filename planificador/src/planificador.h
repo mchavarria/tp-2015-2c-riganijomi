@@ -28,6 +28,7 @@
 
 //Char del orden de la Estructuras para serializar/desserializar
 #define SECUENCIA_PCB "hhhhs"
+#define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 
 //estados del pcb
 #define LISTO 1
@@ -43,6 +44,18 @@
 #define ENTRADA_SALIDA 4
 #define QUANTUM_ACABADO 5
 
+typedef struct NODO_MEM {
+	uint32_t pid;
+	char instruccion[20];
+} __attribute__ ((packed)) t_nodo_mem;
+
+typedef struct hilo {
+	pthread_t thread;
+	char m[100];
+	int  r;
+} t_hilos;
+
+
 /* el estado puede ser:
  * 1: listo
  * 2: bloqueado
@@ -57,27 +70,26 @@ typedef struct PCB {
 	char *contextoEjecucion;
 } t_pcb;
 
-typedef struct NODO_MEM {
-	uint32_t pid;
-	char instruccion[20];
-} __attribute__ ((packed)) t_nodo_mem;
 
+/*
+ * PID nos avisa qué proceso es el que está corriendo
+ * idCPU indica qué CPU está ejecutando la instrucción
+ * Tipo indica la operación que se realiza
+ * [INICIAR | LEER | ESCRIBIR | E/S | FINALIZAR | QUANTUM FINALIZADO ]
+ * Exito indica si fue exitoso o no
+ * pagRW informa qué página fue Leida o Escrita
+ * pc indica cuál es la próxima instrucción a ejecutar
+ * respuesta es el resultado de la página leida
+ */
 typedef struct NODO_RTA_CPU_PLAN {
-	uint32_t tipo;
-	uint32_t exito;
-	uint32_t valor;
-	uint32_t idCPU;
-	uint32_t PID;
-	uint32_t pc;
-
-} __attribute__ ((packed)) t_resp_cpu_plan;
-
-typedef struct hilo {
-	pthread_t thread;
-	char m[100];
-	int  r;
-} t_hilos;
-
+	int PID;
+	int idCPU;
+	int tipo;
+	int exito;
+	int pagRW;
+	int pc;
+	char *respuesta;
+} t_resp_cpu_plan;
 
 int contadorPID = 0;
 int clientePlanificador = 0;
@@ -95,10 +107,10 @@ void agregarALista(char * programa);
 void* enviarPCBaCPU();
 void interpretarLinea(t_resp_cpu_plan * nodoRespuesta);
 static t_hilos *hilo_create(pthread_t thread, char * m, int  r);
-static t_pcb *pcb_create(int PID, char * contextoDeEjecucion);
 int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB);
 void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
-void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
+int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta);
+void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
 
 t_list * listaDeListo;
 t_list * listaDeBloqueado;

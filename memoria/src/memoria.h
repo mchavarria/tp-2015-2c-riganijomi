@@ -9,6 +9,7 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <commons/config.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
@@ -72,6 +73,8 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion);
 void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta);
 void inicializarMemoria();
 void inicializarTLB();
+int inicializarTablaDePaginas();
+void inicializarMarco();
 #endif /* MEMORIA_H_ */
 
 typedef struct TLB{
@@ -91,16 +94,15 @@ typedef struct tablasPaginas {
 	t_list * listaPaginas;
 } __attribute__ ((packed)) t_tablasPaginas;
 
-typedef struct nodoMemoria {
+typedef struct marco {
 	uint32_t processID;
 	char * valor;
 	uint32_t numeroMarco;
-} __attribute__ ((packed)) t_memoria;
-
-int indicePagina = 0;
+	uint32_t presencia;
+} __attribute__ ((packed)) t_marco;
 
 t_list * listaTablasPaginas;
 
-t_list * listaMemoria;
+t_list * listaMarco;
 
 t_list * listaTLB;

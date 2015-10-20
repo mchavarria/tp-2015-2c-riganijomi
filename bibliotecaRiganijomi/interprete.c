@@ -18,3 +18,21 @@ char* devolverParteUsable(char * linea, int desde) {
 	return cosaUsable;
 }
 
+int devolverParteUsableInt(char * linea, int desde) {
+	char * cosaUsable;
+	int valor;
+	cosaUsable = string_substring_from(linea, desde);
+	valor = atoi(cosaUsable);
+	return valor;
+}
+
+int devolverIntInstruccion(char * linea, int desde) {
+	int valor;
+	char * substr;
+	string_substring_from(linea, desde);
+	strtok(substr,"\n");
+	strtok(substr,";");
+	valor = atoi(substr);
+	return valor;
+}
+

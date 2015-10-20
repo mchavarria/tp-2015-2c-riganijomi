@@ -1,6 +1,6 @@
 #include "cpu.h"
 
-int main(void) {
+int main() {
 
 	//Levanta su configuracion y se prepara para conectarse al Planificador y al ADM
 	cargarCfgs();
@@ -8,74 +8,90 @@ int main(void) {
 	//Prepara el archivo log al cual va a escribir
 	archivoLog = log_create("cpu.log", "CPU", false, 2);
 
+	//ACA HABRÍA QUE ABRIR TANTOS HILOS COMO CPUS HAYAN
+	//Y CORRER LO QUE CONTINÚA EN UNA FUNCION PARA HILO
 
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
+	if (socketPlanificador == -1) {
+		log_error(archivoLog, "Planificador no se pudo conectar");
+		return -1;
+	}
+
     socketADM = socketCrearCliente(puertoADM, ipADM,"CPU","Memoria");
 	if (socketADM == -1) {
 		log_error(archivoLog, "Memoria no se pudo conectar");
+		return -1;
+	}
 
-	}
-	if (socketPlanificador == -1) {
-	    log_error(archivoLog, "Planificador no se pudo conectar");
-	}
+	//TODAS LAS CPUS VAN A HACER LO MISMO UNA VEZ CONECTADAS.
+	//SE VAN A QUEDAR ESPERANDO ALGUN MENSAJE DEL PLANIFICADORS
+	//DEBEN TENER UN SEMAFORO PARA COMPARTIR EL ADMINISTRADOR DE MEMORIA
+	int continuarLeyendo = 1;
+
 
 	//Voy a recibir la pcb
 	pcbProc = malloc(sizeof(t_pcb));
-
-	while ((socketRecibirMensaje(socketPlanificador, pcbProc,sizeof(t_pcb))) > 0){
+	pcbProc->PID = 0;
+	int nbytes = recibirPCBdeCPU(pcbProc);
+	if (nbytes > 0){
 
 		FILE * fp;
 		char * linea = NULL;
 		size_t len = 0;
 		ssize_t read;
 
-		fp = fopen(pcbProc->contextoEjecucion, "r");
+		char *mprog = malloc(strlen(pcbProc->contextoEjecucion)+8+1);
+		strcpy(mprog,"/mProgs/");
+		strcat(mprog,pcbProc->contextoEjecucion);
+
+		char *dir = getcwd(NULL, 0);
+		char *contextoEjecucion = malloc(strlen(dir)+strlen(mprog)+1);
+		strcpy(contextoEjecucion,dir);
+		strcat(contextoEjecucion,mprog);
+		fp = fopen(contextoEjecucion, "r");
+
 		if (fp == NULL){
-		  exit(EXIT_FAILURE);
-		}
-		while (((read = getline(&linea, &len, fp)) != -1) && (continuarLeyendo)) {
+			printf("CPU: Archivo -%s- de PCB %d no válido", pcbProc->contextoEjecucion, pcbProc->PID);
+			perror("Archivo no válido.");
+		} else {
+			while (((read = getline(&linea, &len, fp)) != -1) && (continuarLeyendo)) {
 
-		  pc++; //actualiza el pgm counter
-		  //Lee linea y ejecuta
-		  interpretarLinea(linea);
-		  sleep(retardo);
+			  pc++; //actualiza el pgm counter
+			  //Lee linea y ejecuta
+			  interpretarLinea(linea);
+			  sleep(retardo);
 
-		}
+			}
 
-		fclose(fp);
-		if (linea){
-		  free(linea);
-		}
-	}
+			fclose(fp);
+			if (linea){
+			  free(linea);
+			}
+		} // If archivo leido
+	} //if pcb != NULL
 
 	  return 0;
 }
 
 void interpretarLinea(char * linea) {
-
-    char * valor;
+	strtok(linea,";");
+	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
     if (esElComando(linea, "iniciar")) {
-		//valor = devolverParteUsable(line, 8);
 		instruccionIniciarProceso (linea);
 
 	} else if (esElComando(linea, "leer")) {
-		//valor = devolverParteUsable(linea, 5);
 		instruccionLeerPagina (linea);
 
 	} else if (esElComando(linea, "entrada-salida")) {
-		//valor= devolverParteUsable(linea, 15);
 		instruccionEntradaSalida (linea);
 	} else if (esElComando(linea, "escribir")) {
-		char * resultado;
-		//resultado = string_substring(linea, 9, 1);
-		//valor = devolverParteUsable(linea, 11);
 		instruccionEscribirPagina (linea);
 
 	} else if (esElComando(linea, "finalizar")) {
 		instruccionFinalizarProceso(linea);
 	} else {
-		perror("comando invaaaalido");
+		perror("comando invalido");
 	}
 }
 
@@ -92,11 +108,14 @@ char * obtenerDirectorio(char * nombreArchivo) {
 void instruccionIniciarProceso (char * instruccion) {
 
 	int exito;
-	nodoRespuesta->tipo = INICIAR;
-	nodoRespuesta->pc = pc;
-	nodoRespuesta->idCPU = getpid();
-	nodoRespuesta->valor = 0;
-	nodoRespuesta->PID = pcbProc->PID;
+	nodoRtaCpuPlan->PID = pcbProc->PID;
+	nodoRtaCpuPlan->idCPU = getpid();
+	nodoRtaCpuPlan->tipo = INICIAR;
+	nodoRtaCpuPlan->pc = pc;
+	nodoRtaCpuPlan->pagRW = 0;
+	char resp[1];
+	nodoRtaCpuPlan->respuesta = resp;
+	nodoRtaCpuPlan->exito = 0;
 
 	if (socketADM > 0){
 		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
@@ -106,11 +125,11 @@ void instruccionIniciarProceso (char * instruccion) {
 		if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
 			//Envíe el packete.. espero respuesta
 			if (socketRecibirMensaje(socketADM, exito, sizeof(exito)) > 0){
-				nodoRespuesta->exito = exito;
+				nodoRtaCpuPlan->exito = exito;
 
 				if (socketPlanificador > 0){
 					//El socket está linkeado
-					socketEnviarMensaje(socketPlanificador,nodoRespuesta,sizeof(t_resp_cpu_plan));
+					int err = enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
 				}
 
 				if (exito != 1){
@@ -127,11 +146,12 @@ void instruccionIniciarProceso (char * instruccion) {
 
 void instruccionLeerPagina (char * instruccion) {
 	int exito;
-	nodoRespuesta->tipo = LEER;
-	nodoRespuesta->pc = pc;
-	nodoRespuesta->idCPU = getpid();
-
-	nodoRespuesta->PID = pcbProc->PID;
+	nodoRtaCpuPlan->PID = pcbProc->PID;
+	nodoRtaCpuPlan->idCPU = getpid();
+	nodoRtaCpuPlan->tipo = LEER;
+	nodoRtaCpuPlan->pc = pc;
+	int numPag = devolverIntInstruccion(instruccion,5);
+	nodoRtaCpuPlan->pagRW = numPag;
 
 	if (socketADM > 0){
 		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
@@ -140,25 +160,22 @@ void instruccionLeerPagina (char * instruccion) {
 
 		if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
 			if (socketRecibirMensaje(socketADM, exito,sizeof(exito))> 0){
-				nodoRespuesta->exito = 1;
-				nodoRespuesta->valor = exito;
+				nodoRtaCpuPlan->exito = 1;
 				if (exito){
 					char respuesta[exito];
 					socketRecibirMensaje(socketADM, respuesta,sizeof(respuesta));
 					if (socketPlanificador > 0){
 						//El socket está linkeado
-						socketEnviarMensaje(socketPlanificador,nodoRespuesta,sizeof(t_resp_cpu_plan));
-						socketEnviarMensaje(socketPlanificador,respuesta, sizeof(respuesta));
-						int numPag = devolverParteUsable(nodoInstruccion->instruccion,5);
-						socketEnviarMensaje(socketPlanificador,numPag, sizeof(numPag));
+						strcpy(nodoRtaCpuPlan->respuesta,respuesta);
+						int err = enviarMensajeRespuestaCPU(socketPlanificador, nodoRtaCpuPlan);
 					}
-				}else {//exito if
-				log_error(archivoLog, "no se pudo leer el proceso: %d", pcbProc->PID);
-				}
+				}else {
+					log_error(archivoLog, "no se pudo leer el proceso: %d", pcbProc->PID);
+				}//exito if
 			}//rcv adm
-		} else{//enviar adm
+		} else{
 			log_error(archivoLog,"error envio mensaje memoria : %d",socketADM);
-		}
+		}//enviar adm
 		free(nodoInstruccion);
 	}
 }
@@ -177,22 +194,22 @@ void instruccionEntradaSalida (char * tiempo) {
 
 void instruccionFinalizarProceso(char * instruccion) {
 	int exito;
-	nodoRespuesta->tipo = FINALIZAR;
-	nodoRespuesta->pc = pc;
-	nodoRespuesta->idCPU = getpid();
-	nodoRespuesta->valor = 0;
-	nodoRespuesta->PID = pcbProc->PID;
+	nodoRtaCpuPlan->tipo = FINALIZAR;
+	nodoRtaCpuPlan->pc = pc;
+	nodoRtaCpuPlan->idCPU = getpid();
+	strcpy(nodoRtaCpuPlan->respuesta,"");
+	nodoRtaCpuPlan->PID = pcbProc->PID;
 
 	t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
 	nodoInstruccion->pid = pcbProc->PID;
 	strcpy(nodoInstruccion->instruccion,instruccion);
 	if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
 		if (socketRecibirMensaje(socketADM, exito, sizeof(exito)) > 0){
-			nodoRespuesta->exito = exito;
+			nodoRtaCpuPlan->exito = exito;
 
 			if (socketPlanificador > 0){
 				//El socket está linkeado
-				socketEnviarMensaje(socketPlanificador,nodoRespuesta,sizeof(t_resp_cpu_plan));
+				socketEnviarMensaje(socketPlanificador,nodoRtaCpuPlan,sizeof(t_resp_cpu_plan));
 			}
 			if (exito != 1){
 				log_error(archivoLog, "no se pudo finalizar el proceso: %d", pcbProc->PID);
@@ -222,7 +239,73 @@ void cargarCfgs() {
 	retardo = 2;//configObtenerRetardo(directorioActual);
 }
 
+int recibirPCBdeCPU(t_pcb * nodoPCB){
+	unsigned char buffer[1024];
+	int pidCpu = getpid();
+	int nbytes;
+	if ((nbytes = recv(socketPlanificador , buffer , sizeof(buffer) , 0)) < 0){
+		printf("CPU %d: Error recibiendo mensaje de Planificador", pidCpu);
+	} else if (nbytes == 0) {
+		printf("CPU %d: Socket Planificador desconectado", pidCpu);
+		//CERRAR LA CPU
+	}
+	desempaquetarPCB(buffer,nodoPCB);
+	return nbytes;
+}
 
+
+
+void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB){
+
+	//t_pcb * pcb = malloc(sizeof(t_pcb));
+	char programa[50];
+	unpack(buffer,SECUENCIA_PCB,&nodoPCB->PID,&nodoPCB->estado,&nodoPCB->pc,&nodoPCB->quantum,programa);
+
+	nodoPCB->contextoEjecucion = programa;
+	/*
+	 * printf("PCB recibido: PID: %d,  Estado: %d, PC: %d, Quantum: %d, Archivo: %s\n",
+			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
+
+	 EJEMPLO DE ENVIO / RECEPCION PARA PROBAR EN MAIN
+	 t_pcb * pcb1 = malloc(sizeof(t_pcb));
+	pcb1->PID = 0;
+	pcb1->contextoEjecucion = malloc(strlen("programa3.cod"));
+	strcpy(pcb1->contextoEjecucion,"programa3.cod");
+	pcb1->pc=3;
+	pcb1->estado=LISTO;
+	pcb1->quantum=5;
+	unsigned char buffer[1024];
+	empaquetarPCB(buffer,pcb1);
+	puts("pcb enviado.");
+
+	t_pcb * pcb = malloc(sizeof(t_pcb));
+	desempaquetarPCB(buffer,pcb);
+	 */
+}
+
+int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta) {
+	int nbytes;
+	unsigned char buffer[1024];
+	empaquetarNodoRtaCpuPlan(buffer,nodoRta);
+	nbytes = send(socketPlanificador, buffer, sizeof(buffer) , 0);
+	if (nbytes == 0) {
+		printf("CPU: Socket Planificador %d desconectado.\n", socketPlanificador);
+	} else if (nbytes < 0){
+		printf("CPU: Socket Planificador %d envío de mensaje fallido.\n", socketPlanificador);
+		perror("Error - Enviando mensaje");
+	}
+	return nbytes;
+}
+
+void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta){
+	unsigned int tamanioBuffer;
+
+	tamanioBuffer = pack(buffer,SECUENCIA_NODO_RTA_CPU_PLAN,
+			nodoRta->PID,nodoRta->idCPU,nodoRta->tipo,nodoRta->exito,
+			nodoRta->pagRW,nodoRta->pc,nodoRta->respuesta);
+
+	//packi16(buffer+1, tamanioBuffer); // store packet size in packet for kicks
+}
 
 
 
