@@ -71,6 +71,7 @@ void configurarSockets();
 int interpretarLinea(t_nodo_mem * nodoInstruccion);
 void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta);
 void inicializarMemoria();
+void inicializarTLB();
 #endif /* MEMORIA_H_ */
 
 typedef struct TLB{
@@ -81,18 +82,19 @@ typedef struct TLB{
 } __attribute__ ((packed)) t_tlb;
 
 typedef struct tablaPaginasProceso {
-	uint32_t * paginas;
-	uint32_t * marco;
+	uint32_t numeroPagina;
+	uint32_t marco;
 } __attribute__ ((packed)) t_tablaPaginasProceso;
 
 typedef struct tablasPaginas {
 	uint32_t processID;
-	t_tablaPaginasProceso * tablaPagina;
+	t_list * listaPaginas;
 } __attribute__ ((packed)) t_tablasPaginas;
 
 typedef struct nodoMemoria {
 	uint32_t processID;
 	char * valor;
+	uint32_t numeroMarco;
 } __attribute__ ((packed)) t_memoria;
 
 int indicePagina = 0;

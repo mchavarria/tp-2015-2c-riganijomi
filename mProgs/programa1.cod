@@ -1,6 +1,6 @@
-iniciar 200
+iniciar 9
+escribir 2 Nicolas
+escribir 9 Joaquin
 leer 2
-leer 5
-leer 7
-leer 20
+leer 9
 finalizar

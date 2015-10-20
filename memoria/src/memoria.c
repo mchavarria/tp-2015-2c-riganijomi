@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
 	archConfig = malloc(sizeof(t_config));
 	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
-	archConfig = config_create(directorioActual);
+	archConfig = config_create("/home/utnso/ws/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	resultado = levantarCfgInicial(archConfig);
 	inicializarMemoria(); //se inicializan los marcos
 	inicializarTLB();
@@ -193,8 +193,14 @@ void rutina (int n) {
 void inicializarTablaDePaginas(int cantidadPaginas) {
 	t_tablasPaginas * nodoTablaPaginas = malloc(sizeof(t_tablasPaginas));
 	nodoTablaPaginas->processID = indicePagina;
-	nodoTablaPaginas->tablaPagina = malloc(sizeof(t_tablaPaginasProceso));
-	nodoTablaPaginas->tablaPagina->paginas = malloc(cantidadPaginas * TAMANIO_MARCO);
+	nodoTablaPaginas->listaPaginas = malloc(sizeof(t_tablaPaginasProceso));
+	int i = 0;
+	t_tablaPaginasProceso * nodoPaginasProceso;
+	for (i=0; i<cantidadPaginas; i++) {
+		nodoPaginasProceso = malloc(sizeof(t_tablaPaginasProceso));
+		list_add(nodoTablaPaginas->listaPaginas, nodoPaginasProceso);
+		free(nodoPaginasProceso);
+	}
 	list_add(listaTablasPaginas, nodoTablaPaginas);
 	indicePagina++;
 }
@@ -226,13 +232,46 @@ void assert_valor(t_memoria * nodoMemoria, int processID, char * valor) {
 	valor = nodoMemoria->valor;
 }
 
+void assert_valorTablaPag(t_tablasPaginas * nodoTablasPagina, t_list * listaPaginas) {
+	listaPaginas = nodoTablasPagina->listaPaginas;
+}
+
+void assert_valorPagina(t_tablaPaginasProceso * nodoTablasPaginaProceso, int marco) {
+	marco = nodoTablasPaginaProceso->marco;
+}
+
+int buscarTablaPaginas(int processID, int numeroPagina){
+	t_list * listaPagina;
+	int marco;
+
+	int devolverTablaProceso(t_tablasPaginas * nodo){
+		return (nodo->processID == processID);
+	}
+	assert_valorTablaPag(list_find(listaTablasPaginas, (void *) devolverTablaProceso), &listaPagina);
+
+	int devolverPaginasProceso(t_tablaPaginasProceso * nodo){
+		return (nodo->numeroPagina == numeroPagina);
+	}
+	assert_valorPagina(list_find(listaPagina, (void *) devolverPaginasProceso), &marco);
+
+	return marco;
+}
+
+/*
+int buscarEnMarcos(int processID, int numeroPagina){
+
+}
+*/
+
 int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
+	int resultadoBusqueda;
 	char * devolverValor(t_memoria * nodo) {
-		return (nodo->processID == nodoInstruccion->pid);
+		return (nodo->numeroMarco == resultadoBusqueda);
 	}
 
     char * valor;
+    char * texto;
     int processID;
     //respuesta = malloc(sizeof(char[30]));
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
@@ -242,10 +281,11 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		strcpy(respuesta,"iniciar");
 		return 1;
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
-		int resultadoBusqueda;
 		resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid);
 		if (resultadoBusqueda < 0) {
-			//resultadoBusqueda = buscarTablaPaginas(nodoInstruccion->pid);
+			int numeroPagina;
+			numeroPagina = devolverParteUsable(nodoInstruccion->instruccion, 5);
+			resultadoBusqueda = buscarTablaPaginas(nodoInstruccion->pid, numeroPagina);
 			if (resultadoBusqueda < 0) {
 				//resultadoBusqueda = buscarEnMarcos(nodoInstruccion->pid);
 			} else {
@@ -254,15 +294,25 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		} else {
 			assert_valor(list_find(listaMemoria, (void*) devolverValor), &processID, &valor);
 		}
-
-
-		//valor = devolverParteUsable(nodoInstruccion->instruccion, 5);
+		puts(valor);
 		strcpy(respuesta,"AFX");
 	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
-		char * rta;
-		rta = string_substring(nodoInstruccion->instruccion, 9, 1);
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 11);
-		strcpy(respuesta,"escribir");
+		int pagina;
+		pagina = string_substring(nodoInstruccion->instruccion, 9, 1);
+		if (pagina > 9) {
+			texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, 11)) + 1);
+			strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, 11));
+			strcat(texto, "\0");
+		}else{
+			texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, 10)) + 1);
+			strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, 10));
+			strcat(texto, "\0");
+		}
+		resultadoBusqueda = buscarTablaPaginas(nodoInstruccion->pid, pagina);
+		printf("%d",nodoInstruccion->pid);
+		printf("%d",pagina);
+		puts(texto);
+		escribirMarco(nodoInstruccion->pid, resultadoBusqueda, texto);
 	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
 		strcpy(respuesta,"finalizar");
 	} else {
@@ -272,6 +322,22 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
     return 0;
 }
+
+static t_memoria * marco_create(int processID, char * valor, int numeroMarco) {
+	t_memoria *new = malloc(sizeof(t_memoria));
+    new->processID = processID;
+    new->numeroMarco = numeroMarco;
+    new->valor = malloc(sizeof(valor) + 1);
+    strcpy(new->valor, valor);
+    strcat(new->valor, "\0");
+    return new;
+}
+
+void escribirMarco(int processID, int marco, char * texto){
+	list_replace(listaMemoria, marco, marco_create(processID, texto, marco));
+}
+
+
 
 void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta) {
 
