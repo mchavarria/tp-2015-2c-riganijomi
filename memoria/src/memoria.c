@@ -16,7 +16,8 @@ int main(int argc, char* argv[]) {
 	programa1[2] = "escribir 5 joaquin";
 	programa1[3] = "leer 8";
 	programa1[4] = "leer 5";
-	programa1[5] = "finalizar";
+	programa1[5] = "leer 7";
+	programa1[6] = "finalizar";
 
 	char cfgFin[] ="/src/config.cfg";
 
@@ -33,7 +34,7 @@ int main(int argc, char* argv[]) {
 
 	archConfig = malloc(sizeof(t_config));
 	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
-	archConfig = config_create("/home/utnso/ws/tp-2015-2c-riganijomi/memoria/src/config.cfg");
+	archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	resultado = levantarCfgInicial(archConfig);
 
 	inicializarTLB();
@@ -41,7 +42,7 @@ int main(int argc, char* argv[]) {
 	inicializarMarco();
 
 	int i=0;
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 8; i++) {
 		t_nodo_mem * mem = malloc(sizeof(t_nodo_mem));
 		strcpy(mem->instruccion, programa1[i]);
 		mem->pid = 1234;
@@ -106,6 +107,18 @@ int main(int argc, char* argv[]) {
 		**/
 }
 
+static t_marco * marco_create(int processID, char * valor, int numeroMarco,  int presencia, int numeroPagina, int bitModificacion) {
+	t_marco *new = malloc(sizeof(t_marco));
+    new->processID = processID;
+    new->numeroMarco = numeroMarco;
+    new->presencia = presencia;
+    new->numeroPagina = numeroPagina;
+    new->bitModificacion = bitModificacion;
+    new->valor = malloc(sizeof(valor));
+    strcpy(new->valor, valor);
+    return new;
+}
+
 void inicializarTLB() {
 	int i = 0;
 	t_tlb * nodoTLB;
@@ -117,17 +130,26 @@ void inicializarTLB() {
 }
 
 void inicializarMarco() {
-	int i = 0;
-	t_marco * nodoMarco;
+	uint32_t i = 0;
+	//o * nodoMarco;
 	//listaMarco = malloc(sizeof(t_marco) * CANTIDAD_MARCOS);
+	//nodoMarco = malloc(sizeof(t_marco));
+	int numeroMarco;
+	int processID;
+	char * valor;
+	int presencia;
+	int numeroPagina;
+	int bitModificacion;
 	for(i=0; i<CANTIDAD_MARCOS; i++) {
-		nodoMarco = malloc(sizeof(t_marco));
-		nodoMarco->numeroMarco = i;
-		nodoMarco->processID = 0;
-		//nodoMarco->valor = NULL;
-		nodoMarco->presencia = 0;
-		list_add(listaMarco, nodoMarco);
-		free(nodoMarco);
+		numeroMarco = i;
+		processID = i;
+		valor = malloc(sizeof("NULL"));
+		strcpy(valor, "NULL");
+		strcat(valor, "\0");
+		presencia = 0;
+		numeroPagina = 0;
+		bitModificacion = 0;
+		list_add(listaMarco, marco_create(processID, valor, numeroMarco, presencia, numeroPagina, bitModificacion));
 	}
 	/*int * array = malloc(CANTIDAD_MARCOS * TAMANIO_MARCO);
 	memoria = &array[0];
@@ -219,31 +241,53 @@ void rutina (int n) {
 	}
 }
 
+static t_marcoLibre * marcoLibre_create(int numeroMarco) {
+	t_marcoLibre * new = malloc(sizeof(t_marcoLibre));
+
+	new->numeroMarco = numeroMarco;
+
+	return new;
+}
+
+static t_tablaPaginasProceso * nodoTablaPaginaProceso_create(int numeroMarco, int numeroPagina) {
+	t_tablaPaginasProceso * new = malloc(sizeof(t_tablaPaginasProceso));
+
+	new->numeroMarco = numeroMarco;
+	new->numeroPagina = numeroPagina;
+
+	return new;
+}
+
 int inicializarTablaDePaginas(int cantidadPaginas, int pid) {
 	int j = 0;
+	listaMarcosLibres = list_create();
 	t_marco * nodoMarco = malloc(sizeof(t_marco));
 	int cantidadMarcosDisponibles = 0;
-	for (j = 0; j < CANTIDAD_MARCOS; j++) {
+	t_marcoLibre * nodoMarcoLibre = malloc(sizeof(t_marcoLibre));
+	for (j = 0; j<cantidadPaginas; j++) {
 		nodoMarco = list_get(listaMarco, j);
 		if (nodoMarco->presencia == 0) {
 			cantidadMarcosDisponibles ++;
+			nodoMarcoLibre->numeroMarco = nodoMarco->numeroMarco;
+			list_add(listaMarcosLibres, marcoLibre_create(nodoMarco->numeroMarco));
 		}
 
 	}
+	//free(nodoMarcoLibre);
 	if (cantidadMarcosDisponibles >= cantidadPaginas) {
 		t_tablasPaginas * nodoTablaPaginas = malloc(sizeof(t_tablasPaginas));
 		nodoTablaPaginas->processID = pid;
-		nodoTablaPaginas->listaPaginas = malloc(sizeof(t_tablaPaginasProceso));
+		nodoTablaPaginas->listaPaginas = list_create();
 		int i = 0;
 		t_tablaPaginasProceso * nodoPaginasProceso;
 		for (i=0; i<cantidadPaginas; i++) {
 			nodoPaginasProceso = malloc(sizeof(t_tablaPaginasProceso));
-			nodoPaginasProceso->marco = 0;
-			nodoPaginasProceso->numeroPagina = 0;
-			list_add(nodoTablaPaginas->listaPaginas, nodoPaginasProceso);
+			nodoMarcoLibre = list_remove(listaMarcosLibres, 0);
+			nodoPaginasProceso->numeroMarco = nodoMarcoLibre->numeroMarco;
+			nodoPaginasProceso->numeroPagina = i;
+			list_add(nodoTablaPaginas->listaPaginas, nodoTablaPaginaProceso_create(nodoMarcoLibre->numeroMarco, i));
 			free(nodoPaginasProceso);
 		}
-		listaTablasPaginas = malloc(sizeof(nodoTablaPaginas));
 		list_add(listaTablasPaginas, nodoTablaPaginas);
 		return 0;
 	}else{
@@ -268,9 +312,16 @@ int buscarEnTLB(int processID) {
 		return (nodo->processID == processID);
 	}
 
-	assert_valorTLB(list_find(listaTLB, (void *) devolverValorDeTLB), &pid, &numeroPagina, &fueModificado, &marco);
+	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
 
-	return marco;
+	nodoTLB = NULL;
+
+	nodoTLB = list_find(listaTLB, (void *) devolverValorDeTLB);
+
+	if (nodoTLB != NULL) {
+		return nodoTLB->marco;
+	}
+	return 0;
 }
 
 void assert_valor(t_marco * nodoMarco, int processID, char * valor) {
@@ -283,7 +334,7 @@ void assert_valorTablaPag(t_tablasPaginas * nodoTablasPagina, t_list * listaPagi
 }
 
 void assert_valorPagina(t_tablaPaginasProceso * nodoTablasPaginaProceso, int marco) {
-	marco = nodoTablasPaginaProceso->marco;
+	marco = nodoTablasPaginaProceso->numeroMarco;
 }
 
 int buscarTablaPaginas(int processID, int numeroPagina){
@@ -300,7 +351,7 @@ int buscarTablaPaginas(int processID, int numeroPagina){
 	//assert_valorTablaPag(nodoTablasPagina,&listaPagina);
 
 	int devolverPaginasProceso(t_tablaPaginasProceso * nodo){
-		int  valor = nodo->numeroPagina == numeroPagina;
+		int valor = 2;
 		return (nodo->numeroPagina == numeroPagina);
 	}
 
@@ -308,14 +359,26 @@ int buscarTablaPaginas(int processID, int numeroPagina){
 	nodoTablasPaginaProceso = list_find(nodoTablasPagina->listaPaginas, (void *) devolverPaginasProceso);
 	//assert_valorPagina(nodoTablasPaginaProceso, &marco);
 
-	return marco;
+	if (nodoTablasPaginaProceso->numeroMarco >= 0) {
+		return nodoTablasPaginaProceso->numeroMarco;
+	}
+
+	return -1;
 }
 
-/*
-int buscarEnMarcos(int processID, int numeroPagina){
+int buscarEnMarcos(int processID, int numeroPagina) {
+	t_marco * marco = malloc(sizeof(t_marco));
+
+
+	int devolverValorMarco(t_marco * nodo) {
+		return ((nodo->numeroPagina == numeroPagina) && (nodo->processID == processID));
+	}
+
+	marco = list_find(listaMarco, (void *) devolverValorMarco);
+
+	return marco->valor;
 
 }
-*/
 
 int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 
@@ -336,19 +399,20 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		return 1;
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
 		resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid);
-		if (resultadoBusqueda < 0) {
+		t_marco * marco = malloc(sizeof(t_marco));
+		if (resultadoBusqueda == 0) {
 			int numeroPagina;
 			numeroPagina = devolverParteUsableInt(nodoInstruccion->instruccion, 5);
 			resultadoBusqueda = buscarTablaPaginas(nodoInstruccion->pid, numeroPagina);
 			if (resultadoBusqueda < 0) {
-				//resultadoBusqueda = buscarEnMarcos(nodoInstruccion->pid);
+				resultadoBusqueda = buscarEnMarcos(nodoInstruccion->pid, numeroPagina);
 			} else {
-				assert_valor(list_find(listaMarco, (void*) devolverValor), &processID, &valor);
+				marco = list_find(listaMarco, (void*) devolverValor);
 			}
 		} else {
-			assert_valor(list_find(listaMarco, (void*) devolverValor), &processID, &valor);
+			marco = list_find(listaMarco, (void*) devolverValor);
 		}
-		puts(valor);
+		puts(marco->valor);
 		strcpy(respuesta,"AFX");
 	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
 		int pagina;
@@ -368,30 +432,44 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		printf("%d",nodoInstruccion->pid);
 		printf("%d",pagina);
 		puts(texto);
-		escribirMarco(nodoInstruccion->pid, resultadoBusqueda, texto, 1);
+		int enviarASwap;
+		enviarASwap = escribirMarco(nodoInstruccion->pid, resultadoBusqueda, texto, 1, pagina);
+		if (enviarASwap > 0) {
+			enviarPaginaASwap(nodoInstruccion->pid, texto, pagina);
+		}
 	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
-		strcpy(respuesta,"finalizar");
+		int procesoActual(t_tablasPaginas * nodo) {
+			return (nodo->processID == nodoInstruccion->pid);
+		}
+		list_remove_by_condition(listaTablasPaginas, (void *) procesoActual);
 	} else {
 		strcpy(respuesta,"error");
 		perror("comando invalido");
 	}
 
-    return 0;
+    return 1;
 }
 
-static t_marco * marco_create(int processID, char * valor, int numeroMarco,  int presencia) {
-	t_marco *new = malloc(sizeof(t_marco));
-    new->processID = processID;
-    new->numeroMarco = numeroMarco;
-    new->valor = malloc(sizeof(valor) + 1);
-    new->presencia = presencia;
-    strcpy(new->valor, valor);
-    strcat(new->valor, "\0");
-    return new;
+int enviarPaginaASwap(int processID, char * valor, int numeroPagina) {
+	t_envioPaginaSwap * nodoSwap = malloc(sizeof(t_envioPaginaSwap));
+
+	nodoSwap->numeroPagina = numeroPagina;
+	nodoSwap->processID = processID;
+	nodoSwap->valor = malloc(sizeof(valor));
+	strcpy(nodoSwap->valor, valor);
+
+	socketEnviarMensaje(socketSwap, nodoSwap, sizeof(t_envioPaginaSwap));
 }
 
-void escribirMarco(int processID, int marco, char * texto, int presencia){
-	list_replace(listaMarco, marco, marco_create(processID, texto, marco, presencia));
+
+int escribirMarco(int processID, int marco, char * texto, int presencia, int numeroPagina){
+	if (!string_equals_ignore_case(texto, "NULL")) {
+		list_replace(listaMarco, marco, marco_create(processID, texto, marco, presencia, numeroPagina, 0));
+		return 0;
+	} else {
+		list_replace(listaMarco, marco, marco_create(processID, texto, marco, presencia, numeroPagina, 1));
+		return 1;
+	}
 }
 
 

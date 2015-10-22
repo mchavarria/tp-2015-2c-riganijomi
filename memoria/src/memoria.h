@@ -77,6 +77,10 @@ int inicializarTablaDePaginas();
 void inicializarMarco();
 #endif /* MEMORIA_H_ */
 
+typedef struct marcosLibrs {
+	uint32_t numeroMarco;
+} __attribute__ ((packed)) t_marcoLibre;
+
 typedef struct TLB{
 	uint32_t processID;
 	uint32_t numeroPagina;
@@ -86,7 +90,7 @@ typedef struct TLB{
 
 typedef struct tablaPaginasProceso {
 	uint32_t numeroPagina;
-	uint32_t marco;
+	uint32_t numeroMarco;
 } __attribute__ ((packed)) t_tablaPaginasProceso;
 
 typedef struct tablasPaginas {
@@ -98,8 +102,18 @@ typedef struct marco {
 	uint32_t processID;
 	char * valor;
 	uint32_t numeroMarco;
+	uint32_t numeroPagina;
 	uint32_t presencia;
+	uint32_t bitModificacion;
 } __attribute__ ((packed)) t_marco;
+
+typedef struct envioPaginaSwap {
+	uint32_t processID;
+	char * valor;
+	uint32_t numeroPagina;
+} __attribute__ ((packed)) t_envioPaginaSwap;
+
+t_list * listaMarcosLibres;
 
 t_list * listaTablasPaginas;
 
