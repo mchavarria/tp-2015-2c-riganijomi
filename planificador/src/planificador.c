@@ -16,13 +16,10 @@
 int main() {
 	sem_init(&mutexCPU, 0, 0);
 	sem_init(&semProgramas,0,0);
+	sem_init(&mutexListaListo,0,1);
 	levantarCfg();
-
-	listaDeBloqueado = malloc(50000);
 	listaDeBloqueado = list_create();
-	listaDeEjecutado = malloc(50000);
 	listaDeEjecutado = list_create();
-	listaDeListo = malloc(50000);
 	listaDeListo = list_create();
 
 	pthread_t thread1;
@@ -34,7 +31,7 @@ int main() {
 	int r2;
 
 	r1 = pthread_create( &thread1, NULL, &consola, (void*) m1);
-
+	//ver de hacer el hilo del monitor
 	r2 = pthread_create( &thread2, NULL, &enviarPCBaCPU, (void*) m2);
 
 	pthread_join( thread1, NULL);
@@ -42,35 +39,37 @@ int main() {
 	return 1;
 }
 
+//HACERLO POR CADA CPU CONECTADA
+//INFORMARSE CON UN MONITOR CADA VEZ QUE SE CONECTA UNA
 void* enviarPCBaCPU() {
 
 	sem_wait(&mutexCPU);
 	while(1) {
 		sem_wait(&semProgramas);
 
-		if (listaDeListo->elements_count > 0) {
-			//sem_wait(sem_CPU_conectada);
-			t_pcb * nodoPCB =  list_get(listaDeListo, 0);
-			int err = enviarMensajeDePCBaCPU(socketCPU, nodoPCB);
-			if (err <= 0){
-				//Error en el envío
-				printf("No se pudo enviar el PCB %d",nodoPCB->PID);
-			} else {
-				//Enviado correctamente
-				//saca de lista ready
-				list_remove(listaDeListo, 0);
-				//se agrega a la lista de ejecucion
-				list_add(listaDeEjecutado,nodoPCB );
+		//sem_wait(sem_CPU_conectada);
+		t_pcb * nodoPCB =  list_get(listaDeListo, 0);
+		int err = enviarMensajeDePCBaCPU(socketCPU, nodoPCB);
+		if (err <= 0){
+			//Error en el envío
+			printf("No se pudo enviar el PCB %d",nodoPCB->PID);
+			sem_post(&semProgramas);
+		} else {
+			//Enviado correctamente
+			//saca de lista ready
+			list_remove(listaDeListo, 0);
+			//se agrega a la lista de ejecucion
+			list_add(listaDeEjecutado,nodoPCB );
 
-				t_resp_cpu_plan * nodoRespuesta;
-				int nbytes;
-				nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
-				while ((nbytes = recibirRtadeCPU(socketCPU, nodoRespuesta) > 0)){
-					interpretarLinea(nodoRespuesta);
+			t_resp_cpu_plan * nodoRespuesta;
+			int nbytes;
+			nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
 
-				}//fin while recibir rta
-			}//Cierra el err
-		}//cierra if cantidad de elementos
+			while ((nbytes = recibirRtadeCPU(socketCPU, nodoRespuesta) > 0)){
+				interpretarLinea(nodoRespuesta);
+
+			}//fin while recibir rta
+		}//Cierra el err
 	}//cierra while
 }
 
@@ -109,7 +108,11 @@ void agregarALista(char * programa) {
 	pcb->quantum=quantumcfg;
 	//imprimo pcb
 	int antesDeAgregar = listaDeListo->elements_count;
+	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
+	sem_wait(&mutexListaListo);
 	list_add(listaDeListo, pcb);
+	sem_post(&mutexListaListo);
+	//MUTEX
 	int despuesDeAgregar = listaDeListo->elements_count;
 	if (despuesDeAgregar > antesDeAgregar) {
 		//sem_post(&semProgramas);
@@ -236,12 +239,19 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     		   	//No necesita avisarle al cpu
 				//TODO Solo loguear y actualizar las estructuras necesarias
 				if (exito){
-					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por entrada-salida ",idCPU,PID);
+					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por entrada-salida %d",idCPU,PID,pagRW);
+
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPorPID);
-					list_add(listaDeBloqueado,nodoPCB);
+
+					//ABRIR HILO PARA MANEJAR EL SLEEP DEL PROCESO BLOQUEADO
+					pthread_t thread_I_O;
+					int r3;
+
+					r3 = pthread_create( &thread_I_O, NULL, &bloquearPCB, nodoPCB,pagRW);
+
 					//usar el valor de nodo respuesta como tiempo de entrada salida
 				} else {
-					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo instruccion entrada-salida ",idCPU,PID);
+					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo instruccion entrada-salida %d ",idCPU,PID,pagRW);
 				}
 				break;
     		case QUANTUM_ACABADO:
@@ -251,10 +261,16 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					//actualizar el pc del nodoPCB con el valor del pc del nodo respuesta
 					nodoPCB->pc = nodoRespuesta->pc;
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPorPID);
-					list_add(listaDeListo,nodoPCB);
+
+					//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
+					sem_wait(&mutexListaListo);
+					list_add(listaDeListo, nodoPCB);
+					sem_post(&mutexListaListo);
+					//MUTEX
+
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por quantum acabado ",idCPU,PID);
 				} else {
-				//validar luego que opcion hay para fallar
+					//validar luego que opcion hay para fallar
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo la instruccion por quantum",idCPU,PID);
 
 				}
@@ -338,8 +354,21 @@ int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta){
 	} else if (nbytes == 0) {
 		printf("Planificador: Socket CPU desconectado");
 		//CERRAR LA CPU
+	} else {
+		desempaquetarNodoRtaCpuPlan(buffer,nodoRta);
 	}
-	desempaquetarNodoRtaCpuPlan(buffer,nodoRta);
 	return nbytes;
 }
 
+void* bloquearPCB(t_pcb * nodoPCB,int dormir) {
+	//UTILIZA EL MUTEX PARA AGREGAR A LISTO NUEVAMENTE
+	list_add(listaDeBloqueado,nodoPCB);
+	sleep(dormir);
+	//se agrega a la lista de listo
+	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
+	sem_wait(&mutexListaListo);
+	list_add(listaDeListo,nodoPCB );
+	sem_post(&mutexListaListo);
+	//MUTEX
+
+}

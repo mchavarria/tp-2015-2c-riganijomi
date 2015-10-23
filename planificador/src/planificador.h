@@ -97,6 +97,7 @@ int servidorPlanificador = 0;
 int socketCPU = -1;
 sem_t mutexCPU;
 sem_t semProgramas;
+sem_t mutexListaListo;
 char comando[100];
 int quantumcfg = 0;
 
@@ -111,6 +112,7 @@ int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB);
 void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta);
 void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
+void* bloquearPCB(t_pcb * nodoPCB,int dormir);
 
 t_list * listaDeListo;
 t_list * listaDeBloqueado;
