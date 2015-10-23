@@ -90,7 +90,7 @@ void instruccionEscribirPagina (char * instruccion);
 void instruccionEntradaSalida (char * tiempo);
 void instruccionFinalizarProceso(char * instruccion);
 void interpretarLinea(char * line);
-int recibirPCBdeCPU(t_pcb * nodoPCB);
+int recibirPCBdePlanificador(t_pcb * nodoPCB);
 void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta);
 void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);

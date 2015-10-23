@@ -33,14 +33,15 @@ int main() {
 	//Voy a recibir la pcb
 	pcbProc = malloc(sizeof(t_pcb));
 	pcbProc->PID = 0;
-	int nbytes = recibirPCBdeCPU(pcbProc);
-	if (nbytes > 0){
+	int nbytes;
+	while ((nbytes = recibirPCBdePlanificador(pcbProc)) > 0){
 
 		FILE * fp;
 		char * linea = NULL;
 		size_t len = 0;
 		ssize_t read;
 
+		//Configuro el archivo para abrir el mProg
 		char *mprog = malloc(strlen(pcbProc->contextoEjecucion)+8+1);
 		strcpy(mprog,"/mProgs/");
 		strcat(mprog,pcbProc->contextoEjecucion);
@@ -49,6 +50,8 @@ int main() {
 		char *contextoEjecucion = malloc(strlen(dir)+strlen(mprog)+1);
 		strcpy(contextoEjecucion,dir);
 		strcat(contextoEjecucion,mprog);
+		//Hasta aca el arlchivo
+
 		fp = fopen(contextoEjecucion, "r");
 
 		if (fp == NULL){
@@ -160,18 +163,21 @@ void instruccionLeerPagina (char * instruccion) {
 
 		if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
 			if (socketRecibirMensaje(socketADM, exito,sizeof(exito))> 0){
-				nodoRtaCpuPlan->exito = 1;
 				if (exito){
+					nodoRtaCpuPlan->exito = 1;
 					char respuesta[exito];
 					socketRecibirMensaje(socketADM, respuesta,sizeof(respuesta));
 					if (socketPlanificador > 0){
 						//El socket está linkeado
 						strcpy(nodoRtaCpuPlan->respuesta,respuesta);
-						int err = enviarMensajeRespuestaCPU(socketPlanificador, nodoRtaCpuPlan);
 					}
 				}else {
+					nodoRtaCpuPlan->exito = 0;
+					char * respuesta = "\0";
+					nodoRtaCpuPlan->respuesta = respuesta;
 					log_error(archivoLog, "no se pudo leer el proceso: %d", pcbProc->PID);
 				}//exito if
+				int err = enviarMensajeRespuestaCPU(socketPlanificador, nodoRtaCpuPlan);
 			}//rcv adm
 		} else{
 			log_error(archivoLog,"error envio mensaje memoria : %d",socketADM);
@@ -190,6 +196,7 @@ void instruccionEscribirPagina (char * instruccion) {
 }
 
 void instruccionEntradaSalida (char * tiempo) {
+	//en el pagRW poner el valor del Tiempo de E/S
 }
 
 void instruccionFinalizarProceso(char * instruccion) {
@@ -239,7 +246,7 @@ void cargarCfgs() {
 	retardo = 2;//configObtenerRetardo(directorioActual);
 }
 
-int recibirPCBdeCPU(t_pcb * nodoPCB){
+int recibirPCBdePlanificador(t_pcb * nodoPCB){
 	unsigned char buffer[1024];
 	int pidCpu = getpid();
 	int nbytes;
