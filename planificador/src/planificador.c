@@ -156,7 +156,20 @@ void* consola() {
 			} else {
 				perror("Programa invalido");
 			}
-		} else {
+		} else if (esElComando(comando, "ps")) {
+			imprimeEstado(listaDeListo,"listo");
+			imprimeEstado(listaDeBloqueado,"bloqueado");
+			imprimeEstado(listaDeEjecutado,"ejecutado");
+
+
+	    }
+		/* se le manda como parametro la listaCPU q aun no esta definida
+		else if (esElComando(comando, "cpu")) {
+			imprimePorcentajeCPU(listaCPU);
+
+	    }
+		*/
+		else {
 			perror("Comando no valido.");
 		}
 		fgets(comando, 100, stdin);
@@ -164,6 +177,43 @@ void* consola() {
 	}
 	//pasos para cerrar el programa
 	puts("Cerrando el proceso Planificador...");
+}
+
+/*falta saber la struct de la listaCPU
+void imprimePorcentajeCPU(lista){
+	if(list_is_empty(lista)>0)
+	{
+	 int tamanio = list_size(lista);
+	 for(int i=0; i< tamanio ;i++)
+	   {
+		t_pcb * nodoPCB = list_get(lista, i);
+		printf("cpu %s : %d %",nodoPCB->PID,calcualaPorcentaje(nodoPCB));
+	   }
+	}
+	else
+	{
+		puts("lista vacia");
+	}
+
+}
+*/
+
+void imprimeEstado(t_list *lista, char*estado ){
+	int i;
+	if(list_is_empty(lista)>0)
+	{
+	 int tamanio = list_size(lista);
+	 for(i=0; i< tamanio ;i++)
+       {
+	    t_pcb * nodoPCB = list_get(lista, i);
+	    printf("mProc %d: %s -> %d",nodoPCB->PID,nodoPCB->contextoEjecucion,estado);
+	   }
+	}
+	else
+	{
+		puts("lista vacia");
+	}
+
 }
 
 void levantarCfg(){
@@ -299,7 +349,6 @@ static t_hilos *hilo_create(pthread_t thread, char * m, int  r) {
 	nuevo->m[sizeof(nuevo->m)-1] = "\0";
     return nuevo;
 }
-
 
 int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB) {
 	int nbytes;

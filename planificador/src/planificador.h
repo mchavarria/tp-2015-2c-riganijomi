@@ -113,6 +113,8 @@ void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta);
 void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
 void* bloquearPCB(t_pcb * nodoPCB,int dormir);
+void imprimeEstado(t_list *lista, char*estado );
+void imprimePorcentajeCPU(t_list *lista);
 
 t_list * listaDeListo;
 t_list * listaDeBloqueado;

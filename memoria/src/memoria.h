@@ -9,6 +9,7 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <commons/config.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
@@ -71,7 +72,14 @@ void configurarSockets();
 int interpretarLinea(t_nodo_mem * nodoInstruccion);
 void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta);
 void inicializarMemoria();
+void inicializarTLB();
+int inicializarTablaDePaginas();
+void inicializarMarco();
 #endif /* MEMORIA_H_ */
+
+typedef struct marcosLibrs {
+	uint32_t numeroMarco;
+} __attribute__ ((packed)) t_marcoLibre;
 
 typedef struct TLB{
 	uint32_t processID;
@@ -81,24 +89,34 @@ typedef struct TLB{
 } __attribute__ ((packed)) t_tlb;
 
 typedef struct tablaPaginasProceso {
-	uint32_t * paginas;
-	uint32_t * marco;
+	uint32_t numeroPagina;
+	uint32_t numeroMarco;
 } __attribute__ ((packed)) t_tablaPaginasProceso;
 
 typedef struct tablasPaginas {
 	uint32_t processID;
-	t_tablaPaginasProceso * tablaPagina;
+	t_list * listaPaginas;
 } __attribute__ ((packed)) t_tablasPaginas;
 
-typedef struct nodoMemoria {
+typedef struct marco {
 	uint32_t processID;
 	char * valor;
-} __attribute__ ((packed)) t_memoria;
+	uint32_t numeroMarco;
+	uint32_t numeroPagina;
+	uint32_t presencia;
+	uint32_t bitModificacion;
+} __attribute__ ((packed)) t_marco;
 
-int indicePagina = 0;
+typedef struct envioPaginaSwap {
+	uint32_t processID;
+	char * valor;
+	uint32_t numeroPagina;
+} __attribute__ ((packed)) t_envioPaginaSwap;
+
+t_list * listaMarcosLibres;
 
 t_list * listaTablasPaginas;
 
-t_list * listaMemoria;
+t_list * listaMarco;
 
 t_list * listaTLB;
