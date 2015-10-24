@@ -8,18 +8,20 @@
 #ifndef PLANIFICADOR_H_
 #define PLANIFICADOR_H_
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
 #include <commons/log.h>
 #include <commons/string.h>
-#include <string.h>
 #include <pthread.h>
-#include <stdio.h>
+
 #include <unistd.h>
 #include <semaphore.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <stdlib.h>
 #include "socketServidor.h"
 #include "socketCliente.h"
 #include "interprete.h"
@@ -44,17 +46,17 @@
 #define ENTRADA_SALIDA 4
 #define QUANTUM_ACABADO 5
 
-typedef struct NODO_MEM {
-	uint32_t pid;
-	char instruccion[20];
-} __attribute__ ((packed)) t_nodo_mem;
-
 typedef struct hilo {
 	pthread_t thread;
 	char m[100];
 	int  r;
 } t_hilos;
 
+typedef struct CPU {
+	int pid;
+	int socket;
+	int disponible;
+} t_cpu;
 
 /* el estado puede ser:
  * 1: listo
@@ -94,32 +96,39 @@ typedef struct NODO_RTA_CPU_PLAN {
 int contadorPID = 0;
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
-int socketCPU = -1;
-sem_t mutexCPU;
 sem_t semProgramas;
 sem_t mutexListaListo;
 char comando[100];
 int quantumcfg = 0;
 
 void levantarCfg();
+
+//Hilos principales
 void* consola();
-int programaValido(char * programa);
-void agregarALista(char * programa);
+void* monitorearSockets();
 void* enviarPCBaCPU();
+
+int programaValido(char * programa);
+void* agregarPCBALista(char * programa);
+void agregarCPUALista(int cpu);
 void interpretarLinea(t_resp_cpu_plan * nodoRespuesta);
 static t_hilos *hilo_create(pthread_t thread, char * m, int  r);
 int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB);
 void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta);
 void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
-void* bloquearPCB(t_pcb * nodoPCB,int dormir);
+void* bloquearPCB(void *contexto);
 void imprimeEstado(t_list *lista, char*estado );
-void imprimePorcentajeCPU(t_list *lista);
+void imprimePorcentajeCPU();
+
+void recibirRespuestaCPU(int socketCpu, int * nbytes);
+void informarDesconexionCPU(int i);
 
 t_list * listaDeListo;
 t_list * listaDeBloqueado;
 t_list * listaDeEjecutado;
 t_list * listaDeHilos;
 t_log * archivoLog;
+t_list * listaDeCPUs;
 
 #endif
