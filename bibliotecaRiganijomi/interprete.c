@@ -29,7 +29,7 @@ int devolverParteUsableInt(char * linea, int desde) {
 int devolverIntInstruccion(char * linea, int desde) {
 	int valor;
 	char * substr;
-	string_substring_from(linea, desde);
+	substr = string_substring_from(linea, desde);
 	strtok(substr,"\n");
 	strtok(substr,";");
 	valor = atoi(substr);

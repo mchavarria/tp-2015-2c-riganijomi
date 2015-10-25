@@ -32,7 +32,7 @@ int socketCrearCliente(char * PUERTO, char * IP, char * procesoNombre, char * pr
 		//Ahora me conecto!
 		if (connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen))
 		{
-			printf("%s: Conexión fallida con\n", procesoNombre,procesoServidor);
+			printf("%s: Conexión fallida con %s\n", procesoNombre,procesoServidor);
 			perror("Error - Conexión Fallida");
 			serverSocket = 0;
 		} else {
