@@ -10,22 +10,66 @@ int main() {
 
 	//ACA HABRÍA QUE ABRIR TANTOS HILOS COMO CPUS HAYAN
 	//Y CORRER LO QUE CONTINÚA EN UNA FUNCION PARA HILO
+	hiloCPUs();
 
+
+	return EXIT_SUCCESS;
+}
+
+void hiloCPUs() {
+	//crear los hilos de las CPU
+	//pthread_mutex_lock(&mutexCPUs);
+	char *m1 = "cpu1";
+
+	int i;
+	listaHilosCPU = list_create();
+	int cantCPUs = cantidadHilos;
+	for (i = 0; i < cantCPUs; i++) {
+		list_add(listaHilosCPU, hilos_create());
+	}
+
+	//crear Hilos
+	t_hilos_CPU * nodoHilosCPU;
+	for (i = 0; i < cantCPUs; i++) {
+		nodoHilosCPU =  list_get(listaHilosCPU, i);
+		pthread_create(&(nodoHilosCPU->hiloCPU), NULL, cpu_func, (void*) m1);
+	}
+	//pthread_mutex_unlock(&mutexCPU);
+	//Esperar hilos
+	for (i = 0; i < cantCPUs; i++) {
+		pthread_join(nodoHilosCPU->hiloCPU, NULL );
+	}
+}
+
+static t_hilos_CPU *hilos_create()
+{
+	t_hilos_CPU* new = malloc(sizeof(t_hilos_CPU));
+	return new;
+}
+
+void cpu_func() {
+
+	int idCPU = getpid();
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
 	if (socketPlanificador == -1) {
 		log_error(archivoLog, "Planificador no se pudo conectar");
-		return -1;
+		exit(EXIT_FAILURE);
+	} else {
+		log_info(archivoLog, "CPU conectada al Planificador, idCpu: %d", &idCPU);
 	}
 
+	//Se conecta al ADM
     socketADM = socketCrearCliente(puertoADM, ipADM,"CPU","Memoria");
 	if (socketADM == -1) {
 		log_error(archivoLog, "Memoria no se pudo conectar");
-		return -1;
+		exit(EXIT_FAILURE);
+	} else {
+		log_info(archivoLog, "CPU conectada a Memoria, idCpu: %d", &idCPU);
 	}
 
 	//TODAS LAS CPUS VAN A HACER LO MISMO UNA VEZ CONECTADAS.
-	//SE VAN A QUEDAR ESPERANDO ALGUN MENSAJE DEL PLANIFICADORS
+	//SE VAN A QUEDAR ESPERANDO ALGUN MENSAJE DEL PLANIFICADOR
 	//DEBEN TENER UN SEMAFORO PARA COMPARTIR EL ADMINISTRADOR DE MEMORIA
 	int continuarLeyendo = 1;
 
@@ -73,9 +117,9 @@ int main() {
 			}
 		} // If archivo leido
 	} //if pcb != NULL
-
-	  return 0;
 }
+
+
 
 void interpretarLinea(char * linea) {
 	strtok(linea,";");
@@ -126,7 +170,7 @@ void instruccionIniciarProceso (char * instruccion) {
 		strcpy(nodoInstruccion->instruccion,instruccion);
 		//El socket está linkeado
 		if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
-			//Envíe el packete.. espero respuesta
+			//Envíe el paquete.. espero respuesta
 			if (socketRecibirMensaje(socketADM, exito, sizeof(exito)) > 0){
 				nodoRtaCpuPlan->exito = exito;
 
@@ -143,6 +187,7 @@ void instruccionIniciarProceso (char * instruccion) {
 		} else {
 			log_error(archivoLog,"error envio mensaje memoria : %d",socketADM);
 		}
+		log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
 		free(nodoInstruccion);
 	}
 }
@@ -182,6 +227,7 @@ void instruccionLeerPagina (char * instruccion) {
 		} else{
 			log_error(archivoLog,"error envio mensaje memoria : %d",socketADM);
 		}//enviar adm
+		log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
 		free(nodoInstruccion);
 	}
 }
@@ -196,7 +242,30 @@ void instruccionEscribirPagina (char * instruccion) {
 }
 
 void instruccionEntradaSalida (char * tiempo) {
-	//en el pagRW poner el valor del Tiempo de E/S
+
+	int exito;
+	nodoRtaCpuPlan->PID = pcbProc->PID;
+	nodoRtaCpuPlan->idCPU = getpid();
+	nodoRtaCpuPlan->tipo = ENTRADA_SALIDA;
+	nodoRtaCpuPlan->pc = pc;
+	nodoRtaCpuPlan->pagRW = 0; // poner el valor del Tiempo de E/S
+	char resp[1];
+	nodoRtaCpuPlan->respuesta = resp;
+	nodoRtaCpuPlan->exito = 0;
+
+
+	if (socketPlanificador > 0){
+		//El socket está linkeado
+		int err = enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
+	}
+
+	if (exito != 1){
+		log_error(archivoLog, "no se pudo ejecutar la entrada salida: %d", pcbProc->PID);
+	} else {
+		log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+	}
+
+	continuarLeyendo = 0;
 }
 
 void instruccionFinalizarProceso(char * instruccion) {
@@ -225,6 +294,7 @@ void instruccionFinalizarProceso(char * instruccion) {
 	} else {
 		log_error(archivoLog,"error envio mensaje memoria: %d",socketADM);
 	}
+	log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
 	free(nodoInstruccion);
 
 }
@@ -239,11 +309,9 @@ void cargarCfgs() {
 	ipPlanificador = configObtenerIpPlanificador(directorioActual);
 	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);
 	cantidadHilos = configObtenerCantidadHilos(directorioActual);
-	//a = atoi(cantidadHilos);
-
 	ipADM = configObtenerIpADM(directorioActual);
 	puertoADM = configObtenerPuertoADM(directorioActual);
-	retardo = 2;//configObtenerRetardo(directorioActual);
+	retardo = configObtenerRetardoCPU(directorioActual);
 }
 
 int recibirPCBdePlanificador(t_pcb * nodoPCB){

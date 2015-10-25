@@ -14,7 +14,7 @@
 #include <commons/collections/list.h>
 #include <commons/config.h>
 #include <commons/string.h>
-
+#include <pthread.h>
 #include <unistd.h>
 #include <commons/log.h>
 #include <sys/types.h>
@@ -75,8 +75,14 @@ typedef struct NODO_RTA_CPU_PLAN {
 	char *respuesta;
 } t_resp_cpu_plan;
 
+//Lista de Hilos de CPUs
+typedef struct _t_hilos {
+	pthread_t hiloCPU;
+} t_hilos_CPU;
+
 t_resp_cpu_plan * nodoRtaCpuPlan;
 t_pcb * pcbProc;
+t_list * listaHilosCPU;
 
 //Log
 t_log* archivoLog;
@@ -94,6 +100,10 @@ int recibirPCBdePlanificador(t_pcb * nodoPCB);
 void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta);
 void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
+void hiloCPUs();
+void cpu_func();
+static t_hilos_CPU *hilos_create();
+
 
 //Variables globales
 char directorioActual[1024];
@@ -101,7 +111,7 @@ char * ipPlanificador;
 char * puertoPlanificador;
 char * ipADM;
 char * puertoADM;
-char * cantidadHilos;
+int cantidadHilos;
 int retardo;
 
 int socketADM;
