@@ -123,6 +123,7 @@ void inicializarTLB() {
 	t_tlb * nodoTLB;
 	for (i=0; i<ENTRADAS_TLB; i++) {
 		nodoTLB = malloc(sizeof(t_tlb));
+		nodoTLB->processID = 1000000;
 		list_add(listaTLB, nodoTLB);
 		free(nodoTLB);
 	}
@@ -255,6 +256,8 @@ static t_tablaPaginasProceso * nodoTablaPaginaProceso_create(int numeroMarco, in
 
 	new->numeroMarco = numeroMarco;
 	new->numeroPagina = numeroPagina;
+	new->bitPresencia = 0;
+	new->bitModificacion = 0;
 
 	return new;
 }
@@ -276,7 +279,6 @@ int inicializarTablaDePaginas(int cantidadPaginas, int pid) {
 void assert_valorTLB(t_tlb * nodoTLB, int processID, int numeroPagina, int fueModificado, int marco) {
 	processID = nodoTLB->processID;
 	numeroPagina = nodoTLB->numeroPagina;
-	fueModificado = nodoTLB->fueModificado;
 	marco = nodoTLB->marco;
 }
 
@@ -332,8 +334,6 @@ static t_tablaPaginasProceso * obtenerPagina(int numeroPagina, t_tablasPaginas *
 }
 
 static t_tablasPaginas * buscarTablaPaginas(int processID, int numeroPagina){
-	t_list * listaPagina;
-	int marco;
 
 	int devolverTablaProceso(t_tablasPaginas * nodo){
 		return (nodo->processID == processID);
@@ -341,14 +341,6 @@ static t_tablasPaginas * buscarTablaPaginas(int processID, int numeroPagina){
 
 	t_tablasPaginas * nodoTablaDeProceso = NULL;
 	nodoTablaDeProceso = list_find(listaTablasPaginas, (void *) devolverTablaProceso);
-	//assert_valorTablaPag(nodoTablasPagina,&listaPagina);
-
-	/*int devolverPaginasProceso(t_tablaPaginasProceso * nodo){
-		return (nodo->numeroPagina == numeroPagina);
-	}
-
-	t_tablaPaginasProceso * nodoTablasPaginaProceso = NULL;
-	nodoTablasPaginaProceso = list_find(nodoTablasPagina->listaPaginas, (void *) devolverPaginasProceso);*/
 
 	return nodoTablaDeProceso;
 }
@@ -408,37 +400,77 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 		resultadoBusqueda = nodoPagina->numeroMarco;
 		if (resultadoBusqueda < 0) {
-			//TODO pedir a swap la pagina.
-			/*if (send(socketSwap, ____, sizeof(t_nodo_mem)) > 0) { TODO envia el numero de pagina y el processID para que el swap lo traiga de vuelta.
-				if (recv(socketSwap, valor, sizeof(____)) > 0) {
-					puts(valor);
+			//Pide a swap la pagina. Envia el numero de pagina y el processID para que el swap lo traiga de vuelta.
+			t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
+			nodoDecidir->mensaje = 1;
+			send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
+			t_pedirPaginaSwap * nodoPedirPaginaSwap = malloc(sizeof(t_pedirPaginaSwap));
+			nodoPedirPaginaSwap->numeroPagina = numeroPagina;
+			nodoPedirPaginaSwap->processID = nodoInstruccion->pid;
+			if (send(socketSwap, nodoPedirPaginaSwap, sizeof(t_pedirPaginaSwap), 0) > 0) {
+				char paginaSwap [1024];
+				if (recv(socketSwap, paginaSwap, 1024, 0) > 0) {
+					if (cantidadMarcosAsignados(nodoInstruccion->pid) < MAXIMO_MARCOS_POR_PROCESO) {
+						indiceMarco = obtenerUnMarcoLibre(listaMarco);
+						if (indiceMarco < 0) {
+							//finaliza proceso.
+							char finalizarProceso [] = "finalizar";
+							send(socketCpu, finalizarProceso, sizeof(finalizarProceso), 0);
+							t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
+							nodoDecidir->mensaje = 3;
+							send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
+							t_eliminarPaginaSwap * nodoEliminar = malloc(sizeof(t_eliminarPaginaSwap));
+							nodoEliminar->processID = nodoInstruccion->pid;
+							nodoEliminar->valor = malloc(sizeof("error") + 1);
+							strcpy(nodoEliminar->valor, "error");
+							strcat(nodoEliminar->valor, "\0");
+							send(socketSwap, nodoEliminar, sizeof(t_eliminarPaginaSwap), 0);
+						} else {
+							resultadoBusqueda = indiceMarco;
+							actualizarMarco(texto,nodoInstruccion->pid, numeroPagina,paginaSwap,indiceMarco);
+						}
+					} else if (cantidadMarcosAsignados(nodoInstruccion->pid) == MAXIMO_MARCOS_POR_PROCESO) {
+						//ejecuta algoritmo de reemplazo FIFO.
+						//elimina numero de marco en la pagina victima
+						int marco = algoritmoReemplazoFIFO();
+						actualizarMarco(texto,nodoInstruccion->pid, numeroPagina,paginaSwap,marco);
+					}
+					puts(paginaSwap);
 				}
-			} */
-			if (cantidadMarcosAsignados(nodoInstruccion->pid) < MAXIMO_MARCOS_POR_PROCESO) {
-				indiceMarco = obtenerUnMarcoLibre(listaMarco);
-				if (indiceMarco < 0) {
-					//TODO finalizar proceso.
-				} else {
-					resultadoBusqueda = indiceMarco;
-					//TODO Terminar de leer o escribir.
-				}
-			} else if (cantidadMarcosAsignados(nodoInstruccion->pid) == MAXIMO_MARCOS_POR_PROCESO) {
-				//TODO ejecutar algoritmo de reemplazo FIFO.
-				//TODO eliminar numero de marco en la pagina victima
-				//enviarPaginaASwap(nodoInstruccion->pid, texto, pagina);
 			}
-			if (strlen(texto) > 0) {
-				// comando escribir.
-				escribirMarco(nodoInstruccion->pid, marco->numeroMarco, texto, 1, numeroPagina);
-			}
-			actualizarTablaPaginas(indiceMarco, nodoInstruccion->pid, numeroPagina);
 		}
 	}
 	marco = list_find(listaMarco, (void*) devolverValor);
 	return marco;
 }
 
-void actualizarTablaPaginas(int indiceMarco, int processID, int numeroPagina) {
+int algoritmoReemplazoFIFO(){
+	t_marco * nodoMarco = malloc(sizeof(t_marco));
+	nodoMarco = list_get(listaMarco, 0);
+	return nodoMarco->numeroMarco;
+}
+
+void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, int indiceMarco){
+	if (texto == NULL) {
+		escribirMarco(nodoInstruccion->pid, indiceMarco, paginaSwap , 1, numeroPagina);
+		actualizarTablaPaginas(indiceMarco, nodoInstruccion->pid, numeroPagina, 1, 0);
+	}else{
+		escribirMarco(nodoInstruccion->pid, indiceMarco, texto , 1, numeroPagina);
+		actualizarTablaPaginas(indiceMarco, nodoInstruccion->pid, numeroPagina, 1, 1);
+		t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
+		nodoDecidir->mensaje = 2;
+		send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
+		t_envioPaginaSwap * envioSwap = malloc(sizeof(t_envioPaginaSwap));
+		envioSwap->processID = pid;
+		envioSwap->numeroPagina = numeroPagina;
+		envioSwap->valor = malloc(strlen(texto) + 1);
+		strcpy(envioSwap->valor, texto);
+		strcat(envioSwap->valor, "\0");
+		send(socketSwap, envioSwap, strlen(t_envioPaginaSwap), 0);
+	}
+}
+
+void actualizarTablaPaginas(int indiceMarco, int processID, int numeroPagina, int bitPresencia, int bitModificacion) {
 	t_tablasPaginas * tablaDeProceso;
 	t_tablaPaginasProceso * nodoPagina;
 
@@ -447,6 +479,8 @@ void actualizarTablaPaginas(int indiceMarco, int processID, int numeroPagina) {
 	nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 
 	nodoPagina->numeroMarco = indiceMarco;
+	nodoPagina->bitPresencia = bitPresencia;
+	nodoPagina->bitModificacion = bitModificacion;
 }
 
 int interpretarLinea(t_nodo_mem * nodoInstruccion) {
@@ -460,40 +494,45 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
     	int cantidadPaginasProceso;
     	cantidadPaginasProceso = devolverParteUsableInt(nodoInstruccion->instruccion, 8);
     	inicializarTablaDePaginas(cantidadPaginasProceso, nodoInstruccion->pid);
+    	t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
+    	nodoDecidir->mensaje = 0;
+    	send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
+    	t_iniciarSwap * nodoIniciarSwap = malloc(sizeof(t_iniciarSwap));
+    	nodoIniciarSwap->processID = nodoInstruccion->pid;
+    	nodoIniciarSwap->cantidadPaginas = cantidadPaginasProceso;
+    	send(socketSwap, nodoIniciarSwap, sizeof(t_iniciarSwap), 0);
 		strcpy(respuesta,"iniciar");
 		return 1;
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
 		resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid);
-		marco = accederAPaginaCiclicamente(nodoInstruccion, devolverParteUsableInt(nodoInstruccion->instruccion, 5));
+		marco = accederAPaginaCiclicamente(nodoInstruccion, devolverParteUsableInt(nodoInstruccion->instruccion, 5), "");
+		cargarTlb(nodoInstruccion, marco);
 		puts(marco->valor);
 		strcpy(respuesta,"AFX");
 	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
-		int pagina;
-		char * paginaChar;
-		paginaChar = string_substring(nodoInstruccion->instruccion, 9, 1);
-		pagina = atoi(paginaChar);
-		if (pagina > 9) {
-			texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, 11)) + 1);
-			strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, 11));
-			strcat(texto, "\0");
-		}else{
-			texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, 10)) + 1);
-			strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, 10));
-			strcat(texto, "\0");
-		}
+		int pagina = valorPagina(nodoInstruccion->instruccion);
+		texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, pagina)));
+		strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, pagina));
+		strcat(texto, "\0");
 		marco = accederAPaginaCiclicamente(nodoInstruccion, pagina, texto);
-		//resultadoBusqueda = buscarTablaPaginas(nodoInstruccion->pid, pagina, &listaTablaProceso);
+		cargarTlb(nodoInstruccion, marco);
 		printf("%d",nodoInstruccion->pid);
 		printf("%d",pagina);
 		puts(texto);
-		/*if (enviarASwap > 0) {
-
-		}*/
 	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
 		int procesoActual(t_tablasPaginas * nodo) {
 			return (nodo->processID == nodoInstruccion->pid);
 		}
 		list_remove_by_condition(listaTablasPaginas, (void *) procesoActual);
+		t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
+		nodoDecidir->mensaje = 3;
+		send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
+		t_eliminarPaginaSwap * nodoEliminar = malloc(sizeof(t_eliminarPaginaSwap));
+		nodoEliminar->processID = nodoInstruccion->pid;
+		nodoEliminar->valor = malloc(sizeof("finalizar") + 1);
+		strcpy(nodoEliminar->valor, "finalizar");
+		strcat(nodoEliminar->valor, "\0");
+		send(socketSwap, nodoEliminar, sizeof(t_eliminarPaginaSwap), 0);
 	} else {
 		strcpy(respuesta,"error");
 		perror("comando invalido");
@@ -502,25 +541,42 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
     return 1;
 }
 
-int enviarPaginaASwap(int processID, char * valor, int numeroPagina) {
-	t_envioPaginaSwap * nodoSwap = malloc(sizeof(t_envioPaginaSwap));
+void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
+	int var = 0;
 
-	nodoSwap->numeroPagina = numeroPagina;
-	nodoSwap->processID = processID;
-	nodoSwap->valor = malloc(sizeof(valor));
-	strcpy(nodoSwap->valor, valor);
+	int devolverNodoTLBLibre(t_tlb * nodo) {
+		return (nodo->processID == 1000000);
+	}
 
-	socketEnviarMensaje(socketSwap, nodoSwap, sizeof(t_envioPaginaSwap)); //TODO usar send y recv
+	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
+
+	nodoTLB = NULL;
+
+	nodoTLB = list_find(listaTLB, (void *) devolverNodoTLBLibre);
+
+	if(nodoTLB == NULL){
+		nodoTLB = list_get(listaTLB, 0);
+	}
+	nodoTLB->processID = nodoInstruccion->pid;
+	nodoTLB->numeroPagina = marco->numeroPagina;
+	nodoTLB->marco = marco->numeroMarco;
+
 }
 
+int valorPagina(char * instruccion){
+	int character = 0;
+	while (string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
+		character++;
+	}
+	int pagina = atoi(string_substring(instruccion, 9, character));
+	return pagina;
+}
 
-int escribirMarco(int processID, int marco, char * texto, int presencia, int numeroPagina){
+void escribirMarco(int processID, int marco, char * texto, int presencia, int numeroPagina){
 	if (!string_equals_ignore_case(texto, "NULL")) {
 		list_replace(listaMarco, marco, marco_create(processID, texto, marco, presencia, numeroPagina, 0));
-		return 0;
 	} else {
 		list_replace(listaMarco, marco, marco_create(processID, texto, marco, presencia, numeroPagina, 1));
-		return 1;
 	}
 }
 

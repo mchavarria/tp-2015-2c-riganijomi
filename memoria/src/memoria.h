@@ -64,20 +64,6 @@ typedef struct NODO_MEM {
 	char instruccion[20];
 } __attribute__ ((packed)) t_nodo_mem;
 
-t_resp_swap_mem * nodoRespuesta;
-t_nodo_mem * nodoInstruccion;
-void rutina (int n);
-//int levantarCfgInicial(t_config* ar[]chConfig);
-void configurarSockets();
-
-int interpretarLinea(t_nodo_mem * nodoInstruccion);
-void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta);
-void inicializarMemoria();
-void inicializarTLB();
-int inicializarTablaDePaginas();
-void inicializarMarco();
-#endif /* MEMORIA_H_ */
-
 typedef struct marcosLibrs {
 	uint32_t numeroMarco;
 } __attribute__ ((packed)) t_marcoLibre;
@@ -85,7 +71,6 @@ typedef struct marcosLibrs {
 typedef struct TLB{
 	uint32_t processID;
 	uint32_t numeroPagina;
-	uint32_t fueModificado;
 	uint32_t marco;
 } __attribute__ ((packed)) t_tlb;
 
@@ -93,6 +78,7 @@ typedef struct tablaPaginasProceso {
 	uint32_t numeroPagina;
 	uint32_t numeroMarco;
 	uint32_t bitPresencia;
+	uint32_t bitModificacion;
 } __attribute__ ((packed)) t_tablaPaginasProceso;
 
 typedef struct tablasPaginas {
@@ -115,6 +101,25 @@ typedef struct envioPaginaSwap {
 	uint32_t numeroPagina;
 } __attribute__ ((packed)) t_envioPaginaSwap;
 
+typedef struct pedirPaginaSwap {
+	uint32_t processID;
+	uint32_t numeroPagina;
+} __attribute__ ((packed)) t_pedirPaginaSwap;
+
+typedef struct eliminarPaginaSwap {
+	uint32_t processID;
+	char * valor;
+} __attribute__ ((packed)) t_eliminarPaginaSwap;
+
+typedef struct iniciarSwap {
+	uint32_t processID;
+	uint32_t cantidadPaginas;
+} __attribute__ ((packed)) t_iniciarSwap;
+
+typedef struct decidirEstructuraSwap {
+	uint32_t mensaje;
+} __attribute__ ((packed)) t_decidirEstructuraSwap;
+
 t_list * listaMarcosLibres;
 
 t_list * listaTablasPaginas;
@@ -122,3 +127,25 @@ t_list * listaTablasPaginas;
 t_list * listaMarco;
 
 t_list * listaTLB;
+
+t_resp_swap_mem * nodoRespuesta;
+t_nodo_mem * nodoInstruccion;
+void rutina (int n);
+//int levantarCfgInicial(t_config* ar[]chConfig);
+void configurarSockets();
+
+int interpretarLinea(t_nodo_mem * nodoInstruccion);
+void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta);
+void inicializarMemoria();
+void inicializarTLB();
+int inicializarTablaDePaginas();
+void inicializarMarco();
+void actualizarTablaPaginas(int indiceMarco, int processID, int numeroPagina, int bitPresencia, int bitModificacion);
+void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, int indiceMarco);
+int algoritmoReemplazoFIFO();
+void escribirMarco(int processID, int marco, char * texto, int presencia, int numeroPagina);
+int valorPagina(char * instruccion);
+void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco);
+#endif /* MEMORIA_H_ */
+
+

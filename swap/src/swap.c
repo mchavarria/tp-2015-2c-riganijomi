@@ -30,24 +30,52 @@ int main() {
 	crearParticion();
 	for(;(socketMemoria > 0) && continuar;){
 		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
-		//sem_wait(&sem_mem);
-		nbytes = socketRecibirMensaje(socketMemoria, nodoInstruccion,sizeof(t_nodo_mem));
-		// tengo un mensaje de algun cliente
-		if (nbytes <= 0) {
-			// Error o conexion cerrada por el cliente
-			if (nbytes == 0) {
-				printf("servidor MEM: socket %d desconectado\n", socketMemoria);
-			} else {
-				perror("recepcion error");
-			}
-			continuar = 0;
-			//monitorEliminarSocket(socketCpu);
-		} else {
-			//Mensaje
-			interpretarLinea(nodoInstruccion);
-			//nbytes = socketEnviarMensaje(socketMemoria, respuesta,sizeof(respuesta));
-		}
+		t_decidirEstructuraSwap * decidirEstructuraSwap = malloc(sizeof(t_decidirEstructuraSwap));
+		recv(socketMemoria, decidirEstructuraSwap,sizeof(t_decidirEstructuraSwap), 0);
+		estructuraRecibida(decidirEstructuraSwap->mensaje);
 	}
+}
+
+void estructuraRecibida(int mensaje){
+	t_iniciarSwap * iniciarSwap = malloc(sizeof(t_iniciarSwap));
+	t_pedirPaginaSwap * nodoPedirPaginaSwap = malloc(sizeof(t_pedirPaginaSwap));
+	t_envioPaginaSwap * envioSwap = malloc(sizeof(t_envioPaginaSwap));
+	t_eliminarPaginaSwap * nodoEliminar = malloc(sizeof(t_eliminarPaginaSwap));
+	char finalizarError [10] ;
+	switch (mensaje) {
+		case 0:
+			recv(socketMemoria, iniciarSwap,sizeof(t_iniciarSwap), 0);
+			iniciar(iniciarSwap);
+		break;
+		case 1:
+			recv(socketMemoria, nodoPedirPaginaSwap,sizeof(t_pedirPaginaSwap), 0);
+			leer(nodoPedirPaginaSwap);
+		break;
+		case 2:
+			recv(socketMemoria, envioSwap,sizeof(t_envioPaginaSwap), 0);
+			escribir(envioSwap);
+		break;
+		case 3:
+			recv(socketMemoria, nodoEliminar,sizeof(t_eliminarPaginaSwap), 0);
+			finalizar(nodoEliminar);
+		break;
+	}
+}
+
+void iniciar(t_iniciarSwap * nodoIniciar){
+	recibirProceso(nodoIniciar->processID,nodoIniciar->cantidadPaginas);
+}
+
+void leer(t_pedirPaginaSwap * nodoLeer){
+	leerPaginaProceso(nodoLeer->processID,nodoLeer->numeroPagina);
+}
+
+void escribir(t_envioPaginaSwap * nodoEscribir){
+	//TODO hacer
+}
+
+void finalizar(t_eliminarPaginaSwap * nodoEliminar){
+	eliminarProceso(nodoEliminar);
 }
 
 void levantarCfgInicial(){
@@ -67,13 +95,13 @@ void levantarCfgInicial(){
 
 void crearParticion(){
 	FILE *particion;
-	int cantPag = 64;
-	int tamPag = 4;
+	int cantPag = cantPaginas;
+	int tamPag = tamanioPaginas;
 	int i;
 
 	//modificar para el directorio real
 	particion=fopen("swap.data","w");
-	putc('A',particion);
+	//putc('A',particion);
 	for (i = 2; i < cantPag * tamPag; i++){
 		putc('\0',particion);
 	}
@@ -111,31 +139,6 @@ static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProces
     return nodoProceso;
 }
 
-
-void interpretarLinea(t_nodo_mem * nodoInstruccion) {
-
-	nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
-    int valor;
-    int pid = nodoInstruccion->pid;
-    if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
-		valor = atoi(devolverParteUsable(nodoInstruccion->instruccion, 8));
-		recibirProceso(pid,valor);
-	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
-		valor = atoi(devolverParteUsable(nodoInstruccion->instruccion, 5));
-		leerPaginaProceso(pid,valor);
-	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
-		char * rta;
-		rta = string_substring(nodoInstruccion->instruccion, 9, 1);
-		valor = devolverParteUsable(nodoInstruccion->instruccion, 11);
-		strcpy(respuesta,"escribir");
-	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
-		eliminarProceso(pid);
-	} else {
-		perror("comando invalido");
-		strcpy(respuesta,"error-comando");
-	}
-}
-
 void recibirProceso(int idProc, int cantPagProceso){
 
 	nodoRespuesta->tipo = INICIAR;
@@ -168,12 +171,12 @@ void recibirProceso(int idProc, int cantPagProceso){
 	printf("lista procesos (elementos) : %d \n",listaProcesos->elements_count);
 }
 
-void eliminarProceso(int idProc){
+void eliminarProceso(t_eliminarPaginaSwap * nodoEliminar){
 
 	nodoRespuesta->tipo = FINALIZAR;
 	nodoRespuesta->largo = 0;//No devuelve nada mas
 	bool condicionProcAEliminar(t_nodoProceso * nodoProceso) {
-		return (nodoProceso->idProc == idProc);
+		return (nodoProceso->idProc == nodoEliminar->processID);
 	}
 
 	t_nodoProceso * nodoProceso = NULL;
@@ -183,7 +186,7 @@ void eliminarProceso(int idProc){
 		//encontro el nodo a eliminar
 		//TODO crear el nodo libre correspondiente al espacio liberado
 		list_add(listaLibres, crearNodoLibre(nodoProceso->indice, nodoProceso->tamanio));
-		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, nodoProceso->tamanio);
+		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", nodoEliminar->processID, nodoProceso->indice, nodoProceso->tamanio);
 		list_remove_by_condition(listaProcesos,(void*) condicionProcAEliminar);
 		//TODO falta eliminar el nodo de memoria!!!!
 		nodoRespuesta->exito = 1;
@@ -192,7 +195,7 @@ void eliminarProceso(int idProc){
 		//no encontro el proceso indicado
 		nodoRespuesta->exito = 0;
 		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
-		log_info(archivoLog, "No se pudo eliminar el proceso PID: %d", idProc);
+		log_info(archivoLog, "No se pudo eliminar el proceso PID: %d", nodoEliminar->processID);
 		perror("no se encontró el proceso indicado");
 		strcpy(respuesta,"finalizar-fallo");
 	}
