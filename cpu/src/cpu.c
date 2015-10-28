@@ -159,7 +159,7 @@ void instruccionIniciarProceso (char * instruccion) {
 	nodoRtaCpuPlan->idCPU = getpid();
 	nodoRtaCpuPlan->tipo = INICIAR;
 	nodoRtaCpuPlan->pc = pc;
-	nodoRtaCpuPlan->pagRW = 0;
+	nodoRtaCpuPlan->pagRW = retardo;
 	char resp[1];
 	nodoRtaCpuPlan->respuesta = resp;
 	nodoRtaCpuPlan->exito = 0;
