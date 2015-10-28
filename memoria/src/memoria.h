@@ -32,6 +32,7 @@ int TAMANIO_MARCO;
 int CANTIDAD_MARCOS;
 int MAXIMO_MARCOS_POR_PROCESO;
 int ENTRADAS_TLB;
+int MAXIMO_MARCOS_POR_PROCESO;
 char TLB_HABILITADA[3];
 char ALGORITMO_REEMPLAZO[50];
 t_config* archConfig;
@@ -91,6 +92,7 @@ typedef struct TLB{
 typedef struct tablaPaginasProceso {
 	uint32_t numeroPagina;
 	uint32_t numeroMarco;
+	uint32_t bitPresencia;
 } __attribute__ ((packed)) t_tablaPaginasProceso;
 
 typedef struct tablasPaginas {
