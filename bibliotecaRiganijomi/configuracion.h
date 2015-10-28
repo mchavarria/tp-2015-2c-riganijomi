@@ -22,7 +22,8 @@ char * configObtenerTLBHabilitada(char * ruta);
 char * configObtenerRetardoMemoria(char * ruta);
 char * configObtenerPuertoADM(char * ruta);
 char * configObtenerIpADM(char * ruta);
-char * configObtenerCantidadHilos(char * ruta);
+int configObtenerCantidadHilos(char * ruta);
+int configObtenerRetardoCPU(char * ruta);
 int configObtenerQuantum(char * ruta);
 
 #endif /* CONFIGURACION_H_ */

@@ -19,40 +19,36 @@ char * configObtenerPuertoEscucha(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
 	char * PUERTO;
-
 	PUERTO = config_get_string_value(config, "PUERTO_ESCUCHA");
 	return PUERTO;
 }
 char * configObtenerPuertoSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * PUERTO;
-
-	PUERTO = config_get_string_value(config, "PUERTO_SWAP");
-	return PUERTO;
+	char * PUERTO_SWAP;
+	PUERTO_SWAP = config_get_string_value(config, "PUERTO_SWAP");
+	return PUERTO_SWAP;
 }
 char * configObtenerPuertoPlanificador(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * PUERTO;
-
-	PUERTO = config_get_string_value(config, "PUERTO_PLANIFICADOR");
-	return PUERTO;
+	char * PUERTO_PLANIFICADOR;
+	PUERTO_PLANIFICADOR = config_get_string_value(config, "PUERTO_PLANIFICADOR");
+	return PUERTO_PLANIFICADOR;
 }
 char * configObtenerPuertoMemoria(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * PUERTO;
-
-	PUERTO = config_get_string_value(config, "PUERTO_MEMORIA");
-	return PUERTO;
+	char * PUERTO_MEMORIA;
+	PUERTO_MEMORIA = config_get_string_value(config, "PUERTO_MEMORIA");
+	return PUERTO_MEMORIA;
 }
 char * configObtenerIpSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * IP;
-	IP = config_get_string_value(config, "IP_SWAP");
-	return IP;
+	char * IP_SWAP;
+	IP_SWAP = config_get_string_value(config, "IP_SWAP");
+	return IP_SWAP;
 }
 char * configObtenerNombreArchivoSwap(char * ruta) {
 	t_config* config;
@@ -92,37 +88,37 @@ char * configObtenerRetardoCompactacionSwap(char * ruta) {
 char * configObtenerMaxMarcosProceso(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * CANT;
-	CANT = config_get_string_value(config, "MAXIMO_MARCOS_POR_PROCESO");
-	return CANT;
+	char * MAXIMO_MARCOS_POR_PROCESO;
+	MAXIMO_MARCOS_POR_PROCESO = config_get_string_value(config, "MAXIMO_MARCOS_POR_PROCESO");
+	return MAXIMO_MARCOS_POR_PROCESO;
 }
 char * configObtenerCantMarcos(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * CANT;
-	CANT = config_get_string_value(config, "CANTIDAD_MARCOS");
-	return CANT;
+	char * CANTIDAD_MARCOS;
+	CANTIDAD_MARCOS = config_get_string_value(config, "CANTIDAD_MARCOS");
+	return CANTIDAD_MARCOS;
 }
 char * configObtenerTamanioMarco(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * TAM;
-	TAM = config_get_string_value(config, "TAMANIO_MARCO");
-	return TAM;
+	char * TAMANIO_MARCO;
+	TAMANIO_MARCO = config_get_string_value(config, "TAMANIO_MARCO");
+	return TAMANIO_MARCO;
 }
 char * configObtenerEntradasTLB(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * CANT;
-	CANT = config_get_string_value(config, "ENTRADAS_TLB");
-	return CANT;
+	char * ENTRADAS_TLB;
+	ENTRADAS_TLB = config_get_string_value(config, "ENTRADAS_TLB");
+	return ENTRADAS_TLB;
 }
 char * configObtenerTLBHabilitada(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * HAB;
-	HAB = config_get_string_value(config, "TLB_HABILITADA");
-	return HAB;
+	char * TLB_HABILITADA;
+	TLB_HABILITADA = config_get_string_value(config, "TLB_HABILITADA");
+	return TLB_HABILITADA;
 }
 char * configObtenerRetardoMemoria(char * ruta) {
 	t_config* config;
@@ -132,12 +128,12 @@ char * configObtenerRetardoMemoria(char * ruta) {
 	return RET;
 }
 
-char * configObtenerCantidadHilos(char * ruta) {
+int configObtenerCantidadHilos(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * NOMBRE_ARCHIVO;
-	NOMBRE_ARCHIVO = config_get_string_value(config, "CANTIDAD_HILOS");
-	return NOMBRE_ARCHIVO;
+	int CANTIDAD_HILOS;
+	CANTIDAD_HILOS = config_get_int_value(config, "CANTIDAD_HILOS");
+	return CANTIDAD_HILOS;
 }
 char * configObtenerIpADM(char * ruta) {
 	t_config* config;
@@ -149,16 +145,16 @@ char * configObtenerIpADM(char * ruta) {
 char * configObtenerPuertoADM(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * NOMBRE_ARCHIVO;
-	NOMBRE_ARCHIVO = config_get_string_value(config, "PUERTO_ADM");
-	return NOMBRE_ARCHIVO;
+	char * PUERTO_ADM;
+	PUERTO_ADM = config_get_string_value(config, "PUERTO_ADM");
+	return PUERTO_ADM;
 }
-char * configObtenerRetardo(char * ruta) {
+int configObtenerRetardoCPU(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * NOMBRE_ARCHIVO;
-	NOMBRE_ARCHIVO = config_get_int_value(config, "RETARDO");
-	return NOMBRE_ARCHIVO;
+	int RETARDO;
+	RETARDO = config_get_int_value(config, "RETARDO");
+	return RETARDO;
 }
 
 int configObtenerQuantum(char * ruta) {
