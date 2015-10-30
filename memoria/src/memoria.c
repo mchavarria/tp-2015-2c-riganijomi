@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 
 	archConfig = malloc(sizeof(t_config));
 	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
-	archConfig = config_create("/home/utnso/ws/tp-2015-2c-riganijomi/memoria/src/config.cfg");
+	archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	resultado = levantarCfgInicial(archConfig);
 	configurarSockets();
 	inicializarTLB();
@@ -166,25 +166,6 @@ void inicializarMarco() {
 	}*/
 }
 
-/*
-void levantarCfgInicial() {
-	//Levanta sus puertos cfg e ip para conectarse
-	char directorioActual[1024];
-	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/src/config.cfg");
-
-	//puertoSwap = configObtenerPuertoSwap(directorioActual);
-	//ipSwap = configObtenerIpSwap(directorioActual);
-	//puertoEscucha = configObtenerPuertoEscucha(directorioActual);
-	maxMarcosProceso = configObtenerMaxMarcosProceso(directorioActual);
-	cantMarcos = configObtenerCantMarcos(directorioActual);
-	tamanioMarco = configObtenerTamanioMarco(directorioActual);
-	entradasTLB = configObtenerEntradasTLB(directorioActual);
-	TLBHabilitada = configObtenerTLBHabilitada(directorioActual);
-	//retardoMemoria = configObtenerRetardoMemoria(directorioActual);
-
-}*/
-
 
 int levantarCfgInicial(t_config* archConfig){
 	int retorno = 1;
@@ -287,14 +268,9 @@ void assert_valorTLB(t_tlb * nodoTLB, int processID, int numeroPagina, int fueMo
 	marco = nodoTLB->marco;
 }
 
-int buscarEnTLB(int processID) {
-	int pid;
-	int numeroPagina;
-	int fueModificado;
-	int marco;
-
+int buscarEnTLB(int processID, int numeroPagina) {
 	int devolverValorDeTLB(t_tlb * nodo) {
-		return (nodo->processID == processID);
+		return (nodo->processID == processID && nodo->numeroPagina == numeroPagina);
 	}
 
 	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
@@ -306,7 +282,7 @@ int buscarEnTLB(int processID) {
 	if (nodoTLB != NULL) {
 		return nodoTLB->marco;
 	}
-	return 0;
+	return 1000000;
 }
 
 void assert_valor(t_marco * nodoMarco, int processID, char * valor) {
@@ -394,8 +370,8 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 	int indiceMarco;
 	t_marco * marco = malloc(sizeof(t_marco));
 
-	resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid);
-	if (resultadoBusqueda == 0) {
+	resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid, numeroPagina);
+	if (resultadoBusqueda == 1000000) {
 		//numeroPagina = devolverParteUsableInt(nodoInstruccion->instruccion, 5);
 		tablaDeProceso = buscarTablaPaginas(nodoInstruccion->pid, numeroPagina);
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
@@ -403,11 +379,7 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 		if (resultadoBusqueda == 1000000) {
 			//Pide a swap la pagina. Envia el numero de pagina y el processID para que el swap lo traiga de vuelta.
 			t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
-			if (strlen(texto)>0) {
-				nodoDecidir->mensaje = 2;
-			}else{
-				nodoDecidir->mensaje = 1;
-			}
+			nodoDecidir->mensaje = 1;
 			send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
 			t_pedirPaginaSwap * nodoPedirPaginaSwap = malloc(sizeof(t_pedirPaginaSwap));
 			nodoPedirPaginaSwap->numeroPagina = numeroPagina;
@@ -498,6 +470,7 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
     t_marco * marco = malloc(sizeof(t_marco));
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
     	int cantidadPaginasProceso;
+    	char mensajeDelSwap[1024];
     	cantidadPaginasProceso = devolverParteUsableInt(nodoInstruccion->instruccion, 8);
     	inicializarTablaDePaginas(cantidadPaginasProceso, nodoInstruccion->pid);
     	t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
@@ -507,18 +480,20 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
     	nodoIniciarSwap->processID = nodoInstruccion->pid;
     	nodoIniciarSwap->cantidadPaginas = cantidadPaginasProceso;
     	send(socketSwap, nodoIniciarSwap, sizeof(t_iniciarSwap), 0);
+    	recv(socketSwap, mensajeDelSwap, 1024, 0);
+    	puts(mensajeDelSwap);
 		strcpy(respuesta,"iniciar");
 		return 1;
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
-		resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid);
 		marco = accederAPaginaCiclicamente(nodoInstruccion, devolverParteUsableInt(nodoInstruccion->instruccion, 5), "");
 		cargarTlb(nodoInstruccion, marco);
 		puts(marco->valor);
 		strcpy(respuesta,"AFX");
 	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
 		int pagina = valorPagina(nodoInstruccion->instruccion);
-		texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, pagina)));
-		strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, pagina));
+		texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion))));
+		strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion)));
+		strtok(texto, "\'");
 		strcat(texto, "\0");
 		marco = accederAPaginaCiclicamente(nodoInstruccion, pagina, texto);
 		cargarTlb(nodoInstruccion, marco);
@@ -573,6 +548,14 @@ int valorPagina(char * instruccion){
 	}
 	int pagina = atoi(string_substring(instruccion, 9, character));
 	return pagina;
+}
+
+int posicionComilla(char * instruccion){
+	int character = 0;
+	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\'")){
+		character++;
+	}
+	return character;
 }
 
 void escribirMarco(int processID, int marco, char * texto, int presencia, int numeroPagina){

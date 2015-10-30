@@ -4,10 +4,10 @@
 //valores cfg
 char * puertoEscucha;
 char * nombreSwap;
-char * cantPaginas;
-char * tamanioPaginas;
-char * retardoSwap;
-char * retardoCompactacion;
+int cantPaginas;
+int tamanioPaginas;
+int retardoSwap;
+int retardoCompactacion;
 
 
 char instruccion[20];
@@ -83,32 +83,32 @@ void levantarCfgInicial(){
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcat(directorioActual, "/swap/src/config.cfg");
-	strcpy(directorioActual, "/home/utnso/ws/tp-2015-2c-riganijomi/swap/src/config.cfg");
+	strcpy(directorioActual, "/home/utnso/rigonijami/tp-2015-2c-riganijomi/swap/src/config.cfg");
+	t_config * archConfig = malloc(sizeof(t_config));
+	archConfig = config_create(directorioActual);
 
-	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
+	puertoEscucha = config_get_string_value(archConfig, "PUERTO_ESCUCHA");
 	nombreSwap = configObtenerNombreArchivoSwap(directorioActual);
-	cantPaginas = configObtenerCantPaginasSwap(directorioActual);
-	tamanioPaginas = configObtenerTamPaginasSwap(directorioActual);
-	retardoSwap = configObtenerRetardoSwap(directorioActual);
-	retardoCompactacion = configObtenerRetardoCompactacionSwap(directorioActual);
+	tamanioPaginas = config_get_int_value(archConfig, "TAMANIO_PAGINA");
+	cantPaginas = config_get_int_value(archConfig, "CANTIDAD_PAGINAS");
+	retardoSwap = config_get_int_value(archConfig, "RETARDO_SWAP");
+	retardoCompactacion = config_get_int_value(archConfig, "RETARDO_COMPACTACION");
 	configurarSocketServer();
 }
 
 void crearParticion(){
 	FILE *particion;
-	int cantPag = cantPaginas;
-	int tamPag = tamanioPaginas;
 	int i;
 
 	//modificar para el directorio real
 	particion=fopen("swap.data","w");
 	//putc('A',particion);
-	for (i = 2; i < cantPag * tamPag; i++){
+	for (i = 2; i < cantPaginas * tamanioPaginas; i++){
 		putc('\0',particion);
 	}
 	fclose(particion);
 
-	list_add(listaLibres, crearNodoLibre(0, cantPag));
+	list_add(listaLibres, crearNodoLibre(0, cantPaginas));
 
 }
 
@@ -160,7 +160,8 @@ void recibirProceso(int idProc, int cantPagProceso){
 		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
 		//TODO MODIFICAR LA LISTA DE DISPONIBLES
 		nodoRespuesta->exito = 1;
-		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+		//nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+		send(socketMemoria, "Se recibio bien", 1024, 0);
 
 	} else {
 		//No hay elementos libres, no puedo alojar.. Rechazo
@@ -207,8 +208,7 @@ void eliminarProceso(t_eliminarPaginaSwap * nodoEliminar){
 
 void leerPaginaProceso(int idProc, int pagina){
 
-	int pagTam = atoi(tamanioPaginas);
-	char resp[pagTam];
+	char leerDelArchivo[1024];
 	int indiceProceso;
 	FILE *particion;
 
@@ -222,7 +222,7 @@ void leerPaginaProceso(int idProc, int pagina){
 
 	if (nodoProceso != NULL){
 		indiceProceso = nodoProceso->indice;
-		int ubicacion = indiceProceso + (pagina * pagTam);
+		int ubicacion = indiceProceso + (pagina * tamanioPaginas);
 
 		//modificar para el directorio real
 		//TODO cuidado con las direciones relativas
@@ -234,16 +234,19 @@ void leerPaginaProceso(int idProc, int pagina){
 			//Se ubica en +1 así que tiene que ser -1
 			fseek(particion, SEEK_SET, ubicacion-1);
 			//leer esa posicion como una lectura normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
-			if (fread(resp, sizeof(pagTam), 1, particion) > 0){
+			if (fread(leerDelArchivo, sizeof(tamanioPaginas), 1, particion) > 0){
 				//enviar mensaje
-				strcat(resp,"\0");
-				strcpy(respuesta,resp);
+				strcat(leerDelArchivo,"\0");
+				strcpy(respuesta,leerDelArchivo);
 				nodoRespuesta->tipo = LEER;
 				nodoRespuesta->exito = 1;
 				nodoRespuesta->largo = sizeof(respuesta);
-				nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
-				nbytes = socketEnviarMensaje(socketMemoria, respuesta,sizeof(respuesta));
-				log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, pagTam);
+
+				if (strlen(leerDelArchivo) == 0) {
+					strcpy(leerDelArchivo, "NULL");
+				}
+				send(socketMemoria, leerDelArchivo, 1024, 0);
+				log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, tamanioPaginas);
 			}
 
 			fclose(particion);
