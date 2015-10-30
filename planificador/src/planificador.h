@@ -56,6 +56,9 @@ typedef struct CPU {
 	int pid;
 	int socket;
 	int disponible;
+	int retardo;
+	char* contextoEjecucionProcesoAsignado;
+	int pidSiguienteIns;
 } t_cpu;
 
 /* el estado puede ser:
@@ -120,6 +123,9 @@ void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta
 void* bloquearPCB(void *contexto);
 void imprimeEstado(t_list *lista, char*estado );
 void imprimePorcentajeCPU();
+int porcentajeCPU(t_cpu *nodoCPU);
+int interpretarLineaSegunRetardo(char * linea, int retardo);
+int devolverParteUsableInt(char * linea, int desde);
 
 void recibirRespuestaCPU(int socketCpu, int * nbytes);
 void informarDesconexionCPU(int i);

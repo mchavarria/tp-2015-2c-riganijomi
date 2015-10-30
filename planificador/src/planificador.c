@@ -22,6 +22,7 @@ int main() {
 	listaDeListo = list_create();
 	listaDeCPUs = list_create();
 
+
 	pthread_t thread1;
 	char *m1 = "monitor";
 	int r1;
@@ -55,6 +56,7 @@ void* enviarPCBaCPU() {
 	t_cpu * nodoCPU = NULL;
 	while(1) {
 		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
+		nodoCPU->retardo=0;
 		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
 		if (nodoCPU != NULL){
 			//CPU disponible, envío el PCB
@@ -68,6 +70,8 @@ void* enviarPCBaCPU() {
 			} else {
 				//Enviado correctamente
 				nodoCPU->disponible = 0;
+				//agrego al pidProceso el pid del pcb para luego calcular el porcentaje
+				nodoCPU->contextoEjecucionProcesoAsignado = nodoPCB->contextoEjecucion;
 				//saca de lista ready
 				list_remove(listaDeListo, 0);
 				//se agrega a la lista de ejecucion
@@ -194,7 +198,7 @@ void imprimePorcentajeCPU(){
 	 for(i=0; i< tamanio ;i++)
 	   {
 		t_cpu * nodoCPU = list_get(listaDeCPUs, i);
-		printf("CPU %d, socket %d, estado %s\n",nodoCPU->pid,nodoCPU->socket,(nodoCPU->disponible==1)?"Disponible":"Ocupada");
+		printf("CPU %d porcentaje: %d\n",nodoCPU->pid,porcentaje(nodoCPU));
 	   }
 	}
 	else
@@ -202,6 +206,78 @@ void imprimePorcentajeCPU(){
 		puts("No hay CPUs conectadas.\n");
 	}
 }
+
+//funcion q calcula el porcentaje de cpu usada
+int porcentajeCPU(t_cpu *nodoCPU){
+  int total=0;
+  int usado=0;
+  int respuesta=0;
+  if(nodoCPU->disponible==1)
+  {
+	  return respuesta;
+  }
+  else
+  {
+	  FILE * fp;
+	  int pc = 0;
+	  char * linea = NULL;
+	  size_t len = 0;
+	  ssize_t read;
+
+	  //Configuro el archivo para abrir el mProg
+	  char *mprog = malloc(strlen(nodoCPU->contextoEjecucionProcesoAsignado)+8+1);
+	  strcpy(mprog,"/mProgs/");
+	  strcat(mprog,nodoCPU->contextoEjecucionProcesoAsignado);
+
+	  char *dir = getcwd(NULL, 0);
+	  char *contextoEjecucion = malloc(strlen(dir)+strlen(mprog)+1);
+	  strcpy(contextoEjecucion,dir);
+	  strcat(contextoEjecucion,mprog);
+	  //Hasta aca el arlchivo
+
+	  fp = fopen(contextoEjecucion, "r");
+
+	  while (((read = getline(&linea, &len, fp)) != -1)) {
+		  total = total + interpretarLineaSegunRetardo(linea,nodoCPU->retardo);
+		  if (pc < nodoCPU->pidSiguienteIns){
+		     pc++;
+			 usado = usado + interpretarLineaSegunRetardo(linea,nodoCPU->retardo);
+		  }
+	  }
+	  fclose(fp);
+	  if (linea){
+	      free(linea);
+		  }
+     respuesta = usado * 100 / total;
+     return respuesta;
+}
+
+int interpretarLineaSegunRetardo(char * linea, int retardo) {
+  	strtok(linea,";");
+      if (esElComando(linea, "iniciar")) {
+  		return retardo;
+
+  	} else if (esElComando(linea, "leer")) {
+  		return retardo;
+
+  	} else if (esElComando(linea, "entrada-salida")) {
+  		return devolverParteUsableInt(linea,14);
+
+  	} else if (esElComando(linea, "escribir")) {
+  		return retardo;
+
+  	} else if (esElComando(linea, "finalizar")) {
+  		return retardo;
+  	}
+  }
+
+int devolverParteUsableInt(char * linea, int desde) {
+	char * cosaUsable;
+	int valor;
+	cosaUsable = string_substring_from(linea, desde);
+	valor = atoi(cosaUsable);
+	return valor;
+
 
 
 void imprimeEstado(t_list *lista, char*estado ){
@@ -267,6 +343,10 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     switch (tipoResp) {
     		case INICIAR:
 				if (exito){
+					//el nodo cpu tendra como parametro el retardo
+					nodoCPU->retardo = pagRW;
+					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
+					nodoCPU->pidSiguienteIns = pc;
 					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) creado",idCPU,PID,nodoPCB->contextoEjecucion);
 				} else {
 					//saco de la lista de ejecutando
@@ -278,6 +358,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 			break;
     		case LEER:
     			if (exito){
+					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
+					nodoCPU->pidSiguienteIns = pc;
     				log_info(archivoLog,"CPU %d: Proceso mProc %d - pagina %d leida: %s",idCPU,PID,pagRW,nodoRespuesta->respuesta);
 				} else {
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d - pagina %d No leida.",idCPU,PID,pagRW);
@@ -285,6 +367,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     		break;
     		case ESCRIBIR:
     			if (exito){
+					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
+					nodoCPU->pidSiguienteIns = pc;
     				log_info(archivoLog,"CPU %d: Proceso mProc %d - escribio ",idCPU,PID);
 				} else {
 					log_debug(archivoLog,"CPU %d:Proceso mProc %d NO escribio",idCPU,PID);
@@ -292,6 +376,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     		break;
     		case ENTRADA_SALIDA:
 				if (exito){
+					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
+					nodoCPU->pidSiguienteIns = pc;
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por entrada-salida %d",idCPU,PID,pagRW);
 
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
@@ -306,6 +392,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 				break;
     		case QUANTUM_ACABADO:
 				if (exito){
+					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
+					nodoCPU->pidSiguienteIns = pc;
 					t_pcb* nodoPCB=NULL;
 					nodoPCB = list_find(listaDeEjecutado,(void*)buscarPCBporPID);
 					//actualizar el pc del nodoPCB con el valor del pc del nodo respuesta
@@ -327,7 +415,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 				break;
     		case FINALIZAR:
     			if (exito){
-    				log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
+    				nodoCPU->pidSiguienteIns = pc;
+       				log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
 				} else {
 					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) no finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
 				}
