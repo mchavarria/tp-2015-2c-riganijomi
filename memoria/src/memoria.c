@@ -12,8 +12,8 @@ int main(int argc, char* argv[]) {
 	listaTLB = list_create();
 	const char *programa1[8];
 	programa1[0] = "iniciar 9";
-	programa1[1] = "escribir 8 nicolas";
-	programa1[2] = "escribir 5 joaquin";
+	programa1[1] = "escribir 8 'nicolas'";
+	programa1[2] = "escribir 5 'joaquin'";
 	programa1[3] = "leer 8";
 	programa1[4] = "leer 5";
 	programa1[6] = "finalizar";
@@ -33,9 +33,9 @@ int main(int argc, char* argv[]) {
 
 	archConfig = malloc(sizeof(t_config));
 	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
-	archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
+	archConfig = config_create("/home/utnso/ws/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	resultado = levantarCfgInicial(archConfig);
-
+	configurarSockets();
 	inicializarTLB();
 
 	inicializarMarco();
@@ -118,16 +118,21 @@ static t_marco * marco_create(int processID, char * valor, int numeroMarco,  int
     return new;
 }
 
+static t_marco * tlb_create(int processID, int numeroPagina, int marco) {
+	t_tlb * new = malloc(sizeof(t_tlb));
+    new->processID = processID;
+    new->numeroPagina = numeroPagina;
+    new->marco = marco;
+    return new;
+}
+
 void inicializarTLB() {
 	int i = 0;
-	t_tlb * nodoTLB;
 	for (i=0; i<ENTRADAS_TLB; i++) {
-		nodoTLB = malloc(sizeof(t_tlb));
-		nodoTLB->processID = 1000000;
-		list_add(listaTLB, nodoTLB);
-		free(nodoTLB);
+		list_add(listaTLB, tlb_create(1000000,0,0));
 	}
 }
+
 
 void inicializarMarco() {
 	uint32_t i = 0;
@@ -205,12 +210,12 @@ int levantarCfgInicial(t_config* archConfig){
 	TAMANIO_MARCO = config_get_long_value(archConfig,"TAMANIO_MARCO");
 
 	MAXIMO_MARCOS_POR_PROCESO = config_get_long_value(archConfig,"MAXIMO_MARCOS_POR_PROCESO");
-	/*
+
 	ENTRADAS_TLB = config_get_long_value(archConfig,"ENTRADAS_TLB");
 	strcpy(TLB_HABILITADA,config_get_string_value(archConfig,"TLB_HABILITADA"));
 	strcpy(ALGORITMO_REEMPLAZO,config_get_string_value(archConfig,"ALGORITMO_REEMPLAZO"));
 
-*/
+
 	if(RETARDO_MEMORIA == 0 || PUERTO_SWAP == 0 || IP_SWAP == NULL ){
 		retorno = -1;
 	}
@@ -221,9 +226,9 @@ void configurarSockets(){
 	//se conecta con el swap que tiene un servidor escuchando
 	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP,"Memoria","Swap");
 	socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
-	if (socketServidor > 0){
-		socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
-	}
+	//if (socketServidor > 0){
+		//socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
+	//}
 }
 
 void rutina (int n) {
@@ -326,11 +331,7 @@ static t_tablaPaginasProceso * obtenerPagina(int numeroPagina, t_tablasPaginas *
 	t_tablaPaginasProceso * nodoTablasPaginaProceso = NULL;
 	nodoTablasPaginaProceso = list_find(nodoTablasPagina->listaPaginas, (void *) devolverPaginasProceso);
 
-	if (nodoTablasPaginaProceso->numeroMarco < 1000000) {
-		return (nodoTablasPaginaProceso);
-	}
-
-	return NULL;
+	return nodoTablasPaginaProceso;
 }
 
 static t_tablasPaginas * buscarTablaPaginas(int processID, int numeroPagina){
@@ -399,10 +400,14 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 		tablaDeProceso = buscarTablaPaginas(nodoInstruccion->pid, numeroPagina);
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 		resultadoBusqueda = nodoPagina->numeroMarco;
-		if (resultadoBusqueda < 0) {
+		if (resultadoBusqueda == 1000000) {
 			//Pide a swap la pagina. Envia el numero de pagina y el processID para que el swap lo traiga de vuelta.
 			t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
-			nodoDecidir->mensaje = 1;
+			if (strlen(texto)>0) {
+				nodoDecidir->mensaje = 2;
+			}else{
+				nodoDecidir->mensaje = 1;
+			}
 			send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
 			t_pedirPaginaSwap * nodoPedirPaginaSwap = malloc(sizeof(t_pedirPaginaSwap));
 			nodoPedirPaginaSwap->numeroPagina = numeroPagina;
@@ -429,7 +434,8 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 							resultadoBusqueda = indiceMarco;
 							actualizarMarco(texto,nodoInstruccion->pid, numeroPagina,paginaSwap,indiceMarco);
 						}
-					} else if (cantidadMarcosAsignados(nodoInstruccion->pid) == MAXIMO_MARCOS_POR_PROCESO) {
+					}
+					else if (cantidadMarcosAsignados(nodoInstruccion->pid) == MAXIMO_MARCOS_POR_PROCESO) {
 						//ejecuta algoritmo de reemplazo FIFO.
 						//elimina numero de marco en la pagina victima
 						int marco = algoritmoReemplazoFIFO();
@@ -452,11 +458,11 @@ int algoritmoReemplazoFIFO(){
 
 void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, int indiceMarco){
 	if (texto == NULL) {
-		escribirMarco(nodoInstruccion->pid, indiceMarco, paginaSwap , 1, numeroPagina);
-		actualizarTablaPaginas(indiceMarco, nodoInstruccion->pid, numeroPagina, 1, 0);
+		escribirMarco(pid, indiceMarco, paginaSwap , 1, numeroPagina);
+		actualizarTablaPaginas(indiceMarco, pid, numeroPagina, 1, 0);
 	}else{
-		escribirMarco(nodoInstruccion->pid, indiceMarco, texto , 1, numeroPagina);
-		actualizarTablaPaginas(indiceMarco, nodoInstruccion->pid, numeroPagina, 1, 1);
+		escribirMarco(pid, indiceMarco, texto , 1, numeroPagina);
+		actualizarTablaPaginas(indiceMarco, pid, numeroPagina, 1, 1);
 		t_decidirEstructuraSwap * nodoDecidir = malloc(sizeof(t_decidirEstructuraSwap));
 		nodoDecidir->mensaje = 2;
 		send(socketSwap, nodoDecidir, sizeof(t_decidirEstructuraSwap), 0);
@@ -466,7 +472,7 @@ void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, 
 		envioSwap->valor = malloc(strlen(texto) + 1);
 		strcpy(envioSwap->valor, texto);
 		strcat(envioSwap->valor, "\0");
-		send(socketSwap, envioSwap, strlen(t_envioPaginaSwap), 0);
+		send(socketSwap, envioSwap, sizeof(t_envioPaginaSwap), 0);
 	}
 }
 
@@ -549,9 +555,6 @@ void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
 	}
 
 	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
-
-	nodoTLB = NULL;
-
 	nodoTLB = list_find(listaTLB, (void *) devolverNodoTLBLibre);
 
 	if(nodoTLB == NULL){
@@ -565,7 +568,7 @@ void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
 
 int valorPagina(char * instruccion){
 	int character = 0;
-	while (string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
+	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\'")){
 		character++;
 	}
 	int pagina = atoi(string_substring(instruccion, 9, character));

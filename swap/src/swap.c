@@ -83,6 +83,7 @@ void levantarCfgInicial(){
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcat(directorioActual, "/swap/src/config.cfg");
+	strcpy(directorioActual, "/home/utnso/ws/tp-2015-2c-riganijomi/swap/src/config.cfg");
 
 	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
 	nombreSwap = configObtenerNombreArchivoSwap(directorioActual);
@@ -141,6 +142,7 @@ static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProces
 
 void recibirProceso(int idProc, int cantPagProceso){
 
+	nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
 	nodoRespuesta->tipo = INICIAR;
 	nodoRespuesta->largo = 0;//No devuelde nada mas
 	//Salvo en la auxiliar para poder usarla en condicion
