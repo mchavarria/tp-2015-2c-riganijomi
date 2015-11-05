@@ -99,6 +99,7 @@ typedef struct envioPaginaSwap {
 	uint32_t processID;
 	char * valor;
 	uint32_t numeroPagina;
+	uint32_t tamanioTexto;
 } __attribute__ ((packed)) t_envioPaginaSwap;
 
 typedef struct pedirPaginaSwap {

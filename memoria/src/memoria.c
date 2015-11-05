@@ -12,11 +12,14 @@ int main(int argc, char* argv[]) {
 	listaTLB = list_create();
 	const char *programa1[8];
 	programa1[0] = "iniciar 9";
-	programa1[1] = "escribir 8 'nicolas'";
-	programa1[2] = "escribir 5 'joaquin'";
-	programa1[3] = "leer 8";
-	programa1[4] = "leer 5";
-	programa1[6] = "finalizar";
+	programa1[1] = "escribir 0 'nicolas'";
+	programa1[2] = "escribir 1 'juan'";
+	programa1[3] = "escribir 2 'florencia'";
+	programa1[4] = "escribir 3 'pepe'";
+	programa1[5] = "escribir 4 'joaquin'";
+	programa1[6] = "leer 0";
+	programa1[7] = "leer 5";
+	programa1[8] = "finalizar";
 
 	char cfgFin[] ="/src/config.cfg";
 
@@ -41,7 +44,7 @@ int main(int argc, char* argv[]) {
 	inicializarMarco();
 
 	int i=0;
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 9; i++) {
 		t_nodo_mem * mem = malloc(sizeof(t_nodo_mem));
 		strcpy(mem->instruccion, programa1[i]);
 		mem->pid = 1234;
@@ -310,7 +313,7 @@ static t_tablaPaginasProceso * obtenerPagina(int numeroPagina, t_tablasPaginas *
 	return nodoTablasPaginaProceso;
 }
 
-static t_tablasPaginas * buscarTablaPaginas(int processID, int numeroPagina){
+static t_tablasPaginas * buscarTablaPaginas(int processID){
 
 	int devolverTablaProceso(t_tablasPaginas * nodo){
 		return (nodo->processID == processID);
@@ -338,10 +341,14 @@ int buscarEnMarcos(int processID, int numeroPagina) {
 
 int cantidadMarcosAsignados(int processID) {
 
-	int contarMarcosAsignados(t_tablasPaginas * nodo) {
-		return (nodo->processID == processID);
+	t_tablasPaginas * tablaDeProceso = malloc(sizeof(t_tablasPaginas));
+
+	tablaDeProceso = buscarTablaPaginas(processID);
+
+	int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
+		return (nodo->numeroMarco != 1000000);
 	}
-	int valor = list_count_satisfying(listaTablasPaginas, (void*) contarMarcosAsignados);
+	int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
 	return valor;
 }
 
@@ -373,7 +380,7 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 	resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid, numeroPagina);
 	if (resultadoBusqueda == 1000000) {
 		//numeroPagina = devolverParteUsableInt(nodoInstruccion->instruccion, 5);
-		tablaDeProceso = buscarTablaPaginas(nodoInstruccion->pid, numeroPagina);
+		tablaDeProceso = buscarTablaPaginas(nodoInstruccion->pid);
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 		resultadoBusqueda = nodoPagina->numeroMarco;
 		if (resultadoBusqueda == 1000000) {
@@ -410,8 +417,9 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 					else if (cantidadMarcosAsignados(nodoInstruccion->pid) == MAXIMO_MARCOS_POR_PROCESO) {
 						//ejecuta algoritmo de reemplazo FIFO.
 						//elimina numero de marco en la pagina victima
-						int marco = algoritmoReemplazoFIFO();
+						int marco = algoritmoReemplazoFIFO(nodoInstruccion->pid);
 						actualizarMarco(texto,nodoInstruccion->pid, numeroPagina,paginaSwap,marco);
+						resultadoBusqueda = marco;
 					}
 					puts(paginaSwap);
 				}
@@ -422,9 +430,14 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 	return marco;
 }
 
-int algoritmoReemplazoFIFO(){
+int algoritmoReemplazoFIFO(int processID){
+	int devolverMarcoOcupado(t_marco * nodo) {
+		return (nodo->processID == processID);
+	}
+
 	t_marco * nodoMarco = malloc(sizeof(t_marco));
-	nodoMarco = list_get(listaMarco, 0);
+	nodoMarco = list_find(listaMarco, (void*) devolverMarcoOcupado);
+	actualizarTablaPaginas(1000000, processID, nodoMarco->numeroPagina, 1, 1);
 	return nodoMarco->numeroMarco;
 }
 
@@ -444,7 +457,9 @@ void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, 
 		envioSwap->valor = malloc(strlen(texto) + 1);
 		strcpy(envioSwap->valor, texto);
 		strcat(envioSwap->valor, "\0");
+		envioSwap->tamanioTexto = strlen((const char *)envioSwap->valor);
 		send(socketSwap, envioSwap, sizeof(t_envioPaginaSwap), 0);
+		send(socketSwap, (const char *)envioSwap->valor, envioSwap->tamanioTexto, 0);
 	}
 }
 
@@ -452,7 +467,7 @@ void actualizarTablaPaginas(int indiceMarco, int processID, int numeroPagina, in
 	t_tablasPaginas * tablaDeProceso;
 	t_tablaPaginasProceso * nodoPagina;
 
-	tablaDeProceso = buscarTablaPaginas(processID, numeroPagina);
+	tablaDeProceso = buscarTablaPaginas(processID);
 
 	nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 
@@ -494,8 +509,9 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion))));
 		strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion)));
 		strtok(texto, "\'");
+		char ** textoSinComillas = string_split(texto, "\'");
 		strcat(texto, "\0");
-		marco = accederAPaginaCiclicamente(nodoInstruccion, pagina, texto);
+		marco = accederAPaginaCiclicamente(nodoInstruccion, pagina, *textoSinComillas);
 		cargarTlb(nodoInstruccion, marco);
 		printf("%d",nodoInstruccion->pid);
 		printf("%d",pagina);

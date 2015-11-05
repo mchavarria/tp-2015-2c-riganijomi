@@ -53,6 +53,10 @@ void estructuraRecibida(int mensaje){
 		break;
 		case 2:
 			recv(socketMemoria, envioSwap,sizeof(t_envioPaginaSwap), 0);
+			envioSwap->valor = malloc(envioSwap->tamanioTexto + 1);
+			recv(socketMemoria, envioSwap->valor, envioSwap->tamanioTexto, 0);
+			strcpy(envioSwap->valor, string_substring(envioSwap->valor, 0, envioSwap->tamanioTexto));
+			strcat(envioSwap->valor, "\0");
 			escribir(envioSwap);
 		break;
 		case 3:
@@ -71,7 +75,7 @@ void leer(t_pedirPaginaSwap * nodoLeer){
 }
 
 void escribir(t_envioPaginaSwap * nodoEscribir){
-	//TODO hacer
+	escribirPagina(nodoEscribir->processID, nodoEscribir->numeroPagina, nodoEscribir->valor);
 }
 
 void finalizar(t_eliminarPaginaSwap * nodoEliminar){
@@ -101,7 +105,7 @@ void crearParticion(){
 	int i;
 
 	//modificar para el directorio real
-	particion=fopen("swap.data","w");
+	particion=fopen("swap.data","wb+");
 	//putc('A',particion);
 	for (i = 2; i < cantPaginas * tamanioPaginas; i++){
 		putc('\0',particion);
@@ -261,10 +265,25 @@ void leerPaginaProceso(int idProc, int pagina){
 	}
 }
 
-/*
-void escribirPagina () {
-	particion=fopen("swap.data","w+");
-	fseek( fp, 7, SEEK_SET );
-    fputs(" C Programming Language", fp);
+
+void escribirPagina (int idProc, int pagina, char * texto) {
+	FILE *particion;
+
+	particion = fopen("swap.data","r+");
+
+	bool condicionLeer(t_nodoProceso * nodoProceso){
+		return (nodoProceso->idProc == idProc);
+	}
+	t_nodoProceso * nodoProceso = NULL;
+	nodoProceso = list_find(listaProcesos,(void*) condicionLeer);
+
+	int ubicacion = nodoProceso->indice + (pagina * tamanioPaginas);
+
+	fseek(particion, ubicacion, SEEK_SET);
+
+	//fwrite((const char *)texto, strlen((const char *)texto), 1, particion);
+	fputs((const char *)texto, particion);
+
+    fclose(particion);
 }
-*/
+
