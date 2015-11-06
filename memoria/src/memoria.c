@@ -5,11 +5,61 @@ char instruccion[30];
 char respuesta[30];
 int nbytes;
 
+void flushTLB() {
+	sem_wait(&mutexFlushTLB);
+	inicializarTLB();
+}
+
+void flushMarcos() {
+	sem_wait(&mutexFlushMarcos);
+	inicializarMarco();
+	desasignarTodosLosProcesos();
+}
+
+void desasignarTodosLosProcesos() {
+	int i;
+	int j;
+	for (i=0; i<listaTablasPaginas->elements_count; i++) {
+		t_tablasPaginas * nodoTabla = list_get(listaTablasPaginas, i);
+		for (j=0; nodoTabla->listaPaginas; j++) {
+			t_tablaPaginasProceso * nodoPagina = list_get(nodoTabla->listaPaginas, j);
+			nodoPagina->numeroMarco = NULO;
+		}
+	}
+}
+
+void flushTLBActivacion() {
+	sem_post(&mutexFlushTLB);
+}
+
+void flushMarcosActivacion() {
+	sem_post(&mutexFlushMarcos);
+}
+
+
+
 int main(int argc, char* argv[]) {
+
+	pthread_t thread1;
+	char *m1 = "";
+	int r1;
+
+	r1 = pthread_create(&thread1,NULL, flushTLB, (void *) m1);
+
+	pthread_t thread2;
+	char *m2 = "";
+	int r2;
+
+	r2 = pthread_create(&thread2,NULL, flushTLB, (void *) m2);
+
+	signal(SIGINT, flushTLBActivacion);
+	signal(SIGUSR1, flushMarcosActivacion);
+	//signal(SIGUSR2, dumpMemoria);
 
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
 	listaTLB = list_create();
+	/*
 	const char *programa1[9];
 	programa1[0] = "iniciar 9";
 	programa1[1] = "escribir 7 'nicolas'";
@@ -19,7 +69,7 @@ int main(int argc, char* argv[]) {
 	programa1[5] = "escribir 4 'joaquin'";
 	programa1[6] = "leer 1";
 	programa1[7] = "leer 4";
-	programa1[8] = "finalizar";
+	programa1[8] = "finalizar";*/
 
 	char cfgFin[] ="/src/config.cfg";
 
@@ -38,22 +88,19 @@ int main(int argc, char* argv[]) {
 	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
 	archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	resultado = levantarCfgInicial(archConfig);
-	configurarSockets();
+	//configurarSockets();
 	inicializarTLB();
 
 	inicializarMarco();
 
-	int i=0;
+	/*int i=0;
 	for (i = 0; i < 10; i++) {
 		t_nodo_mem * mem = malloc(sizeof(t_nodo_mem));
 		strcpy(mem->instruccion, programa1[i]);
 		mem->pid = 1234;
 		interpretarLinea(mem);
-	}
+	}*/
 
-	/*
-	inicializarMemoria(); //se inicializan los marcos
-	inicializarTLB();
 
 	int continuar = 1;
 	if (resultado == -1 ){
@@ -78,35 +125,22 @@ int main(int argc, char* argv[]) {
 
 			if (socketRecibirMensaje(socketCpu, nodoInstruccion,sizeof(t_nodo_mem)) > 0) {
 			// tengo un mensaje de algun cliente
-				if (interpretarLinea(nodoInstruccion->instruccion) < 0) {
-					if (socketSwap > 0){
-						if (socketEnviarMensaje(socketSwap, nodoInstruccion, sizeof(t_nodo_mem)) > 0) {
-							//envio el nodoInstruccion.. recibo respuesta
-							t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
-							nbytes = socketRecibirMensaje(socketSwap, nodoRespuesta,sizeof(t_resp_swap_mem));
-							//Interpreta la respuesta
-							interpretarRespuestaSwap(nodoRespuesta);
-							//La envia
-							nbytes = socketEnviarMensaje(socketCpu, respuesta,sizeof(respuesta));
-						} else {
-							log_debug(archivoLog,"error envio mensaje swap: %d",socketSwap);
-						}
-						//sem_post(&sem_sockets);
-					} else {
-						log_debug(archivoLog,"seridor no encontrado swap: %d",socketSwap);
-						perror("no hay swap disponible");
-					}//If socketSwap
+				interpretarLinea(nodoInstruccion);
+
+					/*
+							n
+
 				}
-				free(nodoInstruccion);
+				//free(nodoInstruccion);
 			} else {
 				log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
 				continuar = 0;
-			}//Enviar mensaje CPU
+			}//Enviar mensaje CPU*/
+			}
 		}
 
 		free(directorioActual);
 		return 1;
-		**/
 }
 
 static t_marco * marco_create(int processID, char * valor, int numeroMarco, int numeroPagina, int bitModificacion) {
@@ -209,9 +243,9 @@ void configurarSockets(){
 	//se conecta con el swap que tiene un servidor escuchando
 	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP,"Memoria","Swap");
 	socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
-	//if (socketServidor > 0){
-		//socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
-	//}
+	if (socketServidor > 0){
+		socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
+	}
 }
 
 void rutina (int n) {
@@ -535,6 +569,7 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
     char * texto;
     int processID;
     t_marco * marco = malloc(sizeof(t_marco));
+    t_respuestaCPU * nodoRespuestaCPU = malloc(sizeof(t_respuestaCPU));
     if (esElComando(nodoInstruccion->instruccion, "iniciar")) {
     	int cantidadPaginasProceso;
     	char mensajeDelSwap[1024];
@@ -549,13 +584,17 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
     	send(socketSwap, nodoIniciarSwap, sizeof(t_iniciarSwap), 0);
     	recv(socketSwap, mensajeDelSwap, 1024, 0);
     	puts(mensajeDelSwap);
-		strcpy(respuesta,"iniciar");
+		//strcpy(respuesta,"iniciar");
+    	nodoRespuestaCPU->mensaje = 1;
+		send(socketCpu, nodoRespuestaCPU, sizeof(t_respuestaCPU), 0);
 		return 1;
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
 		marco = accederAPaginaCiclicamente(nodoInstruccion, devolverParteUsableInt(nodoInstruccion->instruccion, 5), "");
 		cargarTlb(nodoInstruccion, marco);
 		puts(marco->valor);
 		strcpy(respuesta,"AFX");
+    	nodoRespuestaCPU->mensaje = 1;
+		send(socketCpu, nodoRespuestaCPU, sizeof(t_respuestaCPU), 0);
 	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
 		int pagina = valorPagina(nodoInstruccion->instruccion);
 		texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion))));
@@ -568,6 +607,8 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		printf("%d",nodoInstruccion->pid);
 		printf("%d",pagina);
 		puts(texto);
+    	nodoRespuestaCPU->mensaje = 1;
+		send(socketCpu, nodoRespuestaCPU, sizeof(t_respuestaCPU), 0);
 	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
 		int procesoActual(t_tablasPaginas * nodo) {
 			return (nodo->processID == nodoInstruccion->pid);
