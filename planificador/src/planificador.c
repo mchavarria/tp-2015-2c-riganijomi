@@ -27,9 +27,9 @@ int main() {
 	char *m1 = "monitor";
 	int r1;
 
-	pthread_t thread2;
+	/*pthread_t thread2;
 	char *m2 = "despachador";
-	int r2;
+	int r2;*/
 
 	pthread_t thread3;
 	char *m3 = "consola";
@@ -37,7 +37,7 @@ int main() {
 
 	r1 = pthread_create( &thread1, NULL, monitorearSockets, (void*) m1);
 	//ver de hacer el hilo del monitor
-	r2 = pthread_create( &thread2, NULL, enviarPCBaCPU, (void*) m2);
+	//r2 = pthread_create( &thread2, NULL, enviarPCBaCPU, (void*) m2);
 
 	r3 = pthread_create( &thread3, NULL, consola, (void*) m3);
 
@@ -48,36 +48,37 @@ int main() {
 
 //HACERLO POR CADA CPU CONECTADA
 //INFORMARSE CON UN MONITOR CADA VEZ QUE SE CONECTA UNA
-void* enviarPCBaCPU() {
+void* enviarPCBaCPU()
+{
 	sem_wait(&semProgramas);
 	bool buscarCPUDisponible(t_cpu * nodoCPU) {
 		return (nodoCPU->disponible == 1);
 	}
 	t_cpu * nodoCPU = NULL;
-	while(1) {
-		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
-		nodoCPU->retardo=0;
-		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
-		if (nodoCPU != NULL){
-			//CPU disponible, envío el PCB
-			//sem_wait(sem_CPU_conectada);
-			t_pcb * nodoPCB =  list_get(listaDeListo, 0);
-			int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
-			if (err <= 0){
-				//Error en el envío
-				printf("No se pudo enviar el PCB %d",nodoPCB->PID);
-				sem_post(&semProgramas);
-			} else {
-				//Enviado correctamente
-				nodoCPU->disponible = 0;
-				//saca de lista ready
-				list_remove(listaDeListo, 0);
-				//se agrega a la lista de ejecucion
-				list_add(listaDeEjecutado,nodoPCB );
-			}//Cierra el err
-		}//No hay cpu disponible, vuelve a iniciar el while
-		sem_wait(&semProgramas);
-	}//cierra while
+	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
+	//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
+	if (nodoCPU != NULL){
+		//CPU disponible, envío el PCB
+		//sem_wait(sem_CPU_conectada);
+		t_pcb * nodoPCB =  list_get(listaDeListo, 0);
+		int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
+		if (err <= 0){
+			//Error en el envío
+			printf("No se pudo enviar el PCB %d",nodoPCB->PID);
+			sem_post(&semProgramas);
+		} else {
+			nodoCPU->pcb = nodoPCB->PID;
+			//Enviado correctamente
+			nodoCPU->disponible = 0;
+			//saca de lista ready
+			list_remove(listaDeListo, 0);
+			//se agrega a la lista de ejecucion
+			list_add(listaDeEjecutado,nodoPCB );
+		}//Cierra el err
+	} else {
+		//No hay cpu disponible, vuelve a iniciar el while
+		sem_post(&semProgramas);
+	}
 }
 
 void recibirRespuestaCPU(int socketCpu, int * nbytes){
@@ -169,6 +170,11 @@ void* agregarPCBALista(char * programa) {
 		//sem_post(&semProgramas);
 		//incrementar buffer de pcbs a consumir
 		sem_post(&semProgramas);
+		//Enviar PCB a CPU
+		pthread_t threadPcbACpu;
+		int rcp;
+		//usa el valor de nodo respuesta como tiempo de entrada salida
+		rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
 	} else {
 		perror("Lista no agregada.");
 	}
@@ -213,8 +219,8 @@ void* consola() {
 			imprimeEstado(listaDeListo,"listos");
 			imprimeEstado(listaDeBloqueado,"bloqueados");
 			imprimeEstado(listaDeEjecutado,"ejecutando");
-	    //} else if (esElComando(comando, "cpu")) {
-			//imprimePorcentajeCPU();
+	    } else if (esElComando(comando, "cpu")) {
+			imprimePorcentajeCPU();
 	    } else {
 			perror("Comando no valido.");
 		}
@@ -232,7 +238,7 @@ void imprimePorcentajeCPU()
 	if(listaDeCPUs->elements_count > 0)
 	{
 		 int tamanio = listaDeCPUs->elements_count;
-		 for(i=0; i<= tamanio ;i++)
+		 for(i=0; i< tamanio ;i++)
 		 {
 			t_cpu * nodoCPU = list_get(listaDeCPUs, i);
 			float porc = porcentajeCPU(nodoCPU);
@@ -348,8 +354,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 	int idCPU = nodoRespuesta ->idCPU;
     int tipoResp = nodoRespuesta->tipo;
     int exito = nodoRespuesta->exito;
-    int pagRW = nodoRespuesta->pagRW;
     int pc = nodoRespuesta->pc;
+    int pagRW = nodoRespuesta->pagRW;
 
     bool buscarPCBporPID(t_pcb * nodoPCB) {
     		return (nodoPCB->PID == PID);
@@ -359,9 +365,9 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 	nodoPCB = list_find(listaDeEjecutado,(void*)buscarPCBporPID);
 
 	bool buscarCPUporPid(t_cpu * nodoCPU) {
-	    		return (nodoCPU->pid == idCPU);
+	    		return (nodoCPU->pcb == PID);
 	    	}
-	t_cpu* nodoCPU=NULL;
+	t_cpu * nodoCPU = NULL;
 	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporPid);//Para actualizar si está disponible o no
 
     switch (tipoResp) {
@@ -370,6 +376,9 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					//el nodo cpu tendra como parametro el retardo
 					nodoCPU->retardo = pagRW;
 					nodoCPU->pcb = PID;
+					if (nodoCPU->pid == 0){
+						nodoCPU->pid = idCPU;
+					}
 					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
 					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) creado",idCPU,PID,nodoPCB->contextoEjecucion);
 				} else {
@@ -403,6 +412,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					nodoCPU->disponible = 1;
+					nodoCPU->pcb = 0;
 					pthread_t thread_I_O;
 					int r3;
 					//usa el valor de nodo respuesta como tiempo de entrada salida
@@ -424,14 +434,21 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					sem_wait(&mutexListaListo);
 					list_add(listaDeListo, nodoPCB);
 					sem_post(&mutexListaListo);
-					//MUTEX
+
+					nodoCPU->disponible = 1;
+					nodoCPU->pcb = 0;
+					sem_post(&semProgramas);
+					//Enviar PCB a CPU
+					pthread_t threadPcbACpu;
+					int rcp;
+					//usa el valor de nodo respuesta como tiempo de entrada salida
+					rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
 
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por quantum acabado ",idCPU,PID);
 				} else {
 					//validar luego que opcion hay para fallar
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo la instruccion por quantum",idCPU,PID);
 				}
-				nodoCPU->disponible = 1;
 				break;
     		case FINALIZAR:
     			if (exito){
@@ -532,16 +549,27 @@ void* bloquearPCB(void *contexto) {
 	sem_wait(&mutexListaListo);
 	list_add(listaDeListo,nodoPCB );
 	sem_post(&mutexListaListo);
-	//MUTEX
+
+	//Enviar PCB a CPU
+	pthread_t threadPcbACpu;
+	int rcp;
+	//usa el valor de nodo respuesta como tiempo de entrada salida
+	rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
 }
 
 void agregarCPUALista(int socketCpu) {
 	t_cpu * nodoCpu = malloc(sizeof(t_cpu));
 	nodoCpu->pid = listaDeCPUs->elements_count;
 	nodoCpu->socket = socketCpu;
+	nodoCpu->retardo = 0;
 	nodoCpu->disponible = 1;
 	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
 	list_add(listaDeCPUs, nodoCpu);
+	//Enviar PCB a CPU
+	pthread_t threadPcbACpu;
+	int rcp;
+	//usa el valor de nodo respuesta como tiempo de entrada salida
+	rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
 }
 
 
