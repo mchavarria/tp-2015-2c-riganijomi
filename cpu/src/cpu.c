@@ -56,7 +56,7 @@ void cpu_func() {
 		log_error(archivoLog, "Planificador no se pudo conectar");
 		exit(EXIT_FAILURE);
 	} else {
-		log_info(archivoLog, "CPU conectada al Planificador, idCpu: %d", &idCPU);
+		log_info(archivoLog, "CPU conectada al Planificador, idCpu: %d", idCPU);
 	}
 
 	//Se conecta al ADM
@@ -65,7 +65,7 @@ void cpu_func() {
 		log_error(archivoLog, "Memoria no se pudo conectar");
 		exit(EXIT_FAILURE);
 	} else {
-		log_info(archivoLog, "CPU conectada a Memoria, idCpu: %d", &idCPU);
+		log_info(archivoLog, "CPU conectada a Memoria, idCpu: %d", idCPU);
 	}
 
 	//TODAS LAS CPUS VAN A HACER LO MISMO UNA VEZ CONECTADAS.
@@ -340,7 +340,8 @@ void instruccionFinalizarProceso(char * instruccion) {
 
 			if (socketPlanificador > 0){
 				//El socket está linkeado
-				socketEnviarMensaje(socketPlanificador,nodoRtaCpuPlan,sizeof(t_resp_cpu_plan));
+				int err = enviarMensajeRespuestaCPU(socketPlanificador, nodoRtaCpuPlan);
+				//socketEnviarMensaje(socketPlanificador,nodoRtaCpuPlan,sizeof(t_resp_cpu_plan));
 			}
 			if (exito != 1){
 				log_error(archivoLog, "no se pudo finalizar el proceso: %d", pcbProc->PID);
