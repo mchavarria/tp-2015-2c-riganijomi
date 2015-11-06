@@ -104,6 +104,7 @@ sem_t mutexListaListo;
 char comando[100];
 int quantumcfg = 0;
 char algoritmo[4];
+int tiempoBloqueo = 0;
 
 void levantarCfg();
 
@@ -120,7 +121,7 @@ int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB);
 void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta);
 void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
-void* bloquearPCB(void *contexto);
+void* bloquearPCB();
 void imprimeEstado(t_list *lista, char*estado );
 void imprimePorcentajeCPU();
 float porcentajeCPU(t_cpu *nodoCPU);

@@ -55,29 +55,32 @@ void* enviarPCBaCPU()
 		return (nodoCPU->disponible == 1);
 	}
 	t_cpu * nodoCPU = NULL;
-	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
-	//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
-	if (nodoCPU != NULL){
-		//CPU disponible, envío el PCB
-		//sem_wait(sem_CPU_conectada);
-		t_pcb * nodoPCB =  list_get(listaDeListo, 0);
-		int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
-		if (err <= 0){
-			//Error en el envío
-			printf("No se pudo enviar el PCB %d",nodoPCB->PID);
-			sem_post(&semProgramas);
+	while (1){
+		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
+		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
+		if (nodoCPU != NULL){
+			//CPU disponible, envío el PCB
+			//sem_wait(sem_CPU_conectada);
+			t_pcb * nodoPCB =  list_get(listaDeListo, 0);
+			int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
+			if (err <= 0){
+				//Error en el envío
+				printf("No se pudo enviar el PCB %d",nodoPCB->PID);
+				sem_post(&semProgramas);
+			} else {
+				nodoCPU->pcb = nodoPCB->PID;
+				//Enviado correctamente
+				nodoCPU->disponible = 0;
+				//saca de lista ready
+				list_remove(listaDeListo, 0);
+				//se agrega a la lista de ejecucion
+				list_add(listaDeEjecutado,nodoPCB);
+			}//Cierra el err
 		} else {
-			nodoCPU->pcb = nodoPCB->PID;
-			//Enviado correctamente
-			nodoCPU->disponible = 0;
-			//saca de lista ready
-			list_remove(listaDeListo, 0);
-			//se agrega a la lista de ejecucion
-			list_add(listaDeEjecutado,nodoPCB );
-		}//Cierra el err
-	} else {
-		//No hay cpu disponible, vuelve a iniciar el while
-		sem_post(&semProgramas);
+			//No hay cpu disponible, vuelve a iniciar el while
+			sem_post(&semProgramas);
+		}
+		sem_wait(&semProgramas);
 	}
 }
 
@@ -329,8 +332,8 @@ void levantarCfg(){
 
 	archivoLog = log_create("planificador.log", "Planificador", false, 2);
 
-	//char cfgFin[] ="/planificador/src/config.cfg";//Para consola
-	char cfgFin[] ="/src/config.cfg";//Para eclipse
+	char cfgFin[] ="/planificador/src/config.cfg";//Para consola
+	//char cfgFin[] ="/src/config.cfg";//Para eclipse
 	char *dir = getcwd(NULL, 0);
 
 	char *directorioActual = malloc(strlen(dir)+strlen(cfgFin)+1);
@@ -350,11 +353,10 @@ void levantarCfg(){
 
 void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
-	int PID = nodoRespuesta ->PID;
-	int idCPU = nodoRespuesta ->idCPU;
+	int PID = nodoRespuesta->PID;
+	int idCPU = nodoRespuesta->idCPU;
     int tipoResp = nodoRespuesta->tipo;
     int exito = nodoRespuesta->exito;
-    int pc = nodoRespuesta->pc;
     int pagRW = nodoRespuesta->pagRW;
 
     bool buscarPCBporPID(t_pcb * nodoPCB) {
@@ -363,6 +365,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
     t_pcb* nodoPCB=NULL;
 	nodoPCB = list_find(listaDeEjecutado,(void*)buscarPCBporPID);
+	//actualizar el pc del nodoPCB con el valor del pc del nodo respuesta
+	nodoPCB->pc = nodoRespuesta->pc;
 
 	bool buscarCPUporPid(t_cpu * nodoCPU) {
 	    		return (nodoCPU->pcb == PID);
@@ -375,7 +379,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 				if (exito){
 					//el nodo cpu tendra como parametro el retardo
 					nodoCPU->retardo = pagRW;
-					nodoCPU->pcb = PID;
+					nodoCPU->disponible = 0;
 					if (nodoCPU->pid == 0){
 						nodoCPU->pid = idCPU;
 					}
@@ -385,7 +389,6 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					//saco de la lista de ejecutando
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d (%s) fallo",idCPU,PID,nodoPCB->contextoEjecucion);
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
-					free(nodoPCB);
 					nodoCPU->disponible = 1;
 				}
 			break;
@@ -413,36 +416,31 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					nodoCPU->disponible = 1;
 					nodoCPU->pcb = 0;
+
+					tiempoBloqueo = pagRW;
+
+					list_add(listaDeBloqueado,nodoPCB);
+
 					pthread_t thread_I_O;
 					int r3;
 					//usa el valor de nodo respuesta como tiempo de entrada salida
-					r3 = pthread_create( &thread_I_O, NULL, bloquearPCB, nodoRespuesta );
+					r3 = pthread_create( &thread_I_O, NULL, bloquearPCB, (void*)"bloqueo" );
+
 				} else {
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo instruccion entrada-salida %d ",idCPU,PID,pagRW);
 				}
 				break;
     		case QUANTUM_ACABADO:
 				if (exito){
-					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
-					t_pcb* nodoPCB=NULL;
-					nodoPCB = list_find(listaDeEjecutado,(void*)buscarPCBporPID);
-					//actualizar el pc del nodoPCB con el valor del pc del nodo respuesta
-					nodoPCB->pc = pc;
-					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 
+					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+					nodoCPU->disponible = 1;
+					nodoCPU->pcb = 0;
 					//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
 					sem_wait(&mutexListaListo);
 					list_add(listaDeListo, nodoPCB);
 					sem_post(&mutexListaListo);
-
-					nodoCPU->disponible = 1;
-					nodoCPU->pcb = 0;
 					sem_post(&semProgramas);
-					//Enviar PCB a CPU
-					pthread_t threadPcbACpu;
-					int rcp;
-					//usa el valor de nodo respuesta como tiempo de entrada salida
-					rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
 
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por quantum acabado ",idCPU,PID);
 				} else {
@@ -535,26 +533,18 @@ void* buscarPCBEjecutandoPorPID(int PID){
 	return nodoPCB;
 }
 
-void* bloquearPCB(void *contexto) {
-	t_resp_cpu_plan * nodoRespuesta = contexto;
-
-	t_pcb* nodoPCB = buscarPCBEjecutandoPorPID(nodoRespuesta->PID);
-
-	//UTILIZA EL MUTEX PARA AGREGAR A LISTO NUEVAMENTE
-	list_add(listaDeBloqueado,nodoPCB);
-
-	sleep(nodoRespuesta->pagRW);//Viene de interpretar linea y usa pagRW para dormirlo
+void* bloquearPCB()
+{
+	sleep(tiempoBloqueo);//Viene de interpretar linea y usa pagRW para dormirlo
 	//se agrega a la lista de listo
 	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
+	t_pcb * nodoPCB =  list_get(listaDeBloqueado, 0);
 	sem_wait(&mutexListaListo);
 	list_add(listaDeListo,nodoPCB );
+	sem_post(&semProgramas);
+	list_remove(listaDeBloqueado,0);
 	sem_post(&mutexListaListo);
 
-	//Enviar PCB a CPU
-	pthread_t threadPcbACpu;
-	int rcp;
-	//usa el valor de nodo respuesta como tiempo de entrada salida
-	rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
 }
 
 void agregarCPUALista(int socketCpu) {
