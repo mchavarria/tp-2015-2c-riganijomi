@@ -22,6 +22,7 @@
 #define LEER 2
 #define ESCRIBIR 3
 #define FINALIZAR 4
+#define NULO 1000000
 
 //CFG
 char* PUERTO_SWAP;
@@ -77,8 +78,7 @@ typedef struct TLB{
 typedef struct tablaPaginasProceso {
 	uint32_t numeroPagina;
 	uint32_t numeroMarco;
-	uint32_t bitPresencia;
-	uint32_t bitModificacion;
+	uint32_t ingreso;
 } __attribute__ ((packed)) t_tablaPaginasProceso;
 
 typedef struct tablasPaginas {
@@ -91,8 +91,8 @@ typedef struct marco {
 	char * valor;
 	uint32_t numeroMarco;
 	uint32_t numeroPagina;
-	uint32_t presencia;
 	uint32_t bitModificacion;
+	uint32_t bitLeido;
 } __attribute__ ((packed)) t_marco;
 
 typedef struct envioPaginaSwap {
@@ -141,10 +141,13 @@ void inicializarMemoria();
 void inicializarTLB();
 int inicializarTablaDePaginas();
 void inicializarMarco();
-void actualizarTablaPaginas(int indiceMarco, int processID, int numeroPagina, int bitPresencia, int bitModificacion);
+void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina);
 void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, int indiceMarco);
-int algoritmoReemplazoFIFO();
-void escribirMarco(int processID, int marco, char * texto, int presencia, int numeroPagina);
+int algoritmoReemplazo(int processID);
+int algoritmoReemplazoFIFO(int processID);
+void desasignarMarco(int processID, int marco);
+void escribirMarco(int processID, int marco, char * texto, int numeroPagina);
+static t_tablaPaginasProceso * obtenerPaginaPorNumMarco(int marco, t_tablasPaginas * nodoTablasPagina);
 int valorPagina(char * instruccion);
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco);
 #endif /* MEMORIA_H_ */
