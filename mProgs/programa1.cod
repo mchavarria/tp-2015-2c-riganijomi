@@ -1,8 +1,3 @@
-iniciar 9;
-escribir 1 'hola';
-escribir 2 'loQueQui';
-escribir 4 'eras';
-leer 4;
-leer 2;
-leer 1;
+iniciar 5;
+entrada-salida 2;
 finalizar;
