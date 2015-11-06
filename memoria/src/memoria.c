@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 	puts(directorioActual);
 
 	archConfig = malloc(sizeof(t_config));
-	archivoLog = log_create("memoria.log.log", "Memoria", false, 2);//Eclipse
+	archivoLog = log_create("memoria.log", "Memoria", false, 2);//Eclipse
 	archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	resultado = levantarCfgInicial(archConfig);
 	//configurarSockets();
@@ -220,7 +220,7 @@ int levantarCfgInicial(t_config* archConfig){
 	memset(PUERTO_ESCUCHA,'\0',largo + 1);
 	PUERTO_ESCUCHA=config_get_string_value(archConfig,"PUERTO_ESCUCHA");
 
-	RETARDO_MEMORIA =config_get_long_value(archConfig,"RETARDO_MEMORIA");
+	RETARDO_MEMORIA =config_get_int_value(archConfig,"RETARDO_MEMORIA");
 
 	CANTIDAD_MARCOS = config_get_long_value(archConfig,"CANTIDAD_MARCOS");
 
@@ -567,6 +567,7 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 	int resultadoBusqueda;
     char * valor;
     char * texto;
+    char logs[1024];
     int processID;
     t_marco * marco = malloc(sizeof(t_marco));
     t_respuestaCPU * nodoRespuestaCPU = malloc(sizeof(t_respuestaCPU));
@@ -587,6 +588,7 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		//strcpy(respuesta,"iniciar");
     	nodoRespuestaCPU->mensaje = 1;
 		send(socketCpu, nodoRespuestaCPU, sizeof(t_respuestaCPU), 0);
+		log_info(archivoLog, "Proceso iniciado: process ID %d, cantidad de paginas %d.", nodoInstruccion->pid, cantidadPaginasProceso);
 		return 1;
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
 		marco = accederAPaginaCiclicamente(nodoInstruccion, devolverParteUsableInt(nodoInstruccion->instruccion, 5), "");
@@ -595,6 +597,8 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		strcpy(respuesta,"AFX");
     	nodoRespuestaCPU->mensaje = 1;
 		send(socketCpu, nodoRespuestaCPU, sizeof(t_respuestaCPU), 0);
+		log_info(archivoLog, "Se ha leido una pagina: process ID %d, pagina leida %d con el valor '%s'", nodoInstruccion->pid, devolverParteUsableInt(nodoInstruccion->instruccion, 5), marco->valor);
+		sleep(RETARDO_MEMORIA);
 	} else if (esElComando(nodoInstruccion->instruccion, "escribir")) {
 		int pagina = valorPagina(nodoInstruccion->instruccion);
 		texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion))));
@@ -609,6 +613,8 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		puts(texto);
     	nodoRespuestaCPU->mensaje = 1;
 		send(socketCpu, nodoRespuestaCPU, sizeof(t_respuestaCPU), 0);
+		log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", nodoInstruccion->pid, devolverParteUsableInt(nodoInstruccion->instruccion, 5), marco->valor);
+		sleep(RETARDO_MEMORIA);
 	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
 		int procesoActual(t_tablasPaginas * nodo) {
 			return (nodo->processID == nodoInstruccion->pid);
@@ -623,6 +629,8 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		strcpy(nodoEliminar->valor, "finalizar");
 		strcat(nodoEliminar->valor, "\0");
 		send(socketSwap, nodoEliminar, sizeof(t_eliminarPaginaSwap), 0);
+		log_info(archivoLog, "Se ha finalizado el proceso con ID: %d.", nodoInstruccion->pid);
+		puts("finalizado");
 	} else {
 		strcpy(respuesta,"error");
 		perror("comando invalido");
