@@ -164,3 +164,10 @@ int configObtenerQuantum(char * ruta) {
 	QUANTUM = config_get_int_value(config, "QUANTUM");
 	return QUANTUM;
 }
+char * configObtenerAlgoritmoPlanificador(char * ruta) {
+	t_config* config;
+	config = config_create(ruta);
+	char * ALGORITMO;
+	ALGORITMO = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+	return ALGORITMO;
+}
