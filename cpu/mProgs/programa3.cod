@@ -1,7 +1,13 @@
-iniciar 8;
-escribir 1 "Hola";
-leer 1;
-leer 2;
+iniciar 15;
+escribir 1 'no';
+escribir 5 'te';
+escribir 2 'doy';
+escribir 3 'nada';
+entrada-salida 15;
+escribir 14 'duermas';
+leer 5;
 leer 3;
-leer 4;
+leer 14;
+leer 2;
+leer 1;
 finalizar;

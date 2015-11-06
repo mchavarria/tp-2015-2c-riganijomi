@@ -121,6 +121,10 @@ typedef struct decidirEstructuraSwap {
 	uint32_t mensaje;
 } __attribute__ ((packed)) t_decidirEstructuraSwap;
 
+typedef struct respuestaCPU {
+	uint32_t mensaje;
+} __attribute__ ((packed)) t_respuestaCPU;
+
 t_list * listaMarcosLibres;
 
 t_list * listaTablasPaginas;
@@ -128,6 +132,9 @@ t_list * listaTablasPaginas;
 t_list * listaMarco;
 
 t_list * listaTLB;
+
+sem_t mutexFlushTLB;
+sem_t mutexFlushMarcos;
 
 t_resp_swap_mem * nodoRespuesta;
 t_nodo_mem * nodoInstruccion;
@@ -137,7 +144,6 @@ void configurarSockets();
 
 int interpretarLinea(t_nodo_mem * nodoInstruccion);
 void interpretarRespuestaSwap(t_resp_swap_mem * nodoRespuesta);
-void inicializarMemoria();
 void inicializarTLB();
 int inicializarTablaDePaginas();
 void inicializarMarco();

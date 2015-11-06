@@ -1,0 +1,9 @@
+[INFO] 04:54:57:393 Memoria/(20314:20314): MEM: Archivo de configuracion levantado correctamente
+[INFO] 04:56:14:179 Memoria/(20314:20314): Proceso iniciado: process ID 1, cantidad de paginas 5.
+[INFO] 04:56:17:790 Memoria/(20314:20314): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'no'
+[INFO] 04:57:04:75 Memoria/(20373:20373): MEM: Archivo de configuracion levantado correctamente
+[INFO] 04:57:25:872 Memoria/(20373:20373): Proceso iniciado: process ID 1, cantidad de paginas 5.
+[INFO] 04:57:27:835 Memoria/(20373:20373): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'no'
+[INFO] 04:59:03:328 Memoria/(20430:20430): MEM: Archivo de configuracion levantado correctamente
+[INFO] 04:59:21:904 Memoria/(20430:20430): Proceso iniciado: process ID 1, cantidad de paginas 5.
+[INFO] 05:00:55:23 Memoria/(20430:20430): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'no'

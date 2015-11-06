@@ -250,10 +250,11 @@ void leerPaginaProceso(int idProc, int pagina){
 					strcpy(leerDelArchivo, "NULL");
 				}
 				send(socketMemoria, leerDelArchivo, 1024, 0);
-				log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, tamanioPaginas);
+				//log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, tamanioPaginas);
 			}
 
 			fclose(particion);
+			log_info(archivoLog, "Lectura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, leerDelArchivo, idProc, pagina);
 		}
 	}else{
 
@@ -285,5 +286,7 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	fputs((const char *)texto, particion);
 
     fclose(particion);
+
+    log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, texto, idProc, pagina);
 }
 

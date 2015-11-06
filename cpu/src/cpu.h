@@ -81,7 +81,12 @@ typedef struct _t_hilos {
 	pthread_t hiloCPU;
 } t_hilos_CPU;
 
+typedef struct NODO_RTA_MEM_CPU {
+	uint32_t exito;
+} t_resp_mem_cpu;
+
 t_resp_cpu_plan * nodoRtaCpuPlan;
+t_resp_mem_cpu * nodoRtaMemCpu;
 t_pcb * pcbProc;
 t_list * listaHilosCPU;
 

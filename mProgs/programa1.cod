@@ -1,6 +1,3 @@
-iniciar 9
-escribir 2 Nicolas
-escribir 9 Joaquin
-leer 2
-leer 9
-finalizar
+iniciar 5;
+entrada-salida 2;
+finalizar;
