@@ -78,6 +78,8 @@ void cpu_func() {
 	pcbProc = malloc(sizeof(t_pcb));
 	pcbProc->PID = 0;
 	int nbytes;
+	int i = 0;
+	int controlQuantum = 1;
 	while ((nbytes = recibirPCBdePlanificador(pcbProc)) > 0){
 
 		FILE * fp;
@@ -94,7 +96,7 @@ void cpu_func() {
 		char *contextoEjecucion = malloc(strlen(dir)+strlen(mprog)+1);
 		strcpy(contextoEjecucion,dir);
 		strcat(contextoEjecucion,mprog);
-		//Hasta aca el arlchivo
+		//Hasta aca el archivo
 
 		fp = fopen(contextoEjecucion, "r");
 
@@ -104,22 +106,45 @@ void cpu_func() {
 		} else {
 			while (((read = getline(&linea, &len, fp)) != -1) && (continuarLeyendo)) {
 
-			  pc++; //actualiza el pgm counter
-			  //Lee linea y ejecuta
-			  interpretarLinea(linea);
-			  sleep(retardo);
-
+				if ((pcbProc->pc >= i++) && (controlQuantum++ <= pcbProc->quantum)){
+					pcbProc->pc++;  //actualiza el pgm counter
+					//Lee linea y ejecuta
+					interpretarLinea(linea);
+					sleep(retardo);
+				}
+				if (controlQuantum > pcbProc->quantum){
+					sacarPorQuantum();
+				}
 			}
 
 			fclose(fp);
 			if (linea){
 			  free(linea);
 			}
-		} // If archivo leido
-	} //if pcb != NULL
+		}
+	}
 }
 
+void sacarPorQuantum(){
 
+	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
+
+	int exito;
+	nodoRtaCpuPlan->PID = pcbProc->PID;
+	nodoRtaCpuPlan->idCPU = getpid();
+	nodoRtaCpuPlan->tipo = QUANTUM_ACABADO;
+	nodoRtaCpuPlan->pc = pcbProc->pc;
+	nodoRtaCpuPlan->pagRW = 0;
+	char resp[1];
+	nodoRtaCpuPlan->respuesta = resp;
+	nodoRtaCpuPlan->exito = 1;
+
+	if (socketPlanificador > 0){
+		//El socket está linkeado
+		int err = enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
+		log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+	}
+}
 
 void interpretarLinea(char * linea) {
 	strtok(linea,";");
@@ -141,16 +166,6 @@ void interpretarLinea(char * linea) {
 		perror("comando invalido");
 	}
 }
-
-
-/*
-char * obtenerDirectorio(char * nombreArchivo) {
-	char directorioActual[1024];
-	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, nombreArchivo);
-	return directorioActual;
-
-}*/
 
 void instruccionIniciarProceso (char * instruccion) {
 
@@ -193,7 +208,7 @@ void instruccionIniciarProceso (char * instruccion) {
 }
 
 void instruccionLeerPagina (char * instruccion) {
-	int exito;
+	int exito = 1;
 	nodoRtaCpuPlan->PID = pcbProc->PID;
 	nodoRtaCpuPlan->idCPU = getpid();
 	nodoRtaCpuPlan->tipo = LEER;
@@ -215,9 +230,11 @@ void instruccionLeerPagina (char * instruccion) {
 					if (socketPlanificador > 0){
 						//El socket está linkeado
 						strcpy(nodoRtaCpuPlan->respuesta,respuesta);
+						//strcpy(nodoRtaCpuPlan->respuesta,"migue");
 					}
 				}else {
 					nodoRtaCpuPlan->exito = 0;
+					continuarLeyendo = 0;
 					char * respuesta = "\0";
 					nodoRtaCpuPlan->respuesta = respuesta;
 					log_error(archivoLog, "no se pudo leer el proceso: %d", pcbProc->PID);
@@ -233,22 +250,48 @@ void instruccionLeerPagina (char * instruccion) {
 }
 
 void instruccionEscribirPagina (char * instruccion) {
-	/*char * directorioActual;
-	char * puerto;
-	directorioActual = obtenerDirectorio("/src/config.cfg");
-	puts(directorioActual);
-	puerto = configObtenerPuertoMemoria(directorioActual);
-	puts(puerto);*/
+
+	int exito;
+	nodoRtaCpuPlan->PID = pcbProc->PID;
+	nodoRtaCpuPlan->idCPU = getpid();
+	nodoRtaCpuPlan->tipo = ESCRIBIR;
+	nodoRtaCpuPlan->pc = pc;
+	int numPag = devolverIntInstruccion(instruccion,9);
+	nodoRtaCpuPlan->pagRW = numPag;
+
+	if (socketADM > 0){
+		t_nodo_mem * nodoInstruccion = malloc(sizeof(t_nodo_mem));
+		nodoInstruccion->pid = pcbProc->PID;
+		strcpy(nodoInstruccion->instruccion,instruccion);
+
+		if (socketEnviarMensaje(socketADM, nodoInstruccion, sizeof(t_nodo_mem)) > 0){
+			if (socketRecibirMensaje(socketADM, exito,sizeof(exito))> 0){
+				if (exito){
+					nodoRtaCpuPlan->exito = 1;
+					log_info(archivoLog, "se realizo la escritura del proceso: %d", pcbProc->PID);
+				}else {
+					nodoRtaCpuPlan->exito = 0;
+					continuarLeyendo = 0;
+					log_error(archivoLog, "no se pudo Escribir el proceso: %d", pcbProc->PID);
+				}//exito if
+				int err = enviarMensajeRespuestaCPU(socketPlanificador, nodoRtaCpuPlan);
+			}//rcv adm
+		} else{
+			log_error(archivoLog,"error envio mensaje memoria : %d",socketADM);
+		}//enviar adm
+		log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+		free(nodoInstruccion);
+	}
 }
 
-void instruccionEntradaSalida (char * tiempo) {
+void instruccionEntradaSalida (char * instruccion) {
 
 	int exito;
 	nodoRtaCpuPlan->PID = pcbProc->PID;
 	nodoRtaCpuPlan->idCPU = getpid();
 	nodoRtaCpuPlan->tipo = ENTRADA_SALIDA;
 	nodoRtaCpuPlan->pc = pc;
-	nodoRtaCpuPlan->pagRW = 0; // poner el valor del Tiempo de E/S
+	nodoRtaCpuPlan->pagRW = devolverParteUsableInt(instruccion, 15);
 	char resp[1];
 	nodoRtaCpuPlan->respuesta = resp;
 	nodoRtaCpuPlan->exito = 0;
@@ -303,8 +346,8 @@ void instruccionFinalizarProceso(char * instruccion) {
 void cargarCfgs() {
 	int a;
 	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/cpu/src/config.cfg");//para consola
-	//strcat(directorioActual, "/src/config.cfg"); //para eclipse
+	//strcat(directorioActual, "/cpu/src/config.cfg");//para consola
+	strcat(directorioActual, "/src/config.cfg"); //para eclipse
 
 	ipPlanificador = configObtenerIpPlanificador(directorioActual);
 	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);
@@ -334,7 +377,7 @@ void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB){
 
 	//t_pcb * pcb = malloc(sizeof(t_pcb));
 	char programa[50];
-	unpack(buffer,SECUENCIA_PCB,&nodoPCB->PID,&nodoPCB->estado,&nodoPCB->pc,&nodoPCB->quantum,programa);
+	unpack(buffer,SECUENCIA_PCB,&nodoPCB->PID,&nodoPCB->estado,&nodoPCB->pc,&nodoPCB->quantum,&nodoPCB->totalInstrucciones,programa);
 
 	nodoPCB->contextoEjecucion = programa;
 	/*

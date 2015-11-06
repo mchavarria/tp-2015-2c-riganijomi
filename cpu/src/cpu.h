@@ -31,7 +31,7 @@
 #define QUANTUM_ACABADO 5
 #define FINALIZAR 6
 //Char del orden de la Estructuras para serializar/desserializar
-#define SECUENCIA_PCB "hhhhs"
+#define SECUENCIA_PCB "hhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 
 typedef struct NODO_MEM {
@@ -51,6 +51,7 @@ typedef struct PCB {
 	int estado;
 	int pc;
 	int quantum;
+	int totalInstrucciones;
 	char *contextoEjecucion;
 } t_pcb;
 
@@ -102,6 +103,7 @@ int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta)
 void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
 void hiloCPUs();
 void cpu_func();
+void sacarPorQuantum();
 static t_hilos_CPU *hilos_create();
 
 
