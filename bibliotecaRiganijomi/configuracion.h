@@ -25,5 +25,6 @@ char * configObtenerIpADM(char * ruta);
 int configObtenerCantidadHilos(char * ruta);
 int configObtenerRetardoCPU(char * ruta);
 int configObtenerQuantum(char * ruta);
+char * configObtenerAlgoritmoPlanificador(char * ruta);
 
 #endif /* CONFIGURACION_H_ */

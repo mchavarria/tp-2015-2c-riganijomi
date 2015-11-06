@@ -110,6 +110,41 @@ int programaValido(char * programa){
 	return resultado;
 }
 
+int totalInstruccionesArchivo(char * programa){
+	FILE * fp;
+	char* mprog = malloc(strlen(programa)+8+1);
+	strcpy(mprog,"/mProgs/");
+	strcat(mprog,programa);
+	char *dir = getcwd(NULL, 0);
+	char *directorioActual = malloc(strlen(dir)+strlen(mprog)+1);
+	strcpy(directorioActual,dir);
+	strcat(directorioActual,mprog);
+	fp = fopen(directorioActual, "r");
+
+	int resultado;
+
+	if (fp == NULL){
+		resultado = 0;
+	} else {
+		int ch, totalLineas = 0;
+
+		do
+		{
+		    ch = fgetc(fp);
+		    if(ch == '\n')
+		    	totalLineas++;
+		} while (ch != EOF);
+		// last line doesn't end with a new line!
+		// but there has to be a line at least before the last line
+		if(ch != '\n' && totalLineas != 0)
+			totalLineas++;
+
+		fclose(fp);
+		resultado = totalLineas;
+	}
+	return resultado;
+}
+
 void* agregarPCBALista(char * programa) {
 
 	t_pcb * pcb = malloc(sizeof(t_pcb));
@@ -121,6 +156,7 @@ void* agregarPCBALista(char * programa) {
 	pcb->pc=0;
 	pcb->estado=LISTO;
 	pcb->quantum=quantumcfg;
+	pcb->totalInstrucciones= totalInstruccionesArchivo(programa);
 	//imprimo pcb
 	int antesDeAgregar = listaDeListo->elements_count;
 	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
@@ -287,8 +323,8 @@ void levantarCfg(){
 
 	archivoLog = log_create("planificador.log", "Planificador", false, 2);
 
-	char cfgFin[] ="/planificador/src/config.cfg";//Para consola
-	//char cfgFin[] ="/src/config.cfg";//Para eclipse
+	//char cfgFin[] ="/planificador/src/config.cfg";//Para consola
+	char cfgFin[] ="/src/config.cfg";//Para eclipse
 	char *dir = getcwd(NULL, 0);
 
 	char *directorioActual = malloc(strlen(dir)+strlen(cfgFin)+1);
@@ -298,7 +334,10 @@ void levantarCfg(){
 	puts(directorioActual);
 	char * puerto;
 	puerto = configObtenerPuertoEscucha(directorioActual);
-    quantumcfg = configObtenerQuantum(directorioActual);
+	strcpy(algoritmo,configObtenerAlgoritmoPlanificador(directorioActual));
+	if (string_equals_ignore_case(algoritmo,"RR")){
+		quantumcfg = configObtenerQuantum(directorioActual);
+	}
 	servidorPlanificador = socketCrearServidor(puerto,"Planificador");
 }
 
@@ -440,7 +479,7 @@ void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB)
 			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
 	 */
 	tamanioBuffer = pack(buffer,SECUENCIA_PCB,
-			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
+			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->totalInstrucciones,nodoPCB->contextoEjecucion);
 
 	//packi16(buffer+1, tamanioBuffer); // store packet size in packet for kicks
 	//printf("Tamaño del PCB serializado es %u bytes\n", tamanioBuffer);

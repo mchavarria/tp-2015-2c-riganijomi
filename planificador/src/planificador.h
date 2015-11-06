@@ -29,7 +29,7 @@
 #include "serializacion.h"
 
 //Char del orden de la Estructuras para serializar/desserializar
-#define SECUENCIA_PCB "hhhhs"
+#define SECUENCIA_PCB "hhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 
 //estados del pcb
@@ -71,6 +71,7 @@ typedef struct PCB {
 	int estado;
 	int pc;
 	int quantum;
+	int totalInstrucciones;
 	char *contextoEjecucion;
 } t_pcb;
 
@@ -102,6 +103,7 @@ sem_t semProgramas;
 sem_t mutexListaListo;
 char comando[100];
 int quantumcfg = 0;
+char algoritmo[4];
 
 void levantarCfg();
 
@@ -124,6 +126,7 @@ void imprimePorcentajeCPU();
 float porcentajeCPU(t_cpu *nodoCPU);
 int interpretarLineaSegunRetardo(char * linea, int retardo);
 int devolverParteUsableInt(char * linea, int desde);
+int totalInstruccionesArchivo(char * programa);
 
 void recibirRespuestaCPU(int socketCpu, int * nbytes);
 void informarDesconexionCPU(int i);
