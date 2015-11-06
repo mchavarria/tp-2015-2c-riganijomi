@@ -57,8 +57,7 @@ typedef struct CPU {
 	int socket;
 	int disponible;
 	int retardo;
-	char* contextoEjecucionProcesoAsignado;
-	int pidSiguienteIns;
+	int pcb;
 } t_cpu;
 
 /* el estado puede ser:
@@ -115,7 +114,6 @@ int programaValido(char * programa);
 void* agregarPCBALista(char * programa);
 void agregarCPUALista(int cpu);
 void interpretarLinea(t_resp_cpu_plan * nodoRespuesta);
-static t_hilos *hilo_create(pthread_t thread, char * m, int  r);
 int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB);
 void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta);
@@ -123,12 +121,14 @@ void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta
 void* bloquearPCB(void *contexto);
 void imprimeEstado(t_list *lista, char*estado );
 void imprimePorcentajeCPU();
-int porcentajeCPU(t_cpu *nodoCPU);
+float porcentajeCPU(t_cpu *nodoCPU);
 int interpretarLineaSegunRetardo(char * linea, int retardo);
 int devolverParteUsableInt(char * linea, int desde);
 
 void recibirRespuestaCPU(int socketCpu, int * nbytes);
 void informarDesconexionCPU(int i);
+
+void* buscarPCBEjecutandoPorPID(int PID);
 
 t_list * listaDeListo;
 t_list * listaDeBloqueado;
