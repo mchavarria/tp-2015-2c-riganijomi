@@ -50,11 +50,11 @@ int main(int argc, char* argv[]) {
 
 	const char *programa1[9];
 	programa1[0] = "iniciar 9";
-	programa1[1] = "escribir 98 'nicolas'";
-	programa1[2] = "escribir 1 'juan'";
-	programa1[3] = "escribir 2 'florencia'";
-	programa1[4] = "escribir 3 'pepe'";
-	programa1[5] = "escribir 4 'joaquin'";
+	programa1[1] = "escribir 98 \"nicolas\"";
+	programa1[2] = "escribir 1 \"juan\"";
+	programa1[3] = "escribir 2 \"florencia\"";
+	programa1[4] = "escribir 3 \"pepe\"";
+	programa1[5] = "escribir 4 \"joaquin\"";
 	programa1[6] = "leer 15";
 	programa1[7] = "leer 4";
 	programa1[8] = "finalizar";
@@ -159,9 +159,11 @@ static t_marco * tlb_create(int processID, int numeroPagina, int marco) {
 }
 
 void inicializarTLB() {
-	int i = 0;
-	for (i=0; i<ENTRADAS_TLB; i++) {
-		list_add(listaTLB, tlb_create(NULO,0,0));
+	if (string_equals_ignore_case(TLB_HABILITADA, "si")) {
+		int i = 0;
+		for (i=0; i<ENTRADAS_TLB; i++) {
+			list_add(listaTLB, tlb_create(NULO,0,0));
+		}
 	}
 }
 
@@ -446,7 +448,11 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 	int indiceMarco;
 	t_marco * marco = malloc(sizeof(t_marco));
 	t_resp_swap_mem * nodoRespuestaSwap = malloc(sizeof(t_resp_swap_mem));
-	resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid, numeroPagina);
+	if (string_equals_ignore_case(TLB_HABILITADA, "si")) {
+		resultadoBusqueda = buscarEnTLB(nodoInstruccion->pid, numeroPagina);
+	} else {
+		resultadoBusqueda = NULO;
+	}
 	if (resultadoBusqueda == NULO) {
 		//numeroPagina = devolverParteUsableInt(nodoInstruccion->instruccion, 5);
 		tablaDeProceso = buscarTablaPaginas(nodoInstruccion->pid);
@@ -494,7 +500,6 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 								desasignarMarco(nodoInstruccion->pid,marco);
 								resultadoBusqueda = marco;
 							}
-							puts(paginaSwap);
 						}
 					} else {
 						send(socketCpu, nodoRespuestaSwap, sizeof(t_resp_swap_mem), 0);
@@ -630,7 +635,9 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 	} else if (esElComando(nodoInstruccion->instruccion, "leer")) {
 		marco = accederAPaginaCiclicamente(nodoInstruccion, devolverParteUsableInt(nodoInstruccion->instruccion, 5), "");
 		if (marco != NULL) {
-			cargarTlb(nodoInstruccion, marco);
+			if (string_equals_ignore_case(TLB_HABILITADA, "si")) {
+				cargarTlb(nodoInstruccion, marco);
+			}
 			puts(marco->valor);
 			strcpy(respuesta,"AFX");
 			nodoRespuestaCPU->mensaje = 1;
@@ -642,14 +649,14 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		int pagina = valorPagina(nodoInstruccion->instruccion);
 		texto = malloc(sizeof(devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion))));
 		strcpy(texto, devolverParteUsable(nodoInstruccion->instruccion, posicionComilla(nodoInstruccion->instruccion)));
-		strtok(texto, "\'");
-		char ** textoSinComillas = string_split(texto, "\'");
+		strtok(texto, "\"");
+		char ** textoSinComillas = string_split(texto, "\"");
 		strcat(texto, "\0");
 		marco = accederAPaginaCiclicamente(nodoInstruccion, pagina, *textoSinComillas);
 		if (marco != NULL) {
-			cargarTlb(nodoInstruccion, marco);
-			printf("%d",nodoInstruccion->pid);
-			printf("%d",pagina);
+			if (string_equals_ignore_case(TLB_HABILITADA, "si")) {
+				cargarTlb(nodoInstruccion, marco);
+			}
 			t_resp_swap_mem * nodoRespuestaSwap = malloc(sizeof(t_resp_swap_mem));
 			recv(socketSwap, nodoRespuestaSwap, sizeof(t_resp_swap_mem), 0);
 			nodoRespuestaCPU->mensaje = nodoRespuestaSwap->exito;
@@ -702,7 +709,7 @@ void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
 
 int valorPagina(char * instruccion){
 	int character = 0;
-	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\'")){
+	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
 		character++;
 	}
 	int pagina = atoi(string_substring(instruccion, 9, character));
@@ -711,7 +718,7 @@ int valorPagina(char * instruccion){
 
 int posicionComilla(char * instruccion){
 	int character = 0;
-	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\'")){
+	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
 		character++;
 	}
 	return character;

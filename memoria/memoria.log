@@ -36,3 +36,4 @@
 [ERROR] 02:47:39:768 Memoria/(2250:2250): La pagina 100 del proceso 1234 es invalida
 [INFO] 02:49:21:813 Memoria/(2250:2250): Se ha escrito una pagina: process ID 1234, pagina escrita 1 con el valor 'juan'
 [INFO] 02:50:00:880 Memoria/(2250:2250): Se ha escrito una pagina: process ID 1234, pagina escrita 2 con el valor 'florencia'
+[INFO] 03:22:15:619 Memoria/(3320:3320): Proceso iniciado: process ID 1234, cantidad de paginas 9.
