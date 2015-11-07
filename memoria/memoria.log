@@ -7,3 +7,18 @@
 [INFO] 04:59:03:328 Memoria/(20430:20430): MEM: Archivo de configuracion levantado correctamente
 [INFO] 04:59:21:904 Memoria/(20430:20430): Proceso iniciado: process ID 1, cantidad de paginas 5.
 [INFO] 05:00:55:23 Memoria/(20430:20430): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'no'
+[INFO] 22:33:47:613 Memoria/(2311:2311): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 22:34:52:687 Memoria/(2350:2350): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 22:41:08:539 Memoria/(3057:3057): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 22:41:11:346 Memoria/(3057:3057): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'nicolas'
+[INFO] 22:41:15:779 Memoria/(3057:3057): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'juan'
+[INFO] 22:41:20:322 Memoria/(3057:3057): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'florencia'
+[INFO] 22:41:32:811 Memoria/(3057:3057): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'pepe'
+[INFO] 22:41:35:818 Memoria/(3057:3057): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'joaquin'
+[INFO] 22:41:38:827 Memoria/(3057:3057): Se ha leido una pagina: process ID 1234, pagina leida 7 con el valor ''
+[INFO] 22:42:05:516 Memoria/(3137:3137): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 22:42:05:555 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'nicolas'
+[INFO] 22:42:08:561 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'juan'
+[INFO] 22:42:11:570 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'florencia'
+[INFO] 22:42:14:581 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'pepe'
+[INFO] 22:42:17:588 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'joaquin'

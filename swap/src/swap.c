@@ -234,11 +234,11 @@ void leerPaginaProceso(int idProc, int pagina){
 
 		if (particion==NULL){
 			perror("No se pudo leer");
-		} else {
+		} else {SEEK_SET
 			//Se ubica en +1 así que tiene que ser -1
-			fseek(particion, SEEK_SET, ubicacion-1);
+			fseek(particion, ubicacion, SEEK_SET);
 			//leer esa posicion como una lectura normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
-			if (fread(leerDelArchivo, sizeof(tamanioPaginas), 1, particion) > 0){
+			if (fread(leerDelArchivo, tamanioPaginas, 1, particion) > 0){
 				//enviar mensaje
 				strcat(leerDelArchivo,"\0");
 				strcpy(respuesta,leerDelArchivo);

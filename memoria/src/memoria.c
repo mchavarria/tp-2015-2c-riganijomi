@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
 	listaTLB = list_create();
-	/*
+
 	const char *programa1[9];
 	programa1[0] = "iniciar 9";
 	programa1[1] = "escribir 7 'nicolas'";
@@ -67,9 +67,9 @@ int main(int argc, char* argv[]) {
 	programa1[3] = "escribir 2 'florencia'";
 	programa1[4] = "escribir 3 'pepe'";
 	programa1[5] = "escribir 4 'joaquin'";
-	programa1[6] = "leer 1";
+	programa1[6] = "leer 7";
 	programa1[7] = "leer 4";
-	programa1[8] = "finalizar";*/
+	programa1[8] = "finalizar";
 
 	char cfgFin[] ="/src/config.cfg";
 
@@ -88,20 +88,24 @@ int main(int argc, char* argv[]) {
 	archivoLog = log_create("memoria.log", "Memoria", false, 2);//Eclipse
 	archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	resultado = levantarCfgInicial(archConfig);
+	configurarSockets();
 	//configurarSockets();
 	inicializarTLB();
 
 	inicializarMarco();
 
-	/*int i=0;
+	int i=0;
 	for (i = 0; i < 10; i++) {
 		t_nodo_mem * mem = malloc(sizeof(t_nodo_mem));
 		strcpy(mem->instruccion, programa1[i]);
+		if (i == 6) {
+			int a = 2;
+		}
 		mem->pid = 1234;
 		interpretarLinea(mem);
-	}*/
+	}
 
-
+/*
 	int continuar = 1;
 	if (resultado == -1 ){
 		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
@@ -135,11 +139,11 @@ int main(int argc, char* argv[]) {
 			} else {
 				log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
 				continuar = 0;
-			}//Enviar mensaje CPU*/
+			}//Enviar mensaje CPU
 			}
 		}
 
-		free(directorioActual);
+		free(directorioActual);*/
 		return 1;
 }
 
@@ -242,7 +246,7 @@ int levantarCfgInicial(t_config* archConfig){
 void configurarSockets(){
 	//se conecta con el swap que tiene un servidor escuchando
 	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP,"Memoria","Swap");
-	socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
+	//socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
 	if (socketServidor > 0){
 		socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
 	}
@@ -512,7 +516,7 @@ int algoritmoReemplazoFIFO(int processID) {
 }
 
 void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, int indiceMarco){
-	if (texto == NULL) {
+	if (strlen(texto) == 0) {
 		escribirMarco(pid, indiceMarco, paginaSwap, numeroPagina);
 		actualizarNodoPaginas(indiceMarco, pid, numeroPagina);
 	}else{
