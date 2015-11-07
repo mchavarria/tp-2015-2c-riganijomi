@@ -37,3 +37,20 @@
 [INFO] 02:49:21:813 Memoria/(2250:2250): Se ha escrito una pagina: process ID 1234, pagina escrita 1 con el valor 'juan'
 [INFO] 02:50:00:880 Memoria/(2250:2250): Se ha escrito una pagina: process ID 1234, pagina escrita 2 con el valor 'florencia'
 [INFO] 03:22:15:619 Memoria/(3320:3320): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 10:09:21:565 Memoria/(4520:4520): MEM: Archivo de configuracion levantado correctamente
+[INFO] 10:10:22:273 Memoria/(4520:4520): Proceso iniciado: process ID 1, cantidad de paginas 60.
+[INFO] 10:12:12:897 Memoria/(4621:4621): MEM: Archivo de configuracion levantado correctamente
+[INFO] 10:12:30:351 Memoria/(4621:4621): Proceso iniciado: process ID 1, cantidad de paginas 60.
+[INFO] 10:36:16:754 Memoria/(5553:5553): MEM: Archivo de configuracion levantado correctamente
+[INFO] 10:36:35:980 Memoria/(5553:5553): Proceso iniciado: process ID 9, cantidad de paginas 60.
+[INFO] 10:36:48:860 Memoria/(5553:5553): Se ha leido una pagina: process ID 9, pagina leida 0 con el valor 'NULL'
+[INFO] 10:36:56:292 Memoria/(5553:5553): Se ha leido una pagina: process ID 9, pagina leida 1 con el valor 'NULL'
+[INFO] 10:37:07:985 Memoria/(5553:5553): Se ha leido una pagina: process ID 9, pagina leida 2 con el valor 'NULL'
+[INFO] 10:37:21:260 Memoria/(5553:5553): Se ha leido una pagina: process ID 9, pagina leida 50 con el valor 'NULL'
+[INFO] 10:37:27:261 Memoria/(5553:5553): Se ha leido una pagina: process ID 9, pagina leida 53 con el valor 'NULL'
+[INFO] 10:37:30:262 Memoria/(5553:5553): Se ha leido una pagina: process ID 9, pagina leida 0 con el valor 'NULL'
+[INFO] 10:37:33:263 Memoria/(5553:5553): Se ha leido una pagina: process ID 9, pagina leida 0 con el valor 'NULL'
+[INFO] 10:37:36:263 Memoria/(5553:5553): Se ha finalizado el proceso con ID: 9.
+[INFO] 10:37:48:89 Memoria/(5553:5553): Proceso iniciado: process ID 10, cantidad de paginas 20.
+[INFO] 10:39:20:858 Memoria/(5645:5645): MEM: Archivo de configuracion levantado correctamente
+[INFO] 10:39:34:81 Memoria/(5645:5645): Proceso iniciado: process ID 11, cantidad de paginas 20.

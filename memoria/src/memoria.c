@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
 	listaTLB = list_create();
-
+	/**
 	const char *programa1[9];
 	programa1[0] = "iniciar 9";
 	programa1[1] = "escribir 98 \"nicolas\"";
@@ -58,11 +58,11 @@ int main(int argc, char* argv[]) {
 	programa1[6] = "leer 15";
 	programa1[7] = "leer 4";
 	programa1[8] = "finalizar";
-
+	*/
 	//Consola
-	char cfgFin[] ="/memoria/src/config.cfg";
+	//char cfgFin[] ="/memoria/src/config.cfg";
 	//Debug
-	//char cfgFin[] ="/src/config.cfg";
+	char cfgFin[] ="/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -80,12 +80,13 @@ int main(int argc, char* argv[]) {
 	//archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
 	archConfig = config_create(directorioActual);
 	resultado = levantarCfgInicial(archConfig);
-	configurarSockets();
+	//configurarSockets();
 	//configurarSockets();
 	inicializarTLB();
 
 	inicializarMarco();
 
+	/**
 	int i=0;
 	for (i = 0; i < 10; i++) {
 		t_nodo_mem * mem = malloc(sizeof(t_nodo_mem));
@@ -96,8 +97,8 @@ int main(int argc, char* argv[]) {
 		mem->pid = 1234;
 		interpretarLinea(mem);
 	}
+	*/
 
-/*
 	int continuar = 1;
 	if (resultado == -1 ){
 		log_error(archivoLog,"MEM: Error leyendo del archivo de configuracion");
@@ -110,10 +111,7 @@ int main(int argc, char* argv[]) {
 		//Inicia los parametros
 
 		//Tratamiento de la señan enviada por el SO
-	}	signal(SIGINT, rutina);
-		signal(SIGUSR1, rutina);
-		signal(SIGUSR2, rutina);
-
+	}
 		//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
 		for(;(socketCpu > 0) && continuar;){
 			nodoInstruccion = malloc(sizeof(t_nodo_mem));
@@ -123,19 +121,15 @@ int main(int argc, char* argv[]) {
 			// tengo un mensaje de algun cliente
 				interpretarLinea(nodoInstruccion);
 
-					/*
-							n
 
-				}
 				//free(nodoInstruccion);
 			} else {
 				log_debug(archivoLog,"error recepcion mensaje cpu: %d",socketCpu);
 				continuar = 0;
 			}//Enviar mensaje CPU
-			}
 		}
 
-		free(directorioActual);*/
+		free(directorioActual);
 		return 1;
 }
 
@@ -240,7 +234,7 @@ int levantarCfgInicial(t_config* archConfig){
 void configurarSockets(){
 	//se conecta con el swap que tiene un servidor escuchando
 	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP,"Memoria","Swap");
-	//socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
+	socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
 	if (socketServidor > 0){
 		socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
 	}

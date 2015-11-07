@@ -87,7 +87,7 @@ void levantarCfgInicial(){
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcat(directorioActual, "/swap/src/config.cfg");
-	//strcpy(directorioActual, "/home/utnso/rigonijami/tp-2015-2c-riganijomi/swap/src/config.cfg");
+	//strcat(directorioActual, "/src/config.cfg");
 	t_config * archConfig = malloc(sizeof(t_config));
 	archConfig = config_create(directorioActual);
 
@@ -227,7 +227,7 @@ void leerPaginaProceso(int idProc, int pagina){
 
 
 	if (nodoProceso != NULL){
-		if (nodoProceso->tamanio < (pagina * tamanioPaginas)) {
+		//if (nodoProceso->tamanio <= (pagina * tamanioPaginas)) {
 
 			indiceProceso = nodoProceso->indice;
 			int ubicacion = indiceProceso + (pagina * tamanioPaginas);
@@ -261,13 +261,15 @@ void leerPaginaProceso(int idProc, int pagina){
 				fclose(particion);
 				log_info(archivoLog, "Lectura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, leerDelArchivo, idProc, pagina);
 			}
-		} else {
+/**		} else {
 			log_error(archivoLog, "La pagina %d del proceso %d es invalida", pagina, idProc);
 			nodoRespuesta->tipo = LEER;
 			nodoRespuesta->exito = 0;
 			nodoRespuesta->largo = 0;
 			send(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem),0);
+
 		}
+*/
 	}else{
 		perror("no se encontró el proceso indicado");
 		nodoRespuesta->tipo = LEER;
@@ -295,7 +297,7 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
 	nodoRespuesta->tipo=ESCRIBIR;
 
-	if (nodoProceso->tamanio < (pagina * tamanioPaginas)) {
+//	if (nodoProceso->tamanio < (pagina * tamanioPaginas)) {
 		int ubicacion = nodoProceso->indice + (pagina * tamanioPaginas);
 
 		fseek(particion, ubicacion, SEEK_SET);
@@ -308,10 +310,13 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 		log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, texto, idProc, pagina);
 
 		nodoRespuesta->exito =1;
+/**
+	}
 
-	} else {
+else {
 		nodoRespuesta->exito =0;
 	}
+*/
 	send(socketMemoria, nodoRespuesta, sizeof(t_resp_swap_mem), 0);
 }
 
