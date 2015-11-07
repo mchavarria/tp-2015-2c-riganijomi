@@ -28,3 +28,11 @@
 [INFO] 00:04:49:415 Memoria/(31190:31190): Proceso iniciado: process ID 1234, cantidad de paginas 9.
 [INFO] 00:06:06:145 Memoria/(31241:31241): Proceso iniciado: process ID 1234, cantidad de paginas 9.
 [INFO] 00:06:56:407 Memoria/(31241:31241): Se ha escrito una pagina: process ID 1234, pagina escrita 7 con el valor 'nicolas'
+[INFO] 02:37:11:357 Memoria/(1487:1487): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 02:38:27:603 Memoria/(1663:1663): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 02:43:22:433 Memoria/(2051:2051): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[ERROR] 02:44:00:323 Memoria/(2051:2051): La pagina 100 del proceso 1234 es invalida
+[INFO] 02:47:29:995 Memoria/(2250:2250): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[ERROR] 02:47:39:768 Memoria/(2250:2250): La pagina 100 del proceso 1234 es invalida
+[INFO] 02:49:21:813 Memoria/(2250:2250): Se ha escrito una pagina: process ID 1234, pagina escrita 1 con el valor 'juan'
+[INFO] 02:50:00:880 Memoria/(2250:2250): Se ha escrito una pagina: process ID 1234, pagina escrita 2 con el valor 'florencia'

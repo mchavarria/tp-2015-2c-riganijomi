@@ -165,14 +165,14 @@ void recibirProceso(int idProc, int cantPagProceso){
 		//TODO MODIFICAR LA LISTA DE DISPONIBLES
 		nodoRespuesta->exito = 1;
 		//nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
-		send(socketMemoria, "Se recibio bien", 1024, 0);
+		send(socketMemoria, nodoRespuesta, sizeof(t_resp_swap_mem), 0);
 
 	} else {
 		//No hay elementos libres, no puedo alojar.. Rechazo
 		nodoRespuesta->exito = 0;
 		perror("no hay espacio para el proceso");
 		log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
-		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+		send(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem), 0);
 
 	}
 	printf("lista procesos (elementos) : %d \n",listaProcesos->elements_count);
@@ -227,44 +227,53 @@ void leerPaginaProceso(int idProc, int pagina){
 
 
 	if (nodoProceso != NULL){
-		indiceProceso = nodoProceso->indice;
-		int ubicacion = indiceProceso + (pagina * tamanioPaginas);
+		if (nodoProceso->tamanio < (pagina * tamanioPaginas)) {
 
-		//modificar para el directorio real
-		//TODO cuidado con las direciones relativas
-		particion=fopen("swap.data","r");
+			indiceProceso = nodoProceso->indice;
+			int ubicacion = indiceProceso + (pagina * tamanioPaginas);
 
-		if (particion==NULL){
-			perror("No se pudo leer");
-		} else {
-			//Se ubica en +1 así que tiene que ser -1
-			fseek(particion, ubicacion, SEEK_SET);
-			//leer esa posicion como una lectura normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
-			if (fread(leerDelArchivo, tamanioPaginas, 1, particion) > 0){
-				//enviar mensaje
-				strcat(leerDelArchivo,"\0");
-				strcpy(respuesta,leerDelArchivo);
-				nodoRespuesta->tipo = LEER;
-				nodoRespuesta->exito = 1;
-				nodoRespuesta->largo = sizeof(respuesta);
+			//modificar para el directorio real
+			//TODO cuidado con las direciones relativas
+			particion=fopen("swap.data","r");
 
-				if (strlen(leerDelArchivo) == 0) {
-					strcpy(leerDelArchivo, "NULL");
+			if (particion==NULL){
+				perror("No se pudo leer");
+			} else {
+				//Se ubica en +1 así que tiene que ser -1
+				fseek(particion, ubicacion, SEEK_SET);
+				//leer esa posicion como una lectura normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
+				if (fread(leerDelArchivo, tamanioPaginas, 1, particion) > 0){
+					//enviar mensaje
+					strcat(leerDelArchivo,"\0");
+					strcpy(respuesta,leerDelArchivo);
+					nodoRespuesta->tipo = LEER;
+					nodoRespuesta->exito = 1;
+					nodoRespuesta->largo = sizeof(respuesta);
+
+					if (strlen(leerDelArchivo) == 0) {
+						strcpy(leerDelArchivo, "NULL");
+					}
+					send(socketMemoria, nodoRespuesta, sizeof(t_resp_swap_mem),0);
+					send(socketMemoria, leerDelArchivo, nodoRespuesta->largo, 0);
+					//log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, tamanioPaginas);
 				}
-				send(socketMemoria, leerDelArchivo, 1024, 0);
-				//log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, tamanioPaginas);
-			}
 
-			fclose(particion);
-			log_info(archivoLog, "Lectura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, leerDelArchivo, idProc, pagina);
+				fclose(particion);
+				log_info(archivoLog, "Lectura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, leerDelArchivo, idProc, pagina);
+			}
+		} else {
+			log_error(archivoLog, "La pagina %d del proceso %d es invalida", pagina, idProc);
+			nodoRespuesta->tipo = LEER;
+			nodoRespuesta->exito = 0;
+			nodoRespuesta->largo = 0;
+			send(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem),0);
 		}
 	}else{
-
 		perror("no se encontró el proceso indicado");
 		nodoRespuesta->tipo = LEER;
 		nodoRespuesta->exito = 0;
 		nodoRespuesta->largo = 0;
-		nbytes = socketEnviarMensaje(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem));
+		send(socketMemoria, nodoRespuesta,sizeof(t_resp_swap_mem),0);
 	}
 }
 
@@ -283,15 +292,26 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	t_nodoProceso * nodoProceso = NULL;
 	nodoProceso = list_find(listaProcesos,(void*) condicionLeer);
 
-	int ubicacion = nodoProceso->indice + (pagina * tamanioPaginas);
+	t_resp_swap_mem * nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
+	nodoRespuesta->tipo=ESCRIBIR;
 
-	fseek(particion, ubicacion, SEEK_SET);
+	if (nodoProceso->tamanio < (pagina * tamanioPaginas)) {
+		int ubicacion = nodoProceso->indice + (pagina * tamanioPaginas);
 
-	//fwrite((const char *)texto, strlen((const char *)texto), 1, particion);
-	fputs((const char *)texto, particion);
+		fseek(particion, ubicacion, SEEK_SET);
 
-    fclose(particion);
+		//fwrite((const char *)texto, strlen((const char *)texto), 1, particion);
+		fputs((const char *)texto, particion);
 
-    log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, texto, idProc, pagina);
+		fclose(particion);
+
+		log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, texto, idProc, pagina);
+
+		nodoRespuesta->exito =1;
+
+	} else {
+		nodoRespuesta->exito =0;
+	}
+	send(socketMemoria, nodoRespuesta, sizeof(t_resp_swap_mem), 0);
 }
 
