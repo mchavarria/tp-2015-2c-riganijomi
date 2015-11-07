@@ -22,3 +22,9 @@
 [INFO] 22:42:11:570 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'florencia'
 [INFO] 22:42:14:581 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'pepe'
 [INFO] 22:42:17:588 Memoria/(3137:3137): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'joaquin'
+[INFO] 23:54:36:860 Memoria/(30867:30867): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 00:02:10:213 Memoria/(31082:31082): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 00:03:28:713 Memoria/(31082:31082): Se ha escrito una pagina: process ID 1234, pagina escrita 0 con el valor 'nicolas'
+[INFO] 00:04:49:415 Memoria/(31190:31190): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 00:06:06:145 Memoria/(31241:31241): Proceso iniciado: process ID 1234, cantidad de paginas 9.
+[INFO] 00:06:56:407 Memoria/(31241:31241): Se ha escrito una pagina: process ID 1234, pagina escrita 7 con el valor 'nicolas'

@@ -135,6 +135,7 @@ t_list * listaTLB;
 
 sem_t mutexFlushTLB;
 sem_t mutexFlushMarcos;
+sem_t mutexDumpMemoria;
 
 t_resp_swap_mem * nodoRespuesta;
 t_nodo_mem * nodoInstruccion;
@@ -156,6 +157,7 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina);
 static t_tablaPaginasProceso * obtenerPaginaPorNumMarco(int marco, t_tablasPaginas * nodoTablasPagina);
 int valorPagina(char * instruccion);
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco);
+void desasignarTodosLosProcesos();
 #endif /* MEMORIA_H_ */
 
 

@@ -87,7 +87,7 @@ void levantarCfgInicial(){
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
 	strcat(directorioActual, "/swap/src/config.cfg");
-	strcpy(directorioActual, "/home/utnso/rigonijami/tp-2015-2c-riganijomi/swap/src/config.cfg");
+	//strcpy(directorioActual, "/home/utnso/rigonijami/tp-2015-2c-riganijomi/swap/src/config.cfg");
 	t_config * archConfig = malloc(sizeof(t_config));
 	archConfig = config_create(directorioActual);
 
@@ -212,6 +212,8 @@ void eliminarProceso(t_eliminarPaginaSwap * nodoEliminar){
 
 void leerPaginaProceso(int idProc, int pagina){
 
+	sleep(retardoSwap);
+
 	char leerDelArchivo[1024];
 	int indiceProceso;
 	FILE *particion;
@@ -234,7 +236,7 @@ void leerPaginaProceso(int idProc, int pagina){
 
 		if (particion==NULL){
 			perror("No se pudo leer");
-		} else {SEEK_SET
+		} else {
 			//Se ubica en +1 así que tiene que ser -1
 			fseek(particion, ubicacion, SEEK_SET);
 			//leer esa posicion como una lectura normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
@@ -268,6 +270,9 @@ void leerPaginaProceso(int idProc, int pagina){
 
 
 void escribirPagina (int idProc, int pagina, char * texto) {
+
+	sleep(retardoSwap);
+
 	FILE *particion;
 
 	particion = fopen("swap.data","r+");

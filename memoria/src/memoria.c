@@ -6,14 +6,23 @@ char respuesta[30];
 int nbytes;
 
 void flushTLB() {
-	sem_wait(&mutexFlushTLB);
 	inicializarTLB();
 }
 
 void flushMarcos() {
-	sem_wait(&mutexFlushMarcos);
 	inicializarMarco();
 	desasignarTodosLosProcesos();
+}
+
+void dumpMemoria(){
+	int pid = fork();
+	if (pid == 0) {
+		int i;
+		for (i = 0; i < listaMarco->elements_count; i++) {
+			t_marco * nodoMarco = list_get(listaMarco, i);
+			log_info(archivoLog,"Volcado de memoria del marco: %d con un valor de %s",nodoMarco->numeroMarco, nodoMarco->valor);
+		}
+	}
 }
 
 void desasignarTodosLosProcesos() {
@@ -28,33 +37,12 @@ void desasignarTodosLosProcesos() {
 	}
 }
 
-void flushTLBActivacion() {
-	sem_post(&mutexFlushTLB);
-}
-
-void flushMarcosActivacion() {
-	sem_post(&mutexFlushMarcos);
-}
-
-
 
 int main(int argc, char* argv[]) {
 
-	pthread_t thread1;
-	char *m1 = "";
-	int r1;
-
-	r1 = pthread_create(&thread1,NULL, flushTLB, (void *) m1);
-
-	pthread_t thread2;
-	char *m2 = "";
-	int r2;
-
-	r2 = pthread_create(&thread2,NULL, flushTLB, (void *) m2);
-
-	signal(SIGINT, flushTLBActivacion);
-	signal(SIGUSR1, flushMarcosActivacion);
-	//signal(SIGUSR2, dumpMemoria);
+	signal(SIGINT, rutina);
+	signal(SIGUSR1, rutina);
+	signal(SIGUSR2, rutina);
 
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
@@ -71,7 +59,10 @@ int main(int argc, char* argv[]) {
 	programa1[7] = "leer 4";
 	programa1[8] = "finalizar";
 
-	char cfgFin[] ="/src/config.cfg";
+	//Consola
+	char cfgFin[] ="/memoria/src/config.cfg";
+	//Debug
+	//char cfgFin[] ="/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -86,7 +77,8 @@ int main(int argc, char* argv[]) {
 
 	archConfig = malloc(sizeof(t_config));
 	archivoLog = log_create("memoria.log", "Memoria", false, 2);//Eclipse
-	archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
+	//archConfig = config_create("/home/utnso/rigonijami/tp-2015-2c-riganijomi/memoria/src/config.cfg");
+	archConfig = config_create(directorioActual);
 	resultado = levantarCfgInicial(archConfig);
 	configurarSockets();
 	//configurarSockets();
@@ -255,16 +247,19 @@ void configurarSockets(){
 void rutina (int n) {
 	switch (n) {
 		case SIGINT:
-			printf("En tu cara, no salgo nada…\n");
 			log_info(archivoLog,"ingreso el mensaje rutina SIGINT: %d",SIGINT);
+			puts("Llego SIGINT");
+			flushTLB();
 		break;
 		case SIGUSR1:
-			printf("LLEGO SIGUSR1\n");
 			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR1: %d",SIGUSR1);
+			puts("Llego SIGUSR1");
+			flushMarcos();
 		break;
 		case SIGUSR2:
-			printf("LLEGO SIGUSR2\n");
 			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR2: %d",SIGUSR2);
+			puts("Llego SIGUSR2");
+			dumpMemoria();
 		break;
 	}
 }
@@ -617,7 +612,7 @@ int interpretarLinea(t_nodo_mem * nodoInstruccion) {
 		puts(texto);
     	nodoRespuestaCPU->mensaje = 1;
 		send(socketCpu, nodoRespuestaCPU, sizeof(t_respuestaCPU), 0);
-		log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", nodoInstruccion->pid, devolverParteUsableInt(nodoInstruccion->instruccion, 5), marco->valor);
+		log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", nodoInstruccion->pid, devolverParteUsableInt(nodoInstruccion->instruccion, 9), marco->valor);
 		sleep(RETARDO_MEMORIA);
 	} else if (esElComando(nodoInstruccion->instruccion, "finalizar")) {
 		int procesoActual(t_tablasPaginas * nodo) {
