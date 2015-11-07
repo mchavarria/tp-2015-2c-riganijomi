@@ -12,12 +12,15 @@
 #include "socketCliente.h"
 #include "interprete.h"
 #include "configuracion.h"
+#include "serializacion.h"
 
 #define INICIAR 1
 #define LEER 2
 #define ESCRIBIR 3
 #define FINALIZAR 4
 
+#define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
+#define SECUENCIA_MEM_SWAP "hhhs"
 /*
  * Tipo indica la operación que se realiza
  * [INICIAR | LEER | ESCRIBIR | FINALIZAR]
@@ -27,17 +30,20 @@
  * ej: | 1 - 1 - 0 |
  */
 typedef struct NODO_RTA_SWAP_MEM {
- uint32_t tipo;
- uint32_t exito;
- uint32_t largo;
-} __attribute__ ((packed)) t_resp_swap_mem;
+	int tipo;
+	int exito;
+	int pagina;
+	char *contenido;
+} t_resp_swap_mem;
 
 t_resp_swap_mem * nodoRespuesta;
 
-typedef struct NODO_MEM {
-	uint32_t pid;
-	char instruccion[20];
-} __attribute__ ((packed)) t_nodo_mem;
+typedef struct NODO_MEM_SWAP {
+	int tipo;
+	int pid;
+	int pagina;
+	char *contenido;
+} t_nodo_mem_swap;
 
 
 typedef struct nodoLibre {
@@ -56,31 +62,12 @@ typedef struct nodoEspera {
 	int tamanio;
 } t_nodoEspera;
 
-typedef struct decidirEstructuraSwap {
-	uint32_t mensaje;
-} __attribute__ ((packed)) t_decidirEstructuraSwap;
-
-typedef struct iniciarSwap {
-	uint32_t processID;
-	uint32_t cantidadPaginas;
-} __attribute__ ((packed)) t_iniciarSwap;
-
-typedef struct pedirPaginaSwap {
-	uint32_t processID;
-	uint32_t numeroPagina;
-} __attribute__ ((packed)) t_pedirPaginaSwap;
-
 typedef struct envioPaginaSwap {
 	uint32_t processID;
 	char * valor;
 	uint32_t numeroPagina;
 	uint32_t tamanioTexto;
 } __attribute__ ((packed)) t_envioPaginaSwap;
-
-typedef struct eliminarPaginaSwap {
-	uint32_t processID;
-	char * valor;
-} __attribute__ ((packed)) t_eliminarPaginaSwap;
 
 //sockets
 int socketMemoria;
@@ -104,19 +91,19 @@ void recibirProceso();
 
 //cuando finaliza el proceso, lo elimina.
 //En la lista de libres agrega el indice y el tamaño del nodo eliminado
-void eliminarProceso(t_eliminarPaginaSwap * nodoEliminar);
-
-
-void interpretarLinea(t_nodo_mem * nodoInstruccion);
+void eliminarProceso(int pid);
 
 void leerPaginaProceso(int idProc, int pagina);
+void escribirPagina (int idProc, int pagina, char * texto);
 //Condicion para el list_find en nodos libres
 
-void estructuraRecibida(int mensaje);
-void finalizar(t_eliminarPaginaSwap * nodoEliminar);
+void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap);
+int recibirNodoDeMem(t_nodo_mem_swap * nodo);
+void desempaquetarNodoDeMem(unsigned char *buffer,t_nodo_mem_swap * nodo);
+int enviarMensajeRtaAMem(t_resp_swap_mem * nodo);
+void empaquetarNodoRtaAMem(unsigned char *buffer,t_resp_swap_mem * nodo);
+
 void escribir(t_envioPaginaSwap * nodoEscribir);
-void leer(t_pedirPaginaSwap * nodoLeer);
-void iniciar(t_iniciarSwap * nodoIniciar);
 t_list * listaLibres;
 t_list * listaProcesos;
 t_list * listaEspera;

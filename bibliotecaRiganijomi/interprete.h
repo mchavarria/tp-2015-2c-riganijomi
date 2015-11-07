@@ -16,6 +16,7 @@
 
 int esElComando(char * linea, char * comando);
 char* devolverParteUsable(char * linea, int desde);
+int devolverParteUsableInt(char * linea, int desde);
 int devolverIntInstruccion(char * linea, int desde);
 
 #endif /* INTERPRETE_H_ */

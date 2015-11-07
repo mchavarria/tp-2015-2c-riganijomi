@@ -33,11 +33,13 @@
 //Char del orden de la Estructuras para serializar/desserializar
 #define SECUENCIA_PCB "hhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
+#define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
+#define SECUENCIA_CPU_MEM "hs"
 
 typedef struct NODO_MEM {
 	int pid;
-	char instruccion[20];
-} __attribute__ ((packed)) t_nodo_mem;
+	char *instruccion;
+} t_nodo_mem;
 
 
 /* el estado puede ser:
@@ -54,6 +56,13 @@ typedef struct PCB {
 	int totalInstrucciones;
 	char *contextoEjecucion;
 } t_pcb;
+
+typedef struct NODO_RTA_SWAP_MEM {
+	int tipo;
+	int exito;
+	int pagina;
+	char *contenido;
+} t_resp_swap_mem;
 
 
 /*
@@ -87,7 +96,9 @@ typedef struct NODO_RTA_MEM_CPU {
 
 t_resp_cpu_plan * nodoRtaCpuPlan;
 t_resp_mem_cpu * nodoRtaMemCpu;
+t_resp_swap_mem * nodoRta;
 t_pcb * pcbProc;
+t_nodo_mem * nodoInstruccion;
 t_list * listaHilosCPU;
 
 //Log
@@ -102,15 +113,20 @@ void instruccionEscribirPagina (char * instruccion);
 void instruccionEntradaSalida (char * tiempo);
 void instruccionFinalizarProceso(char * instruccion);
 void interpretarLinea(char * line);
-int recibirPCBdePlanificador(t_pcb * nodoPCB);
-void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
-int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta);
-void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
 void hiloCPUs();
 void cpu_func();
 void sacarPorQuantum();
 static t_hilos_CPU *hilos_create();
 
+//Serializacion
+int recibirPCBdePlanificador(t_pcb * nodoPCB);
+void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
+int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta);
+void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
+int enviarMensajeDeNodoAMem(t_nodo_mem * nodo);
+void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo);
+int recibirNodoDeMEM(t_resp_swap_mem * nodo);
+void desempaquetarNodoMem(unsigned char *buffer,t_resp_swap_mem * nodo);
 
 //Variables globales
 char directorioActual[1024];

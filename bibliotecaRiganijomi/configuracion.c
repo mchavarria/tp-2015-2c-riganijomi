@@ -57,32 +57,32 @@ char * configObtenerNombreArchivoSwap(char * ruta) {
 	NOMBRE_ARCHIVO = config_get_string_value(config, "NOMBRE_SWAP");
 	return NOMBRE_ARCHIVO;
 }
-char * configObtenerCantPaginasSwap(char * ruta) {
+int configObtenerCantPaginasSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * CANTIDAD_PAGINAS;
-	CANTIDAD_PAGINAS = config_get_string_value(config, "CANTIDAD_PAGINAS");
+	int CANTIDAD_PAGINAS;
+	CANTIDAD_PAGINAS = config_get_int_value(config, "CANTIDAD_PAGINAS");
 	return CANTIDAD_PAGINAS;
 }
-char * configObtenerTamPaginasSwap(char * ruta) {
+int configObtenerTamPaginasSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * TAMANIO_PAGINA;
-	TAMANIO_PAGINA = config_get_string_value(config, "TAMANIO_PAGINA");
+	int TAMANIO_PAGINA;
+	TAMANIO_PAGINA = config_get_int_value(config, "TAMANIO_PAGINA");
 	return TAMANIO_PAGINA;
 }
-char * configObtenerRetardoSwap(char * ruta) {
+int configObtenerRetardoSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * RETARDO_SWAP;
-	RETARDO_SWAP = config_get_string_value(config, "RETARDO_SWAP");
+	int RETARDO_SWAP;
+	RETARDO_SWAP = config_get_int_value(config, "RETARDO_SWAP");
 	return RETARDO_SWAP;
 }
-char * configObtenerRetardoCompactacionSwap(char * ruta) {
+int configObtenerRetardoCompactacionSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
-	char * RETARDO_COMPACTACION;
-	RETARDO_COMPACTACION = config_get_string_value(config, "RETARDO_COMPACTACION");
+	int RETARDO_COMPACTACION;
+	RETARDO_COMPACTACION = config_get_int_value(config, "RETARDO_COMPACTACION");
 	return RETARDO_COMPACTACION;
 }
 char * configObtenerMaxMarcosProceso(char * ruta) {
@@ -139,14 +139,14 @@ char * configObtenerIpADM(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
 	char * NOMBRE_ARCHIVO;
-	NOMBRE_ARCHIVO = config_get_string_value(config, "IP_ADM");
+	NOMBRE_ARCHIVO = config_get_string_value(config, "IP_MEMORIA");
 	return NOMBRE_ARCHIVO;
 }
 char * configObtenerPuertoADM(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
 	char * PUERTO_ADM;
-	PUERTO_ADM = config_get_string_value(config, "PUERTO_ADM");
+	PUERTO_ADM = config_get_string_value(config, "PUERTO_MEMORIA");
 	return PUERTO_ADM;
 }
 int configObtenerRetardoCPU(char * ruta) {
