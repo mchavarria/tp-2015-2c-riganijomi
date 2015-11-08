@@ -35,9 +35,9 @@ int socketCrearServidor(char * PUERTO, char * procesoNombre){
 		{
 			//print the error message
 			printf("%s: No puede bindear socket server.\n",procesoNombre);
-			perror("Error - Bindeando servidor.");
+			perror("Error - Enlazando servidor.");
 		} else {
-			printf("%s: Socket server  bindeado.\n",procesoNombre);
+			printf("%s: Socket server enlazado.\n",procesoNombre);
 			freeaddrinfo(serverInfo); // Ya no lo vamos a necesitar
 		}
 

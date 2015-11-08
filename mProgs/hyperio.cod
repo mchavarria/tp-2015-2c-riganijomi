@@ -1,7 +1,7 @@
 iniciar 4;
-escribir 0 “hola”;
-escribir 1 “como”;
-escribir 2 “estas?”;
+escribir 0 "hola";
+escribir 1 "como";
+escribir 2 "estas?";
 entrada-salida 40;
 leer 0;
 leer 1;

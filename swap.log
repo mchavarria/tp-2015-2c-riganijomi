@@ -1,0 +1,26 @@
+[INFO] 15:55:04:593 Swap/(11916:11916): Proceso Recibido PID: 1, Indice: 0, Tamanio: 5
+[INFO] 15:56:38:826 Swap/(12041:12041): Proceso Recibido PID: 1, Indice: 0, Tamanio: 5
+[INFO] 15:59:39:230 Swap/(12041:12041): Proceso eliminado PID: 1, Indice: 0, Tamanio: 5 
+
+[INFO] 16:00:31:995 Swap/(12041:12041): Proceso Recibido PID: 2, Indice: 0, Tamanio: 60
+[INFO] 16:00:48:615 Swap/(12041:12041): Lectura en el SWAP: ubicacion 0, valor NULL del process ID 2, de la pagina 0.
+[INFO] 16:07:59:824 Swap/(12426:12426): Proceso Recibido PID: 1, Indice: 0, Tamanio: 5
+[INFO] 16:08:47:897 Swap/(12426:12426): Proceso eliminado PID: 1, Indice: 0, Tamanio: 5 
+
+[INFO] 16:09:41:742 Swap/(12426:12426): Proceso Recibido PID: 2, Indice: 0, Tamanio: 60
+[INFO] 16:10:41:381 Swap/(12426:12426): Lectura en el SWAP: ubicacion 0, valor NULL del process ID 2, de la pagina 0.
+[INFO] 16:11:53:796 Swap/(12426:12426): Lectura en el SWAP: ubicacion 0, valor NULL del process ID 2, de la pagina 0.
+[INFO] 16:53:27:643 Swap/(14182:14182): Proceso Recibido PID: 1, Indice: 0, Tamanio: 5
+[INFO] 16:54:37:291 Swap/(14182:14182): Proceso Recibido PID: 2, Indice: 0, Tamanio: 60
+[INFO] 16:55:13:273 Swap/(14182:14182): Proceso Recibido PID: 2, Indice: 0, Tamanio: 0
+[INFO] 16:56:09:94 Swap/(14182:14182): Proceso Recibido PID: 2, Indice: 0, Tamanio: 0
+[INFO] 17:01:42:951 Swap/(14576:14576): Proceso Recibido PID: 1, Indice: 0, Tamanio: 5
+[INFO] 17:02:17:155 Swap/(14576:14576): Proceso Recibido PID: 2, Indice: 0, Tamanio: 60
+[INFO] 17:02:38:434 Swap/(14576:14576): Lectura en el SWAP: ubicacion 0, valor NULL del process ID 2, de la pagina 0.
+[INFO] 17:03:40:683 Swap/(14576:14576): Lectura en el SWAP: ubicacion 10, valor NULL del process ID 2, de la pagina 1.
+[INFO] 17:04:17:905 Swap/(14576:14576): Lectura en el SWAP: ubicacion 20, valor NULL del process ID 2, de la pagina 2.
+[INFO] 17:05:33:91 Swap/(14576:14576): Lectura en el SWAP: ubicacion 500, valor NULL del process ID 2, de la pagina 50.
+[INFO] 17:06:42:468 Swap/(14576:14576): Lectura en el SWAP: ubicacion 530, valor NULL del process ID 2, de la pagina 53.
+[INFO] 17:07:01:631 Swap/(14576:14576): Lectura en el SWAP: ubicacion 0, valor NULL del process ID 2, de la pagina 0.
+[INFO] 17:07:52:399 Swap/(14576:14576): Proceso Recibido PID: 3, Indice: 0, Tamanio: 2
+[INFO] 17:08:08:39 Swap/(14576:14576): Lectura en el SWAP: ubicacion 0, valor NULL del process ID 3, de la pagina 0.

@@ -1,0 +1,9 @@
+[INFO] 15:55:04:595 Memoria/(11946:11948): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 15:56:38:827 Memoria/(12068:12070): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 15:59:39:230 Memoria/(12068:12070): Se ha finalizado el proceso con ID: 1.
+[INFO] 16:00:31:995 Memoria/(12068:12070): Proceso ID 2, cantidad de paginas 60. Inicio: Exito
+[INFO] 16:00:48:615 Memoria/(12068:12070): Se ha leido una pagina: process ID 2, pagina leida 0 con el valor 'NULL'
+[INFO] 16:07:59:826 Memoria/(12451:12453): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 16:08:47:896 Memoria/(12451:12453): Se ha finalizado el proceso con ID: 1.
+[INFO] 16:09:41:743 Memoria/(12451:12453): Proceso ID 2, cantidad de paginas 60. Inicio: Exito
+[INFO] 16:10:41:382 Memoria/(12451:12453): Se ha leido una pagina: process ID 2, pagina leida 0 con el valor 'NULL'

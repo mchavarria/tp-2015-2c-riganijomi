@@ -1,0 +1,32 @@
+[INFO] 15:56:38:832 Planificador/(12072:12073): CPU 12064: Proceso mProc 1 (programa1.cod) creado
+[INFO] 15:57:56:848 Planificador/(12072:12073): CPU 12064: Proceso mProc 1 - se bloquea por entrada-salida 2
+[INFO] 15:59:39:230 Planificador/(12072:12073): CPU 12064: Proceso mProc 1 (programa1.cod) finalizado
+[INFO] 16:00:31:996 Planificador/(12072:12073): CPU 12064: Proceso mProc 2 (benchmark.cod) creado
+[INFO] 16:07:59:828 Planificador/(12456:12457): CPU 12422: Proceso mProc 1 (programa1.cod) creado
+[INFO] 16:08:03:993 Planificador/(12456:12457): CPU 12422: Proceso mProc 1 - se bloquea por entrada-salida 2
+[INFO] 16:08:51:985 Planificador/(12456:12457): CPU 12422: Proceso mProc 1 (programa1.cod) finalizado
+[INFO] 16:09:41:744 Planificador/(12456:12457): CPU 12422: Proceso mProc 2 (benchmark.cod) creado
+[INFO] 16:49:24:999 Planificador/(14023:14024): CPU 14037: Proceso mProc 1 - se bloquea por entrada-salida 2
+[INFO] 16:49:27:6 Planificador/(14023:14024): CPU 14037: Proceso mProc 1 (programa1.cod) finalizado
+[INFO] 16:53:29:47 Planificador/(14179:14180): CPU 14262: Proceso mProc 1 (programa1.cod) creado
+[INFO] 16:53:30:49 Planificador/(14179:14180): CPU 14262: Proceso mProc 1 - se bloquea por entrada-salida 2
+[INFO] 16:53:32:51 Planificador/(14179:14180): CPU 14262: Proceso mProc 1 (programa1.cod) finalizado
+[INFO] 16:54:38:419 Planificador/(14179:14180): CPU 14262: Proceso mProc 2 (benchmark.cod) creado
+[INFO] 16:55:23:612 Planificador/(14179:14180): CPU 14262: Proceso mProc 2 - pagina 0 leida: 
+[INFO] 16:56:09:97 Planificador/(14179:14180): CPU 14262: Proceso mProc 2 - pagina 1 leida: 
+[INFO] 17:01:44:615 Planificador/(14602:14603): CPU 14657: Proceso mProc 1 (programa1.cod) creado
+[INFO] 17:01:45:615 Planificador/(14602:14603): CPU 14657: Proceso mProc 1 - se bloquea por entrada-salida 2
+[INFO] 17:01:47:620 Planificador/(14602:14603): CPU 14657: Proceso mProc 1 (programa1.cod) finalizado
+[INFO] 17:02:20:690 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 (benchmark.cod) creado
+[INFO] 17:03:18:335 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 - pagina 0 leida: NULL
+[INFO] 17:03:50:773 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 - pagina 1 leida: NULL
+[INFO] 17:04:57:784 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 - pagina 2 leida: NULL
+[INFO] 17:06:25:44 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 - pagina 50 leida: NULL
+[INFO] 17:06:47:809 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 - pagina 53 leida: NULL
+[INFO] 17:07:07:550 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 - pagina 0 leida: NULL
+[INFO] 17:07:27:622 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 - pagina 0 leida: NULL
+[INFO] 17:07:28:624 Planificador/(14602:14603): CPU 14657: Proceso mProc 2 (benchmark.cod) finalizado
+[INFO] 17:07:53:3 Planificador/(14602:14603): CPU 14657: Proceso mProc 3 (muycorto.cod) creado
+[INFO] 17:08:44:738 Planificador/(14602:14603): CPU 14657: Proceso mProc 3 - escribio 
+[INFO] 17:08:54:354 Planificador/(14602:14603): CPU 14657: Proceso mProc 3 - pagina 0 leida: "hola
+[INFO] 17:08:55:360 Planificador/(14602:14603): CPU 14657: Proceso mProc 3 (muycorto.cod) finalizado

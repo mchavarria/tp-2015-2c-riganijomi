@@ -398,6 +398,10 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     				log_info(archivoLog,"CPU %d: Proceso mProc %d - pagina %d leida: %s",idCPU,PID,pagRW,nodoRespuesta->respuesta);
 				} else {
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d - pagina %d No leida.",idCPU,PID,pagRW);
+					log_debug(archivoLog,"CPU %d: Proceso mProc %d - error en asignacion/reemplazo de marcos",idCPU,PID);
+					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+					nodoCPU->disponible = 1;
+					nodoCPU->pcb = 0;
 				}
     		break;
     		case ESCRIBIR:
@@ -406,6 +410,10 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     				log_info(archivoLog,"CPU %d: Proceso mProc %d - escribio ",idCPU,PID);
 				} else {
 					log_debug(archivoLog,"CPU %d:Proceso mProc %d NO escribio",idCPU,PID);
+					log_debug(archivoLog,"CPU %d: Proceso mProc %d - error en asignacion/reemplazo de marcos",idCPU,PID);
+					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+					nodoCPU->disponible = 1;
+					nodoCPU->pcb = 0;
 				}
     		break;
     		case ENTRADA_SALIDA:
@@ -428,6 +436,10 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
 				} else {
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo instruccion entrada-salida %d ",idCPU,PID,pagRW);
+					log_debug(archivoLog,"CPU %d: Proceso mProc %d - error en entrada/salida",idCPU,PID);
+					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+					nodoCPU->disponible = 1;
+					nodoCPU->pcb = 0;
 				}
 				break;
     		case QUANTUM_ACABADO:

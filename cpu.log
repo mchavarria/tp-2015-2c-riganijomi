@@ -1,0 +1,38 @@
+[INFO] 15:54:47:737 CPU/(11954:11955): CPU conectada al Planificador, idCpu: 11954
+[INFO] 15:54:47:748 CPU/(11954:11955): CPU conectada a Memoria, idCpu: 11954
+[INFO] 15:55:04:601 CPU/(11954:11955): Instruccion: INICIAR, Proceso: 1, CPU: 11954, exito: Exito 
+[INFO] 15:55:05:606 CPU/(11954:11955): Instruccion: ENTRADA_SALIDA, Proceso: 1, CPU: 11954, exito: Exito 
+[INFO] 16:47:52:117 CPU/(13920:13921): CPU conectada al Planificador, idCpu: 13920
+[INFO] 16:47:52:129 CPU/(13920:13921): CPU conectada a Memoria, idCpu: 13920
+[INFO] 16:49:19:503 CPU/(14037:14038): CPU conectada al Planificador, idCpu: 14037
+[INFO] 16:49:19:515 CPU/(14037:14038): CPU conectada a Memoria, idCpu: 14037
+[INFO] 16:49:24:1 CPU/(14037:14038): Instruccion: ENTRADA_SALIDA, Proceso: 1, CPU: 14037, exito: Exito 
+[INFO] 16:49:27:5 CPU/(14037:14038): Instruccion: FINALIZAR, Proceso: 1, CPU: 14037, exito: Exito 
+[INFO] 16:50:26:818 CPU/(14098:14099): CPU conectada al Planificador, idCpu: 14098
+[INFO] 16:50:26:824 CPU/(14098:14099): CPU conectada a Memoria, idCpu: 14098
+[INFO] 16:53:01:9 CPU/(14262:14263): CPU conectada al Planificador, idCpu: 14262
+[INFO] 16:53:01:16 CPU/(14262:14263): CPU conectada a Memoria, idCpu: 14262
+[INFO] 16:53:29:46 CPU/(14262:14263): Instruccion: INICIAR, Proceso: 1, CPU: 14262, exito: Exito 
+[INFO] 16:53:30:48 CPU/(14262:14263): Instruccion: ENTRADA_SALI, Proceso: 1, CPU: 14262, exito: Exito 
+[INFO] 16:53:32:51 CPU/(14262:14263): Instruccion: FINALIZAR, Proceso: 1, CPU: 14262, exito: Exito 
+[INFO] 16:54:38:418 CPU/(14262:14263): Instruccion: INICIAR, Proceso: 2, CPU: 14262, exito: Exito 
+[INFO] 16:55:23:612 CPU/(14262:14263): Instruccion: LEER, Proceso: 2, CPU: 14262, exito: Exito 
+[INFO] 16:56:09:97 CPU/(14262:14263): Instruccion: LEER, Proceso: 2, CPU: 14262, exito: Exito 
+[INFO] 17:01:25:408 CPU/(14657:14658): CPU conectada al Planificador, idCpu: 14657
+[INFO] 17:01:25:417 CPU/(14657:14658): CPU conectada a Memoria, idCpu: 14657
+[INFO] 17:01:44:614 CPU/(14657:14658): Instruccion: INICIAR, Proceso: 1, CPU: 14657, exito: Exito 
+[INFO] 17:01:45:615 CPU/(14657:14658): Instruccion: ENTRADA_SALI, Proceso: 1, CPU: 14657, exito: Exito 
+[INFO] 17:01:47:619 CPU/(14657:14658): Instruccion: FINALIZAR, Proceso: 1, CPU: 14657, exito: Exito 
+[INFO] 17:02:20:690 CPU/(14657:14658): Instruccion: INICIAR, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:03:18:335 CPU/(14657:14658): Instruccion: LEER, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:03:50:772 CPU/(14657:14658): Instruccion: LEER, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:04:57:783 CPU/(14657:14658): Instruccion: LEER, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:06:25:43 CPU/(14657:14658): Instruccion: LEER, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:06:47:809 CPU/(14657:14658): Instruccion: LEER, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:07:07:549 CPU/(14657:14658): Instruccion: LEER, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:07:27:622 CPU/(14657:14658): Instruccion: LEER, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:07:28:625 CPU/(14657:14658): Instruccion: FINALIZAR, Proceso: 2, CPU: 14657, exito: Exito 
+[INFO] 17:07:53:2 CPU/(14657:14658): Instruccion: INICIAR, Proceso: 3, CPU: 14657, exito: Exito 
+[INFO] 17:08:44:738 CPU/(14657:14658): Instruccion: ESCRIBIR, Proceso: 3, CPU: 14657, exito: Exito 
+[INFO] 17:08:54:354 CPU/(14657:14658): Instruccion: LEER, Proceso: 3, CPU: 14657, exito: Exito 
+[INFO] 17:08:55:361 CPU/(14657:14658): Instruccion: FINALIZAR, Proceso: 3, CPU: 14657, exito: Exito 

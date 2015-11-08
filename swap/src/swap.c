@@ -186,12 +186,11 @@ void leerPaginaProceso(int idProc, int pagina){
 	}
 	t_nodoProceso * nodoProceso = NULL;
 	nodoProceso = list_find(listaProcesos,(void*) condicionLeer);
-
+	nodoRespuesta->exito = 0;
 
 	if (nodoProceso != NULL){
 		indiceProceso = nodoProceso->indice;
 		int ubicacion = indiceProceso + (pagina * tamanioPaginas);
-
 		//modificar para el directorio real
 		//TODO cuidado con las direciones relativas
 		particion=fopen("swap.data","r");
@@ -222,7 +221,6 @@ void leerPaginaProceso(int idProc, int pagina){
 	}else{
 
 		perror("no se encontró el proceso indicado");
-		nodoRespuesta->exito = 0;
 	}
 	enviarMensajeRtaAMem(nodoRespuesta);
 }

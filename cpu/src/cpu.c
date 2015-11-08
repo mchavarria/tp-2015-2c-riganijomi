@@ -102,6 +102,7 @@ void cpu_func() {
 
 		if (fp == NULL){
 			printf("CPU: Archivo -%s- de PCB %d no válido", pcbProc->contextoEjecucion, pcbProc->PID);
+			notificarNoInicioPCB(pcbProc);
 			perror("Archivo no válido.");
 		} else {
 			while (((read = getline(&linea, &len, fp)) != -1) && (continuarLeyendo)) {
@@ -142,6 +143,24 @@ void cpu_func() {
 	}//while rcv
 }
 
+void notificarNoInicioPCB(t_pcb * pcbProc){
+	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
+
+	nodoRtaCpuPlan->PID = pcbProc->PID;
+	nodoRtaCpuPlan->idCPU = getpid();
+	nodoRtaCpuPlan->tipo = INICIAR;
+	nodoRtaCpuPlan->pc = pcbProc->pc;
+	nodoRtaCpuPlan->pagRW = retardo;
+	nodoRtaCpuPlan->respuesta = malloc(strlen("")+1);
+	strcpy(nodoRtaCpuPlan->respuesta,"\0");
+	nodoRtaCpuPlan->exito = 0;
+
+	if (socketPlanificador > 0){
+		//El socket está linkeado
+		int err = enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
+	}
+}
+
 void sacarPorQuantum(){
 
 	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
@@ -159,27 +178,30 @@ void sacarPorQuantum(){
 	if (socketPlanificador > 0){
 		//El socket está linkeado
 		int err = enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
-		log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+		log_info(archivoLog, "Instruccion: %s, Proceso: %d, CPU: %d, exito: %d ", traducirInstruccion(nodoRtaCpuPlan->tipo),nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
 	}
 }
 
 void interpretarLinea(char * linea) {
 	strtok(linea,";");
+	texto = malloc(strlen("")+1);
+	strcpy(texto,"\0");
 	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
 	nodoInstruccion = malloc(sizeof(t_nodo_mem));
 	nodoRta = malloc(sizeof(t_resp_swap_mem));
     if (esElComando(linea, "iniciar")) {
-		instruccionIniciarProceso (linea);
-
+    	paginaInstruccion = devolverParteUsableInt(linea, 8);
+		instruccionIniciarProceso(linea);
 	} else if (esElComando(linea, "leer")) {
-		instruccionLeerPagina (linea);
-
+		paginaInstruccion = devolverParteUsableInt(linea, 5);
+		instruccionLeerPagina(linea);
 	} else if (esElComando(linea, "entrada-salida")) {
 		continuarLeyendo = 0;
-		instruccionEntradaSalida (linea);
+		instruccionEntradaSalida(linea);
 	} else if (esElComando(linea, "escribir")) {
-		instruccionEscribirPagina (linea);
-
+		paginaInstruccion = valorPaginaEnEscritura(linea);
+		textoAEscribir(linea);
+		instruccionEscribirPagina(linea);
 	} else if (esElComando(linea, "finalizar")) {
 		continuarLeyendo = 0;
 		instruccionFinalizarProceso(linea);
@@ -189,6 +211,26 @@ void interpretarLinea(char * linea) {
     free(nodoRtaCpuPlan);
     free(nodoRta);
     free(nodoInstruccion);
+}
+
+
+void textoAEscribir(char * instruccion){
+	int character = 0;
+	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
+		character++;
+	}
+	strcpy(texto,string_substring(instruccion,character,strlen(instruccion)));
+	strtok(texto, "\"");
+}
+
+int valorPaginaEnEscritura(char * instruccion){
+	int character = 0;
+	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
+		character++;
+	}
+	int pagina = atoi(string_substring(instruccion, 9, character));
+	return pagina;
+
 }
 
 void instruccionIniciarProceso (char * instruccion) {
@@ -204,8 +246,7 @@ void instruccionIniciarProceso (char * instruccion) {
 
 	int err;
 	nodoInstruccion->pid = pcbProc->PID;
-	nodoInstruccion->instruccion = malloc(strlen("\0")+1);
-	strcpy(nodoInstruccion->instruccion,instruccion);
+	nodoInstruccion->instruccion = INICIAR;
 
 	if ((err = enviarMensajeDeNodoAMem(nodoInstruccion)) > 0)
 	{
@@ -221,7 +262,7 @@ void instruccionIniciarProceso (char * instruccion) {
 				continuarLeyendo = 0;
 				log_error(archivoLog, "no se pudo iniciar el proceso: %d", pcbProc->PID);
 			}
-			log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+			log_info(archivoLog, "Instruccion: %s, Proceso: %d, CPU: %d, exito: %s ", traducirInstruccion(nodoRtaCpuPlan->tipo),nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, traducirExitoStatus(nodoRtaCpuPlan->exito));
 		}
 	}
 }
@@ -237,11 +278,11 @@ void instruccionLeerPagina (char * instruccion) {
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 
 	nodoInstruccion->pid = pcbProc->PID;
-	strcpy(nodoInstruccion->instruccion,instruccion);
+	nodoInstruccion->instruccion = LEER;
 	int err;
 	err = enviarMensajeDeNodoAMem(nodoInstruccion);
 
-	nodoRta->contenido = malloc(strlen("\0")+1);
+	nodoRta->contenido = malloc(strlen("")+1);
 	strcpy(nodoRta->contenido,"\0");
 	err = recibirNodoDeMEM(nodoRta);
 	nodoRtaCpuPlan->exito = nodoRta->exito;
@@ -251,7 +292,7 @@ void instruccionLeerPagina (char * instruccion) {
 		log_error(archivoLog, "no se pudo leer el proceso: %d", pcbProc->PID);
 	}
 	err = enviarMensajeRespuestaCPU(socketPlanificador, nodoRtaCpuPlan);
-	log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+	log_info(archivoLog, "Instruccion: %s, Proceso: %d, CPU: %d, exito: %s ", traducirInstruccion(nodoRtaCpuPlan->tipo),nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, traducirExitoStatus(nodoRtaCpuPlan->exito));
 }
 
 void instruccionEscribirPagina (char * instruccion) {
@@ -267,20 +308,21 @@ void instruccionEscribirPagina (char * instruccion) {
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 
 	nodoInstruccion->pid = pcbProc->PID;
-	strcpy(nodoInstruccion->instruccion,instruccion);
+	nodoInstruccion->instruccion = ESCRIBIR;
+
 	int err;
 	err = enviarMensajeDeNodoAMem(nodoInstruccion);
 
-	nodoRta->contenido = malloc(strlen("\0")+1);
+	nodoRta->contenido = malloc(strlen("")+1);
 	strcpy(nodoRta->contenido,"\0");
 	err = recibirNodoDeMEM(nodoRta);
 	nodoRtaCpuPlan->exito = nodoRta->exito;
 	enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
-
 	if (nodoRta->exito != 1){
 		continuarLeyendo = 0;
 	}//exito if
-	log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+
+	log_info(archivoLog, "Instruccion: %s, Proceso: %d, CPU: %d, exito: %s ", traducirInstruccion(nodoRtaCpuPlan->tipo),nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, traducirExitoStatus(nodoRtaCpuPlan->exito));
 }
 
 void instruccionEntradaSalida (char * instruccion) {
@@ -296,7 +338,7 @@ void instruccionEntradaSalida (char * instruccion) {
 	nodoRtaCpuPlan->exito = 1;
 
 	int err = enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
-	log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+	log_info(archivoLog, "Instruccion: %s, Proceso: %d, CPU: %d, exito: %s ", traducirInstruccion(nodoRtaCpuPlan->tipo),nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, traducirExitoStatus(nodoRtaCpuPlan->exito));
 }
 
 void instruccionFinalizarProceso(char * instruccion) {
@@ -304,21 +346,20 @@ void instruccionFinalizarProceso(char * instruccion) {
 	nodoRtaCpuPlan->tipo = FINALIZAR;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->idCPU = getpid();
-	nodoRtaCpuPlan->respuesta = malloc(strlen("\0")+1);
+	nodoRtaCpuPlan->respuesta = malloc(strlen("")+1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 	nodoRtaCpuPlan->PID = pcbProc->PID;
 	nodoRtaCpuPlan->exito = 1;
 
 	nodoInstruccion->pid = pcbProc->PID;
-	nodoInstruccion->instruccion = malloc(strlen("\0")+1);
-	strcpy(nodoInstruccion->instruccion,instruccion);
+	nodoInstruccion->instruccion = FINALIZAR;
 	int err;
 
 	err = enviarMensajeDeNodoAMem(nodoInstruccion);
 
 	err = enviarMensajeRespuestaCPU(socketPlanificador, nodoRtaCpuPlan);
 
-	log_info(archivoLog, "Instruccion: %d, Proceso: %d, CPU: %d, exito: %d ", nodoRtaCpuPlan->tipo,nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, nodoRtaCpuPlan->exito);
+	log_info(archivoLog, "Instruccion: %s, Proceso: %d, CPU: %d, exito: %s ", traducirInstruccion(nodoRtaCpuPlan->tipo),nodoRtaCpuPlan->PID, nodoRtaCpuPlan->idCPU, traducirExitoStatus(nodoRtaCpuPlan->exito));
 }
 
 
@@ -387,7 +428,7 @@ int enviarMensajeDeNodoAMem(t_nodo_mem * nodo)
 {
 	int nbytes;
 	int pid = getpid();
-	unsigned char buffer[100];
+	unsigned char buffer[1024];
 	empaquetarNodoMemCPU(buffer,nodo);
 	nbytes = send(socketADM, buffer, sizeof(buffer) , 0);
 	if (nbytes == 0) {
@@ -403,7 +444,7 @@ int enviarMensajeDeNodoAMem(t_nodo_mem * nodo)
 void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo)
 {
 	unsigned int tamanioBuffer;
-	tamanioBuffer = pack(buffer,SECUENCIA_CPU_MEM,nodo->pid,nodo->instruccion);
+	tamanioBuffer = pack(buffer,SECUENCIA_CPU_MEM,nodo->pid,paginaInstruccion,nodo->instruccion,texto);
 }
 
 
@@ -433,5 +474,34 @@ void desempaquetarNodoMem(unsigned char *buffer,t_resp_swap_mem * nodo)
 	nodo->contenido = programa;
 }
 
+
+char * traducirInstruccion(int tipo){
+	char * resultado;
+	resultado = malloc(strlen("")+1);
+	switch(tipo){
+		case INICIAR:
+			strcpy(resultado,"INICIAR");
+			break;
+		case LEER:
+			strcpy(resultado,"LEER");
+			break;
+		case ESCRIBIR:
+			strcpy(resultado,"ESCRIBIR");
+			break;
+		case ENTRADA_SALIDA:
+			strcpy(resultado,"I/O");
+			break;
+		case QUANTUM_ACABADO:
+			strcpy(resultado,"QUANTUM");
+			break;
+		case FINALIZAR:
+			strcpy(resultado,"FINALIZAR");
+			break;
+		case ERRONEA:
+			strcpy(resultado,"INST ERRONEA");
+			break;
+	}
+	return resultado;
+}
 
 

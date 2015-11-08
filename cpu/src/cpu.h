@@ -30,15 +30,18 @@
 #define ENTRADA_SALIDA 4
 #define QUANTUM_ACABADO 5
 #define FINALIZAR 6
+#define ERRONEA 15
 //Char del orden de la Estructuras para serializar/desserializar
 #define SECUENCIA_PCB "hhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
-#define SECUENCIA_CPU_MEM "hs"
+#define SECUENCIA_CPU_MEM "hhhs"
 
 typedef struct NODO_MEM {
 	int pid;
-	char *instruccion;
+	int pagina;
+	int instruccion;
+	char *texto;
 } t_nodo_mem;
 
 
@@ -120,6 +123,7 @@ static t_hilos_CPU *hilos_create();
 
 //Serializacion
 int recibirPCBdePlanificador(t_pcb * nodoPCB);
+void notificarNoInicioPCB(t_pcb * pcbProc);
 void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta);
 void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
@@ -127,7 +131,9 @@ int enviarMensajeDeNodoAMem(t_nodo_mem * nodo);
 void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo);
 int recibirNodoDeMEM(t_resp_swap_mem * nodo);
 void desempaquetarNodoMem(unsigned char *buffer,t_resp_swap_mem * nodo);
-
+char * traducirInstruccion(int tipo);
+int valorPaginaEnEscritura(char * instruccion);
+void textoAEscribir(char * instruccion);
 //Variables globales
 char directorioActual[1024];
 char * ipPlanificador;
@@ -141,5 +147,7 @@ int socketADM;
 int socketPlanificador = 0;
 int continuarLeyendo = 1;
 int pc;
+int paginaInstruccion = 0;
+char * texto;
 
 #endif /* CPU_H_ */

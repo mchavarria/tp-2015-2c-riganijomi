@@ -1,4 +1,3 @@
-#include <string.h>
 #include "interprete.h"
 
 
@@ -34,5 +33,17 @@ int devolverIntInstruccion(char * linea, int desde) {
 	strtok(substr,";");
 	valor = atoi(substr);
 	return valor;
+}
+
+char * traducirExitoStatus(int exito){
+	char * resultado;
+	resultado = malloc(strlen("")+1);
+	if (exito)
+	{
+		strcpy(resultado,"Exito");
+	} else {
+		strcpy(resultado,"Fallo");
+	}
+	return resultado;
 }
 

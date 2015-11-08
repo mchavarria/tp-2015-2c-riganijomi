@@ -17,7 +17,7 @@
 #define INICIAR 1
 #define LEER 2
 #define ESCRIBIR 3
-#define FINALIZAR 4
+#define FINALIZAR 6
 
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_MEM_SWAP "hhhs"

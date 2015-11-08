@@ -22,20 +22,15 @@
 #define INICIAR 1
 #define LEER 2
 #define ESCRIBIR 3
-#define FINALIZAR 4
+#define FINALIZAR 6
+#define ERRONEA 15
 #define NULO 1000000
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_MEM_SWAP "hhhs"
 
-#define SECUENCIA_CPU_MEM "hs"
+#define SECUENCIA_CPU_MEM "hhhs"
 
-//para mensajes recibidos
-char instruccion[30];
-char respuesta[30];
-int nbytes;
 
-char * linea;
-int pid;
 //CFG
 char* PUERTO_SWAP;
 char* IP_SWAP;
@@ -83,7 +78,9 @@ typedef struct NODO_MEM_SWAP {
 
 typedef struct NODO_MEM {
 	int pid;
-	char *instruccion;
+	int pagina;
+	int instruccion;
+	char *texto;
 } t_nodo_mem;
 
 typedef struct marcosLibrs {
@@ -161,19 +158,17 @@ void rutina (int n);
 void levantarCfgInicial();
 void configurarSockets();
 
-int interpretarLinea();
+int interpretarLinea(t_nodo_mem * nodoInst);
 void inicializarTLB();
 int inicializarTablaDePaginas();
 void inicializarMarco();
 void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina);
-void actualizarMarco(char * texto,int pid, int numeroPagina, char * paginaSwap, int indiceMarco,int tipo);
+void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, int tipo);
 int algoritmoReemplazo(int processID);
 int algoritmoReemplazoFIFO(int processID);
 void desasignarMarco(int processID, int marco);
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo);
 static t_tablaPaginasProceso * obtenerPaginaPorNumMarco(int marco, t_tablasPaginas * nodoTablasPagina);
-int valorPagina(char * instruccion);
-int posicionComilla(char * instruccion);
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco);
 
 void flushMarcosActivacion();
@@ -181,7 +176,7 @@ void* flushTLB();
 void* flushMarcos();
 void desasignarTodosLosProcesos();
 void flushTLBActivacion();
-
+void configurarSockets();
 //SERIALIZACION
 int recibirNodoDeCPU(t_nodo_mem * nodo);
 void desempaquetarNodoInstruccion(unsigned char *buffer,t_nodo_mem * nodo);
@@ -191,7 +186,9 @@ int enviarMensajeDeNodoASWAP(t_nodo_mem_swap * nodo);
 void empaquetarNodoMemSWAP(unsigned char *buffer,t_nodo_mem_swap * nodo);
 int recibirNodoDeRtaSwap(t_resp_swap_mem * nodo);
 void desempaquetarNodoRtaSwap(unsigned char *buffer,t_resp_swap_mem * nodo);
-static t_marco * detectarPageFault(t_nodo_mem * nodoInstruccion, int numeroPagina);
+static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina);
+static t_marco * marco_create(int numeroMarco);
+static t_tlb * tlb_create();
 
 typedef struct CPU {
 	int pid;
@@ -200,8 +197,7 @@ typedef struct CPU {
 
 t_list * listaDeCPUs;
 t_list * listaSolicitudes;
-sem_t mutexRespuestaSwap;
-int tamanioSwapMjeGlobal;
+sem_t cantSolicitudes;
 void informarDesconexionCPU(int socketCPU);
 void* monitorearSockets();
 void recibirSolicitudCPU();
@@ -209,7 +205,8 @@ void agregarCPUALista(int socketCpu);
 void* atenderSolicitudes();
 void recibirSolicitudDeCpu(int socket, int * nbytes);
 int obtenerPaginaLeeroEscribir(char * linea);
-void seleccionarMarcoVictima(t_marco * marco);
+static t_marco * seleccionarMarcoVictima(int pid);
+void finalizarProceso(int pid);
 
 #endif /* MEMORIA_H_ */
 
