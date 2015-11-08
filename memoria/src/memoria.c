@@ -91,8 +91,8 @@ void inicializarMarco() {
 
 void levantarCfgInicial()
 {
-	//char cfgFin[] ="/memoria/src/config.cfg";//Consola
-	char cfgFin[] ="/src/config.cfg";
+	char cfgFin[] ="/memoria/src/config.cfg";//Consola
+	//char cfgFin[] ="/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -320,7 +320,7 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 		resultadoBusqueda = nodoPagina->numeroMarco;
 	}//Encontrado en TLB
-	if (resultadoBusqueda != NULL){
+	if (resultadoBusqueda != NULO){
 		//No hubo PF
 		nodoMarco = list_find(listaMarco, (void*) devolverValor);
 	}
@@ -539,14 +539,15 @@ static t_marco * seleccionarMarcoVictima(int pid)
 
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
 	int devolverNodoTLBLibre(t_tlb * nodo) {
-		return (nodo->processID == NULO);
+		return (nodo->processID == 0);
 	}
 
 	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
 	nodoTLB = list_find(listaTLB, (void *) devolverNodoTLBLibre);
 
 	if(nodoTLB == NULL){
-		nodoTLB = list_get(listaTLB, 0);
+		nodoTLB = list_remove(listaTLB,0);
+		list_add(listaTLB,nodoTLB);
 	}
 	nodoTLB->processID = nodoInstruccion->pid;
 	nodoTLB->numeroPagina = marco->numeroPagina;
@@ -567,19 +568,22 @@ int valorPagina(char * instruccion){
 
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo){
 	t_marco * ptrMarco = NULL;
+	char tamTexto[TAMANIO_MARCO];
+	strcpy(tamTexto,texto);
 	ptrMarco = list_get(listaMarco, marco);
 	ptrMarco->processID = processID;
+	ptrMarco->numeroPagina = numeroPagina;
 	if (ptrMarco != NULL){
 		if (LEER == tipo) {
 			//es lectura
 			ptrMarco->bitLeido = 1;
 			//Si hubo PF guardo el valor
-			strcpy(ptrMarco->valor,texto);
+			strcpy(ptrMarco->valor,tamTexto);
 		} else {
 			//es escritura
 			ptrMarco->bitLeido = 1;
 			ptrMarco->bitModificacion = 1;
-			strcpy(ptrMarco->valor,texto);
+			strcpy(ptrMarco->valor,tamTexto);
 		}
 	}
 }

@@ -50,12 +50,13 @@ int main() {
 //INFORMARSE CON UN MONITOR CADA VEZ QUE SE CONECTA UNA
 void* enviarPCBaCPU()
 {
-	sem_wait(&semProgramas);
+
 	bool buscarCPUDisponible(t_cpu * nodoCPU) {
 		return (nodoCPU->disponible == 1);
 	}
 	t_cpu * nodoCPU = NULL;
 	while (1){
+		sem_wait(&semProgramas);
 		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
 		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
 		if (nodoCPU != NULL){
@@ -80,7 +81,6 @@ void* enviarPCBaCPU()
 			//No hay cpu disponible, vuelve a iniciar el while
 			sem_post(&semProgramas);
 		}
-		sem_wait(&semProgramas);
 	}
 }
 
@@ -632,10 +632,10 @@ void* monitorearSockets(){
     } // fin del for(;;)
 }
 
-void informarDesconexionCPU(int socketCPU)
+void informarDesconexionCPU(int socket)
 {
 	bool buscarCPUporSocket(t_cpu * nodoCPU) {
-		return (nodoCPU->socket == socketCPU);
+		return (nodoCPU->socket == socket);
 	}
 	t_cpu* nodoCPU=NULL;
 	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporSocket);

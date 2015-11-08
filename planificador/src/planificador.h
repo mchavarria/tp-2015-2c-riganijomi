@@ -130,7 +130,7 @@ int devolverParteUsableInt(char * linea, int desde);
 int totalInstruccionesArchivo(char * programa);
 
 void recibirRespuestaCPU(int socketCpu, int * nbytes);
-void informarDesconexionCPU(int i);
+void informarDesconexionCPU(int socket);
 
 void* buscarPCBEjecutandoPorPID(int PID);
 

@@ -106,7 +106,7 @@ typedef struct tablasPaginas {
 
 typedef struct marco {
 	uint32_t processID;
-	char * valor;
+	char *valor;
 	uint32_t numeroMarco;
 	uint32_t numeroPagina;
 	uint32_t bitModificacion;

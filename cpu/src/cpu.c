@@ -6,6 +6,7 @@ int main() {
 	cargarCfgs();
 
 	//Prepara el archivo log al cual va a escribir
+
 	archivoLog = log_create("cpu.log", "CPU", false, 2);
 
 	//ACA HABRÍA QUE ABRIR TANTOS HILOS COMO CPUS HAYAN
@@ -49,11 +50,11 @@ static t_hilos_CPU *hilos_create()
 
 void cpu_func() {
 
-	int idCPU = getpid();
+	int idCPU = pthread_self();
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
 	if (socketPlanificador == -1) {
-		log_error(archivoLog, "Planificador no se pudo conectar");
+		log_error(archivoLog, "CPU %d: Planificador no se pudo conectar", idCPU);
 		exit(EXIT_FAILURE);
 	} else {
 		log_info(archivoLog, "CPU conectada al Planificador, idCpu: %d", idCPU);
@@ -62,7 +63,7 @@ void cpu_func() {
 	//Se conecta al ADM
     socketADM = socketCrearCliente(puertoADM, ipADM,"CPU","Memoria");
 	if (socketADM == -1) {
-		log_error(archivoLog, "Memoria no se pudo conectar");
+		log_error(archivoLog, "CPU %d: Memoria no se pudo conectar", idCPU);
 		exit(EXIT_FAILURE);
 	} else {
 		log_info(archivoLog, "CPU conectada a Memoria, idCpu: %d", idCPU);
@@ -117,7 +118,7 @@ void cpu_func() {
 						sleep(retardo);
 					} else {
 						//RR
-						if (controlQuantum++ < pcbProc->quantum){
+						if (controlQuantum++ <= pcbProc->quantum){
 							pcbProc->pc++;  //actualiza el pgm counter
 							//Lee linea y ejecuta
 							interpretarLinea(linea);
@@ -126,7 +127,7 @@ void cpu_func() {
 					}
 				}
 
-				if ((pcbProc->quantum != 0) && (controlQuantum > pcbProc->quantum)){
+				if ((pcbProc->quantum != 0) && (controlQuantum > pcbProc->quantum) && (continuarLeyendo != 0)){
 					sacarPorQuantum();
 					continuarLeyendo = 0;
 				}
@@ -219,7 +220,7 @@ void textoAEscribir(char * instruccion){
 	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
 		character++;
 	}
-	strcpy(texto,string_substring(instruccion,character,strlen(instruccion)));
+	strcpy(texto,string_substring(instruccion,++character,strlen(instruccion)));
 	strtok(texto, "\"");
 }
 
@@ -365,8 +366,8 @@ void instruccionFinalizarProceso(char * instruccion) {
 
 void cargarCfgs() {
 	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/cpu/src/config.cfg");//para consola
-	//strcat(directorioActual, "/src/config.cfg"); //para eclipse
+	//strcat(directorioActual, "/cpu/src/config.cfg");//para consola
+	strcat(directorioActual, "/src/config.cfg"); //para eclipse
 
 	ipPlanificador = configObtenerIpPlanificador(directorioActual);
 	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);

@@ -1,9 +1,12 @@
-[INFO] 15:55:04:595 Memoria/(11946:11948): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
-[INFO] 15:56:38:827 Memoria/(12068:12070): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
-[INFO] 15:59:39:230 Memoria/(12068:12070): Se ha finalizado el proceso con ID: 1.
-[INFO] 16:00:31:995 Memoria/(12068:12070): Proceso ID 2, cantidad de paginas 60. Inicio: Exito
-[INFO] 16:00:48:615 Memoria/(12068:12070): Se ha leido una pagina: process ID 2, pagina leida 0 con el valor 'NULL'
-[INFO] 16:07:59:826 Memoria/(12451:12453): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
-[INFO] 16:08:47:896 Memoria/(12451:12453): Se ha finalizado el proceso con ID: 1.
-[INFO] 16:09:41:743 Memoria/(12451:12453): Proceso ID 2, cantidad de paginas 60. Inicio: Exito
-[INFO] 16:10:41:382 Memoria/(12451:12453): Se ha leido una pagina: process ID 2, pagina leida 0 con el valor 'NULL'
+[INFO] 18:47:00:490 Memoria/(19771:19773): Proceso ID 1, cantidad de paginas 8. Inicio: Exito
+[INFO] 18:47:02:499 Memoria/(19771:19773): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor ''
+[INFO] 18:47:12:516 Memoria/(19771:19773): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'NULL'
+[INFO] 19:19:31:95 Memoria/(21507:21509): Proceso ID 1, cantidad de paginas 8. Inicio: Exito
+[INFO] 19:20:06:547 Memoria/(21507:21509): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor 'tlb'
+[INFO] 19:20:26:479 Memoria/(21507:21509): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'tlb'
+[INFO] 19:20:45:724 Memoria/(21507:21509): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'tlb'
+[INFO] 19:20:55:725 Memoria/(21507:21509): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'tlb'
+[INFO] 19:21:08:991 Memoria/(21507:21509): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'tlb'
+[INFO] 19:21:18:994 Memoria/(21507:21509): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'tlb'
+[INFO] 19:21:50:104 Memoria/(21507:21509): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'fallo'
+[INFO] 19:22:39:313 Memoria/(21507:21509): Se ha finalizado el proceso con ID: 1.
