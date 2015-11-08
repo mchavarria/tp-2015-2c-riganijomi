@@ -332,8 +332,8 @@ void levantarCfg(){
 
 	archivoLog = log_create("planificador.log", "Planificador", false, 2);
 
-	//char cfgFin[] ="/planificador/src/config.cfg";//Para consola
-	char cfgFin[] ="/src/config.cfg";//Para eclipse
+	char cfgFin[] ="/planificador/src/config.cfg";//Para consola
+	//char cfgFin[] ="/src/config.cfg";//Para eclipse
 	char *dir = getcwd(NULL, 0);
 
 	char *directorioActual = malloc(strlen(dir)+strlen(cfgFin)+1);

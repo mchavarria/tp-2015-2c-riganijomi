@@ -1,7 +1,8 @@
-iniciar 8;
-escribir 1 "Hola";
-leer 1;
-leer 2;
-leer 3;
+iniciar 10;
+escribir 1 'gay';
+escribir 2 'es';
+escribir 4 'Ricardo';
 leer 4;
+leer 2;
+leer 1;
 finalizar;

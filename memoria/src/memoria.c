@@ -17,10 +17,12 @@ int main(int argc, char* argv[]) {
 	signal(SIGINT, flushTLBActivacion);
 	signal(SIGUSR1, flushMarcosActivacion);*/
 	//signal(SIGUSR2, dumpMemoria);
-
+	sem_init(&mutexRespuestaSwap,0,0);
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
 	listaTLB = list_create();
+	listaDeCPUs = list_create();
+	listaSolicitudes = list_create();
 	/*
 	const char *programa1[9];
 	programa1[0] = "iniciar 9";
@@ -48,7 +50,6 @@ int main(int argc, char* argv[]) {
 	}*/
 
 
-	configurarSockets();
 	//sem_init(&sem_mem, 0, 0);
 	//sem_init(&sem_sockets, 0, 1);
 	//Inicia los parametros
@@ -59,17 +60,19 @@ int main(int argc, char* argv[]) {
 	signal(SIGUSR1, rutina);
 	signal(SIGUSR2, rutina);
 
-	//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
-	nodoInstruccion = malloc(sizeof(t_nodo_mem));
-	linea = malloc(strlen("")+1);
-	for(;(socketCpu > 0);){
+	pthread_t monitor;
+	char *m3 = "monitor";
+	int r3;
 
-		//sem_wait(&sem_mem);
-		int err;
-		if ((err = recibirNodoDeCPU(nodoInstruccion) > 0)) {
-			interpretarLinea(nodoInstruccion->instruccion);
-		}
-	}
+	r3 = pthread_create( &monitor, NULL, monitorearSockets, (void*) m3);
+	//r1 = pthread_create(&hiloMonitorSockets,NULL,monitorPrepararServidor(&sem_mem,&sem_sockets), (void *) arg1);
+
+	pthread_t atenderSol;
+	char *m2 = "atenderSol";
+	int r1;
+
+	r1 = pthread_create( &atenderSol, NULL, atenderSolicitudes, (void*) m2);
+	pthread_join(atenderSol,NULL);
 	return 1;
 }
 
@@ -183,14 +186,6 @@ void levantarCfgInicial()
 	free(directorioActual);
 }
 
-void configurarSockets(){
-	//se conecta con el swap que tiene un servidor escuchando
-	socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP,"Memoria","Swap");
-	socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
-	if (socketServidor > 0){
-		socketCpu = socketAceptarConexion(socketServidor,"Memoria","CPU");
-	}
-}
 
 void rutina (int n) {
 	switch (n) {
@@ -351,9 +346,11 @@ int obtenerUnMarcoLibre(t_list * lista) {
 	return (nodoMarco->numeroMarco);
 
 }
+
+
 //Se usar para LEER u ESCRIBIR, busca un marco en TLB, luego lo busca en TABLA DE PAGINAS.
 //Si es necesario envia/pide a swap.
-static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int numeroPagina, char * texto) {
+static t_marco * detectarPageFault(t_nodo_mem * nodoInstruccion, int numeroPagina) {
 	int resultadoBusqueda;
 	bool devolverValor(t_marco * nodo) {
 		return (nodo->numeroMarco == resultadoBusqueda);
@@ -369,48 +366,11 @@ static t_marco * accederAPaginaCiclicamente(t_nodo_mem * nodoInstruccion, int nu
 		tablaDeProceso = buscarTablaPaginas(nodoInstruccion->pid);
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 		resultadoBusqueda = nodoPagina->numeroMarco;
-		if (resultadoBusqueda == NULO) {
-			//Pide a swap la pagina. Envia el numero de pagina y el processID para que el swap lo traiga de vuelta.
-			//Envio a SWAP
-			//Pide lectura a pagina
-
-			//Recibe pagina
-			if (nodoASwap->tipo == LEER){
-				enviarMensajeDeNodoASWAP(nodoASwap);
-				recibirNodoDeRtaSwap(nodoRtaSwap);
-				puts(nodoRtaSwap->contenido);
-			}
-
-
-			if (cantidadMarcosAsignados(nodoInstruccion->pid) < MAXIMO_MARCOS_POR_PROCESO) {
-				indiceMarco = obtenerUnMarcoLibre(listaMarco);
-				if (indiceMarco < 0) {
-					//finaliza proceso.
-					nodoASwap->tipo = FINALIZAR;
-					nodoASwap->pid = nodoInstruccion->pid;
-					enviarMensajeDeNodoASWAP(nodoASwap);
-					nodoRtaSwap->exito = 0;
-				} else {
-					resultadoBusqueda = indiceMarco;
-					if (nodoASwap->tipo == LEER){
-						strcpy(texto,nodoRtaSwap->contenido);
-					}
-					actualizarMarco(texto,nodoInstruccion->pid, numeroPagina,texto,indiceMarco,nodoASwap->tipo);
-				}
-			} else if (cantidadMarcosAsignados(nodoInstruccion->pid) == MAXIMO_MARCOS_POR_PROCESO) {
-				//ejecuta algoritmo de reemplazo FIFO.
-				//elimina numero de marco en la pagina victima
-				int marco = algoritmoReemplazo(nodoInstruccion->pid);
-				if (nodoASwap->tipo == LEER){
-					strcpy(texto,nodoRtaSwap->contenido);
-				}
-				actualizarMarco(texto,nodoInstruccion->pid, numeroPagina,texto,marco,nodoASwap->tipo);
-				desasignarMarco(nodoInstruccion->pid,marco);
-				resultadoBusqueda = marco;
-			}
-
-		}
-	}
+		if (resultadoBusqueda == NULO)
+		{
+			//PAGE FAULT
+		}//Encontrado en la tabla de paginas del proceso
+	}//Encontrado en TLB
 	nodoMarco = list_find(listaMarco, (void*) devolverValor);
 	return nodoMarco;
 }
@@ -515,44 +475,6 @@ int interpretarLinea() {
 		}
     	enviarMensajeDeNodoACPU(nodoRtaSwap);
 		log_info(archivoLog, "Proceso ID %d, cantidad de paginas %d. Inicio: %d", pid, cantidadPaginasProceso,nodoRtaSwap->exito);
-	} else if (esElComando(linea, "leer")) {
-		nodoASwap->tipo = LEER;
-		nodoRtaSwap->tipo = LEER;
-		int pagina;
-		pagina = devolverParteUsableInt(linea, 5);
-		nodoASwap->pagina = pagina;
-		marco = accederAPaginaCiclicamente(nodoInstruccion, pagina, "");
-		cargarTlb(nodoInstruccion, marco);
-		if (marco != NULL){
-			nodoRtaSwap->exito = 1;
-			strcpy(nodoRtaSwap->contenido,marco->valor);
-			puts(marco->valor);
-			log_info(archivoLog, "Se ha leido una pagina: process ID %d, pagina leida %d con el valor '%s'", pid, pagina, marco->valor);
-		} else {
-			log_info(archivoLog, "pagina no leida: process ID %d, pagina %d", pid, pagina);
-		}
-		enviarMensajeDeNodoACPU(nodoRtaSwap);
-
-		sleep(RETARDO_MEMORIA);
-	} else if (esElComando(linea, "escribir")) {
-		nodoASwap->tipo = ESCRIBIR;
-		nodoRtaSwap->tipo = ESCRIBIR;
-		char * texto;
-		int pagina = valorPagina(linea);
-		nodoASwap->pagina = pagina;
-		texto = malloc(strlen(devolverParteUsable(linea, posicionComilla(linea))));
-		strcpy(texto, devolverParteUsable(linea, posicionComilla(linea)));
-		strtok(texto, "\'");
-		char ** textoSinComillas = string_split(texto, "\'");
-		strcat(texto, "\0");
-		marco = accederAPaginaCiclicamente(nodoInstruccion, pagina, *textoSinComillas);
-		if (marco != NULL){
-			nodoRtaSwap->exito = 1;
-			cargarTlb(nodoInstruccion, marco);
-			log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", pid, pagina, texto);
-		}
-		enviarMensajeDeNodoACPU(nodoRtaSwap);
-		sleep(RETARDO_MEMORIA);
 	} else if (esElComando(linea, "finalizar")) {
 		nodoASwap->tipo = FINALIZAR;
 		nodoRtaSwap->tipo = FINALIZAR;
@@ -565,10 +487,44 @@ int interpretarLinea() {
 		log_info(archivoLog, "Se ha finalizado el proceso con ID: %d.", pid);
 		puts("finalizado");
 	} else {
-		perror("comando invalido");
-		nodoRtaSwap->tipo = 0;
-		nodoRtaSwap->exito = 0;
-		enviarMensajeDeNodoACPU(nodoRtaSwap);
+		int pagina = obtenerPaginaLeeroEscribir(linea);
+		marco = detectarPageFault(nodoInstruccion,pagina);
+		if (marco == NULL)
+		{//Hay page fault
+			nodoASwap->tipo = LEER;
+			nodoASwap->pagina = pagina;
+			enviarMensajeDeNodoASWAP(nodoASwap);
+			sem_wait(&mutexRespuestaSwap);
+			tamanioSwapMjeGlobal = recibirNodoDeRtaSwap(nodoRtaSwap);
+			seleccionarMarcoVictima(marco);
+			marco->valor = nodoRtaSwap->contenido;
+			marco->bitLeido = 1;
+			marco->numeroPagina = pagina;
+			marco->processID = nodoInstruccion->pid;
+		}
+		if (esElComando(linea, "leer"))
+		{
+				nodoRtaSwap->tipo = LEER;
+				cargarTlb(nodoInstruccion, marco);
+				strcpy(nodoRtaSwap->contenido,marco->valor);
+				log_info(archivoLog, "Se ha leido una pagina: process ID %d, pagina leida %d con el valor '%s'", pid, pagina, marco->valor);
+				enviarMensajeDeNodoACPU(nodoRtaSwap);
+				sleep(RETARDO_MEMORIA);
+		} else if (esElComando(linea, "escribir")) {
+			nodoRtaSwap->tipo = ESCRIBIR;
+			nodoRtaSwap->exito = 1;
+			char * texto;
+			texto = malloc(strlen(devolverParteUsable(linea, posicionComilla(linea))));
+			strcpy(texto, devolverParteUsable(linea, posicionComilla(linea)));
+			strtok(texto, "\"");
+			char ** textoSinComillas = string_split(texto, "\"");
+			strcat(texto, "\0");
+			strcpy(marco->valor,texto);
+			cargarTlb(nodoInstruccion, marco);
+			log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", pid, pagina, texto);
+			enviarMensajeDeNodoACPU(nodoRtaSwap);
+			sleep(RETARDO_MEMORIA);
+		}
 	}
     free(nodoRtaSwap);
     free(nodoASwap);
@@ -576,6 +532,41 @@ int interpretarLinea() {
 
     return 1;
 }
+
+int obtenerPaginaLeeroEscribir(char * linea)
+{
+	int pagina;
+	if (esElComando(linea, "leer")){
+		pagina = devolverParteUsableInt(linea, 5);
+	} else {
+		pagina = valorPagina(linea);
+	}
+	return pagina;
+}
+
+void seleccionarMarcoVictima(t_marco * marco)
+{
+	int indiceMarco;
+	if (cantidadMarcosAsignados(nodoInstruccion->pid) < MAXIMO_MARCOS_POR_PROCESO)
+	{
+		indiceMarco = obtenerUnMarcoLibre(listaMarco);
+	} else if (cantidadMarcosAsignados(nodoInstruccion->pid) == MAXIMO_MARCOS_POR_PROCESO) {
+		//ejecuta algoritmo de reemplazo FIFO.
+		//elimina numero de marco en la pagina victima
+		int marco = algoritmoReemplazo(nodoInstruccion->pid);
+		desasignarMarco(nodoInstruccion->pid,marco);
+		//TODO guardar en swap en caso de estar modificado
+	}
+	if (indiceMarco < 0) {
+		//finaliza proceso.
+		/*nodoASwap->tipo = FINALIZAR;
+		nodoASwap->pid = nodoInstruccion->pid;
+		enviarMensajeDeNodoASWAP(nodoASwap);
+		nodoRtaSwap->exito = 0;*/
+	} else {
+		marco = list_get(listaMarco,indiceMarco);
+	}
+ }
 
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
 	int devolverNodoTLBLibre(t_tlb * nodo) {
@@ -605,7 +596,7 @@ int valorPagina(char * instruccion){
 
 int posicionComilla(char * instruccion){
 	int character = 0;
-	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\'")){
+	while (!string_equals_ignore_case(string_substring(instruccion, character, 1),"\"")){
 		character++;
 	}
 	return character;
@@ -668,13 +659,7 @@ void flushTLBActivacion() {
 int recibirNodoDeCPU(t_nodo_mem * nodo){
 	unsigned char buffer[100];
 	int nbytes;
-	if ((nbytes = recv(socketCpu , buffer , sizeof(buffer) , 0)) < 0){
-		printf("Memoria: Error recibiendo mensaje de CPU");
-	} else if (nbytes == 0) {
-		printf("Memoria: Socket CPU desconectado");
-		//TODO CERRAR LA CPU
-		socketCpu = 0;
-	}
+	nbytes = recv(socketCpu , buffer , sizeof(buffer) , 0);
 	desempaquetarNodoInstruccion(buffer,nodo);
 	return nbytes;
 }
@@ -763,4 +748,128 @@ void empaquetarNodoMemSWAP(unsigned char *buffer,t_nodo_mem_swap * nodo)
 	unsigned int tamanioBuffer;
 	tamanioBuffer = pack(buffer,SECUENCIA_MEM_SWAP,
 			nodo->tipo,nodo->pid,nodo->pagina,nodo->contenido);
+}
+
+
+void* monitorearSockets(){
+
+	fd_set coleccionSockets;    // coleccion de sockets
+	fd_set coleccionTemp;  // coleccionTemp de sockets temporal
+
+    int nuevoCliente;        // socket cliente recibido
+    int i;
+    int colMax;
+    int nbytes;
+    socketSwap = socketCrearCliente(PUERTO_SWAP,IP_SWAP,"Memoria","Swap");
+    socketServidor = socketCrearServidor(PUERTO_ESCUCHA,"Memoria");
+
+
+    FD_ZERO(&coleccionSockets);    // Limpia los sets de colecciones
+    FD_ZERO(&coleccionTemp);// Limpia los sets de colecciones
+    // agrega el servidor a la colección
+	FD_SET(socketServidor, &coleccionSockets);
+	FD_SET(socketSwap, &coleccionSockets);
+	if (socketSwap < socketServidor){
+		colMax = socketServidor;
+	} else {
+		colMax = socketSwap;
+	}
+
+    // main loop
+    for(;;) {
+        coleccionTemp = coleccionSockets; // lo copio para no perderlo
+        if (select(colMax+1, &coleccionTemp, NULL, NULL, NULL) == -1) {
+            perror("Error - Función Select.");
+        }
+
+        // busca el socket que tiene dato por leer
+        for(i = 0; i <= colMax; i++) {
+            if (FD_ISSET(i, &coleccionTemp)) {
+                if (i == socketServidor) {
+                    // El servidor tiene que aceptar un nuevo cliente
+                	//Aceptamos la conexion entrante, y creamos un nuevo socket mediante el cual nos podamos comunicar.
+                    nuevoCliente = socketAceptarConexion(socketServidor,"Memoria","CPU");
+                    if (nuevoCliente > 0) {
+                        FD_SET(nuevoCliente, &coleccionSockets); // agrega el cliente al set de sockets
+
+                        if (nuevoCliente > colMax) {    // actualiza el maximo
+                            colMax = nuevoCliente;
+                        }
+                        int pid;
+                        //la agrega a la lista de CPUs
+                        agregarCPUALista(nuevoCliente);
+                    }
+                } else if (i == socketSwap) {
+                    // Recibe una respuesta de Swap
+                	sem_post(&mutexRespuestaSwap);
+                	if (tamanioSwapMjeGlobal <= 0) {
+						// connection closed
+						close(i); // bye!
+						FD_CLR(i, &coleccionSockets); // remove from master set
+						puts("swap desconectado");
+					}
+                } else {
+                	//Tengo un mensaje de algún cliente.
+                	//Respuesta de alguna instrucción de CPU
+                	recibirSolicitudDeCpu(i, &nbytes);
+                	if (nbytes <= 0) {
+						// connection closed
+                		close(i); // bye!
+						FD_CLR(i, &coleccionSockets); // remove from master set
+						informarDesconexionCPU(i);
+					}
+
+                } // fin recepcion de mensajes de cliente
+            } // fin isset
+        } // fin recorrido del set
+    } // fin del for(;;)
+}
+
+void* atenderSolicitudes()
+{
+
+	linea = malloc(strlen("")+1);
+	nodoInstruccion = NULL;
+	while (1){
+		nodoInstruccion = list_get(listaSolicitudes,0);
+		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
+		if (nodoInstruccion != NULL){
+			interpretarLinea(nodoInstruccion->instruccion);
+		}
+		nodoInstruccion = NULL;
+
+	}
+
+}
+
+
+void agregarCPUALista(int socketCpu) {
+	t_cpu * nodoCpu = malloc(sizeof(t_cpu));
+	nodoCpu->pid = listaDeCPUs->elements_count;
+	nodoCpu->socket = socketCpu;
+	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
+	list_add(listaDeCPUs, nodoCpu);
+}
+
+void informarDesconexionCPU(int socketCPU)
+{
+	bool buscarCPUporSocket(t_cpu * nodoCPU) {
+		return (nodoCPU->socket == socketCPU);
+	}
+	t_cpu* nodoCPU=NULL;
+	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporSocket);
+	list_remove_by_condition(listaDeCPUs,(void*)buscarCPUporSocket);
+	printf("La CPU: %d ha sido desconectada.\n", nodoCPU->pid);
+}
+
+void recibirSolicitudDeCpu(int socket, int * nbytes){
+	socketCpu = socket;
+	t_nodo_mem * nodo = malloc(sizeof(t_nodo_mem));
+	int err = recibirNodoDeCPU(nodo);
+	*nbytes = err;//Dereferencia del puntero para cambmiarle el valor
+	if (err > 0){
+		//agrega a lista
+		list_add(listaSolicitudes,nodo);
+		nodoInstruccion = nodo;
+	}
 }

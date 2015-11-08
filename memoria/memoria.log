@@ -43,3 +43,4 @@
 [INFO] 08:14:56:688 Memoria/(20131:20131): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor ''gay'
 [INFO] 08:17:05:807 Memoria/(20364:20364): Proceso ID 1, cantidad de paginas 8. Inicio: 1
 [INFO] 08:17:32:615 Memoria/(20364:20364): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor ''gay'
+[INFO] 11:20:03:380 Memoria/(6464:6495): Proceso ID 1, cantidad de paginas 8. Inicio: 1

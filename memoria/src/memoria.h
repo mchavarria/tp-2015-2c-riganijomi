@@ -191,6 +191,25 @@ int enviarMensajeDeNodoASWAP(t_nodo_mem_swap * nodo);
 void empaquetarNodoMemSWAP(unsigned char *buffer,t_nodo_mem_swap * nodo);
 int recibirNodoDeRtaSwap(t_resp_swap_mem * nodo);
 void desempaquetarNodoRtaSwap(unsigned char *buffer,t_resp_swap_mem * nodo);
+static t_marco * detectarPageFault(t_nodo_mem * nodoInstruccion, int numeroPagina);
+
+typedef struct CPU {
+	int pid;
+	int socket;
+} t_cpu;
+
+t_list * listaDeCPUs;
+t_list * listaSolicitudes;
+sem_t mutexRespuestaSwap;
+int tamanioSwapMjeGlobal;
+void informarDesconexionCPU(int socketCPU);
+void* monitorearSockets();
+void recibirSolicitudCPU();
+void agregarCPUALista(int socketCpu);
+void* atenderSolicitudes();
+void recibirSolicitudDeCpu(int socket, int * nbytes);
+int obtenerPaginaLeeroEscribir(char * linea);
+void seleccionarMarcoVictima(t_marco * marco);
 
 #endif /* MEMORIA_H_ */
 
