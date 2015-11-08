@@ -407,7 +407,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     		case ESCRIBIR:
     			if (exito){
 					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
-    				log_info(archivoLog,"CPU %d: Proceso mProc %d - escribio ",idCPU,PID);
+    				log_info(archivoLog,"CPU %d: Proceso mProc %d - escribio: %s ",idCPU,PID,nodoRespuesta->respuesta);
 				} else {
 					log_debug(archivoLog,"CPU %d:Proceso mProc %d NO escribio",idCPU,PID);
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d - error en asignacion/reemplazo de marcos",idCPU,PID);

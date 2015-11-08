@@ -1,0 +1,4 @@
+iniciar 50;
+escribir 33 "LoVemosEl28deNov";
+leer 33;
+finalizar;

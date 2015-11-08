@@ -50,7 +50,7 @@ static t_hilos_CPU *hilos_create()
 
 void cpu_func() {
 
-	int idCPU = pthread_self();
+	int idCPU = getpid();
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
 	if (socketPlanificador == -1) {
@@ -318,6 +318,7 @@ void instruccionEscribirPagina (char * instruccion) {
 	strcpy(nodoRta->contenido,"\0");
 	err = recibirNodoDeMEM(nodoRta);
 	nodoRtaCpuPlan->exito = nodoRta->exito;
+	strcpy(nodoRtaCpuPlan->respuesta,nodoRta->contenido);
 	enviarMensajeRespuestaCPU(socketPlanificador,nodoRtaCpuPlan);
 	if (nodoRta->exito != 1){
 		continuarLeyendo = 0;
@@ -366,8 +367,8 @@ void instruccionFinalizarProceso(char * instruccion) {
 
 void cargarCfgs() {
 	getcwd(directorioActual, sizeof(directorioActual));
-	//strcat(directorioActual, "/cpu/src/config.cfg");//para consola
-	strcat(directorioActual, "/src/config.cfg"); //para eclipse
+	strcat(directorioActual, "/cpu/src/config.cfg");//para consola
+	//strcat(directorioActual, "/src/config.cfg"); //para eclipse
 
 	ipPlanificador = configObtenerIpPlanificador(directorioActual);
 	puertoPlanificador = configObtenerPuertoPlanificador(directorioActual);

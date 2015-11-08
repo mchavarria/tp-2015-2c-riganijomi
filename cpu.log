@@ -27,3 +27,92 @@
 [INFO] 19:12:05:662 CPU/(21140:21141): CPU conectada a Memoria, idCpu: -1218884800
 [INFO] 19:12:10:394 CPU/(21140:21141): Instruccion: INICIAR, Proceso: 1, CPU: 21140, exito: Exito 
 [INFO] 19:14:27:54 CPU/(21140:21141): Instruccion: ESCRIBIR, Proceso: 1, CPU: 21140, exito: Exito 
+[INFO] 19:32:23:174 CPU/(22173:22174): CPU conectada al Planificador, idCpu: -1218913472
+[INFO] 19:32:23:196 CPU/(22173:22174): CPU conectada a Memoria, idCpu: -1218913472
+[INFO] 19:32:29:312 CPU/(22173:22174): Instruccion: INICIAR, Proceso: 1, CPU: 22173, exito: Exito 
+[INFO] 19:32:31:315 CPU/(22173:22174): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22173, exito: Exito 
+[INFO] 19:35:48:414 CPU/(22267:22268): CPU conectada al Planificador, idCpu: -1218819264
+[INFO] 19:35:48:419 CPU/(22267:22268): CPU conectada a Memoria, idCpu: -1218819264
+[INFO] 19:36:17:332 CPU/(22267:22268): Instruccion: INICIAR, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:36:19:339 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:36:29:345 CPU/(22267:22268): Instruccion: LEER, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:36:39:351 CPU/(22267:22268): Instruccion: LEER, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:36:49:354 CPU/(22267:22268): Instruccion: LEER, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:36:59:357 CPU/(22267:22268): Instruccion: LEER, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:37:09:364 CPU/(22267:22268): Instruccion: LEER, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:37:19:367 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:37:21:368 CPU/(22267:22268): Instruccion: FINALIZAR, Proceso: 1, CPU: 22267, exito: Exito 
+[INFO] 19:40:06:430 CPU/(22267:22268): Instruccion: INICIAR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:40:08:446 CPU/(22267:22268): Instruccion: LEER, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:40:18:448 CPU/(22267:22268): Instruccion: LEER, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:40:28:454 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:40:38:458 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:40:48:460 CPU/(22267:22268): Instruccion: LEER, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:40:58:466 CPU/(22267:22268): Instruccion: LEER, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:41:08:478 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:41:18:481 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:41:20:483 CPU/(22267:22268): Instruccion: I/O, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:42:15:218 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:42:17:220 CPU/(22267:22268): Instruccion: I/O, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:42:57:482 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:42:59:483 CPU/(22267:22268): Instruccion: I/O, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:43:14:92 CPU/(22267:22268): Instruccion: ESCRIBIR, Proceso: 2, CPU: 22267, exito: Exito 
+[INFO] 19:49:05:517 CPU/(22909:22910): CPU conectada al Planificador, idCpu: 22909
+[INFO] 19:49:05:521 CPU/(22909:22910): CPU conectada a Memoria, idCpu: 22909
+[INFO] 19:49:14:675 CPU/(22909:22910): Instruccion: INICIAR, Proceso: 1, CPU: 22909, exito: Exito 
+[ERROR] 19:49:16:679 CPU/(22909:22910): no se pudo leer el proceso: 1
+[INFO] 19:49:16:680 CPU/(22909:22910): Instruccion: LEER, Proceso: 1, CPU: 22909, exito: Fallo 
+[INFO] 19:50:15:441 CPU/(22979:22980): CPU conectada al Planificador, idCpu: 22979
+[INFO] 19:50:15:444 CPU/(22979:22980): CPU conectada a Memoria, idCpu: 22979
+[INFO] 19:50:26:65 CPU/(22979:22980): Instruccion: INICIAR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:50:28:82 CPU/(22979:22980): Instruccion: LEER, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:50:38:95 CPU/(22979:22980): Instruccion: LEER, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:50:48:102 CPU/(22979:22980): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:50:58:105 CPU/(22979:22980): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:51:08:128 CPU/(22979:22980): Instruccion: LEER, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:51:18:136 CPU/(22979:22980): Instruccion: LEER, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:51:28:147 CPU/(22979:22980): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:51:38:155 CPU/(22979:22980): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:51:40:159 CPU/(22979:22980): Instruccion: I/O, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:51:48:168 CPU/(22979:22980): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:51:50:170 CPU/(22979:22980): Instruccion: I/O, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:52:04:742 CPU/(22979:22980): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:52:06:744 CPU/(22979:22980): Instruccion: I/O, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:52:17:494 CPU/(22979:22980): Instruccion: ESCRIBIR, Proceso: 1, CPU: 22979, exito: Exito 
+[INFO] 19:58:29:480 CPU/(23374:23375): CPU conectada al Planificador, idCpu: 23374
+[INFO] 19:58:29:500 CPU/(23374:23375): CPU conectada a Memoria, idCpu: 23374
+[INFO] 19:58:37:886 CPU/(23374:23375): Instruccion: INICIAR, Proceso: 1, CPU: 23374, exito: Exito 
+[INFO] 19:58:40:231 CPU/(23374:23375): Instruccion: ESCRIBIR, Proceso: 1, CPU: 23374, exito: Exito 
+[INFO] 20:01:19:838 CPU/(23602:23603): CPU conectada al Planificador, idCpu: 23602
+[INFO] 20:01:19:843 CPU/(23602:23603): CPU conectada a Memoria, idCpu: 23602
+[INFO] 20:01:41:647 CPU/(23602:23603): Instruccion: INICIAR, Proceso: 1, CPU: 23602, exito: Exito 
+[INFO] 20:02:05:212 CPU/(23602:23603): Instruccion: ESCRIBIR, Proceso: 1, CPU: 23602, exito: Exito 
+[INFO] 20:07:56:153 CPU/(23773:23774): CPU conectada al Planificador, idCpu: 23773
+[INFO] 20:07:56:157 CPU/(23773:23774): CPU conectada a Memoria, idCpu: 23773
+[INFO] 20:08:01:737 CPU/(23773:23774): Instruccion: INICIAR, Proceso: 1, CPU: 23773, exito: Exito 
+[INFO] 20:08:03:974 CPU/(23773:23774): Instruccion: ESCRIBIR, Proceso: 1, CPU: 23773, exito: Exito 
+[INFO] 20:09:40:312 CPU/(23830:23831): CPU conectada al Planificador, idCpu: 23830
+[INFO] 20:09:40:327 CPU/(23830:23831): CPU conectada a Memoria, idCpu: 23830
+[INFO] 20:09:45:367 CPU/(23830:23831): Instruccion: INICIAR, Proceso: 1, CPU: 23830, exito: Exito 
+[INFO] 20:09:47:382 CPU/(23830:23831): Instruccion: ESCRIBIR, Proceso: 1, CPU: 23830, exito: Exito 
+[INFO] 20:12:19:210 CPU/(23835:23836): CPU conectada al Planificador, idCpu: 23835
+[INFO] 20:12:19:214 CPU/(23835:23836): CPU conectada a Memoria, idCpu: 23835
+[INFO] 20:12:29:397 CPU/(23840:23841): CPU conectada al Planificador, idCpu: 23840
+[INFO] 20:12:29:400 CPU/(23840:23841): CPU conectada a Memoria, idCpu: 23840
+[INFO] 20:12:39:745 CPU/(23840:23841): Instruccion: INICIAR, Proceso: 1, CPU: 23840, exito: Exito 
+[INFO] 20:12:41:765 CPU/(23840:23841): Instruccion: ESCRIBIR, Proceso: 1, CPU: 23840, exito: Exito 
+[INFO] 20:12:51:761 CPU/(23840:23841): Instruccion: LEER, Proceso: 1, CPU: 23840, exito: Exito 
+[INFO] 20:12:53:767 CPU/(23840:23841): Instruccion: FINALIZAR, Proceso: 1, CPU: 23840, exito: Exito 
+[INFO] 20:13:09:627 CPU/(23840:23841): Instruccion: INICIAR, Proceso: 2, CPU: 23840, exito: Exito 
+[INFO] 20:13:11:646 CPU/(23840:23841): Instruccion: ESCRIBIR, Proceso: 2, CPU: 23840, exito: Exito 
+[INFO] 20:13:21:645 CPU/(23840:23841): Instruccion: ESCRIBIR, Proceso: 2, CPU: 23840, exito: Exito 
+[INFO] 20:13:23:649 CPU/(23840:23841): Instruccion: I/O, Proceso: 2, CPU: 23840, exito: Exito 
+[INFO] 20:13:33:659 CPU/(23840:23841): Instruccion: LEER, Proceso: 2, CPU: 23840, exito: Exito 
+[INFO] 20:13:35:665 CPU/(23840:23841): Instruccion: FINALIZAR, Proceso: 2, CPU: 23840, exito: Exito 
+[INFO] 20:13:57:402 CPU/(23840:23841): Instruccion: INICIAR, Proceso: 3, CPU: 23840, exito: Exito 
+[INFO] 20:13:59:418 CPU/(23840:23841): Instruccion: ESCRIBIR, Proceso: 3, CPU: 23840, exito: Exito 
+[INFO] 20:14:09:430 CPU/(23840:23841): Instruccion: ESCRIBIR, Proceso: 3, CPU: 23840, exito: Exito 
+[INFO] 20:14:19:446 CPU/(23840:23841): Instruccion: ESCRIBIR, Proceso: 3, CPU: 23840, exito: Exito 
+[INFO] 20:14:21:447 CPU/(23840:23841): Instruccion: I/O, Proceso: 3, CPU: 23840, exito: Exito 
+[INFO] 20:14:48:94 CPU/(23840:23841): Instruccion: INICIAR, Proceso: 4, CPU: 23840, exito: Exito 
+[INFO] 20:14:50:106 CPU/(23840:23841): Instruccion: ESCRIBIR, Proceso: 4, CPU: 23840, exito: Exito 

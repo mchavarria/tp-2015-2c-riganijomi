@@ -484,9 +484,13 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				nodoRtaSwap->tipo = ESCRIBIR;
 				if (!finalizaPorError){
 					nodoRtaSwap->exito = 1;
-					strcpy(marco->valor,nodoInst->texto);
-					log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", pid, pagina, nodoInst->texto);
-					printf("Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'\n", pid, pagina, nodoInst->texto);
+					char * tamTexto = malloc(sizeof("")+1);
+					strncpy(tamTexto,nodoInst->texto,TAMANIO_MARCO);
+					strcat(tamTexto,"\0");
+					strcpy(marco->valor,tamTexto);
+					strcpy(nodoRtaSwap->contenido,tamTexto);
+					log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", pid, pagina, marco->valor);
+					printf("Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'\n", pid, pagina, marco->valor);
 				} else {
 					//Si falla la CPU debe finalizarlo
 					nodoRtaSwap->exito = 0;
@@ -568,8 +572,9 @@ int valorPagina(char * instruccion){
 
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo){
 	t_marco * ptrMarco = NULL;
-	char tamTexto[TAMANIO_MARCO];
-	strcpy(tamTexto,texto);
+	char * tamTexto = malloc(sizeof("")+1);
+	strncpy(tamTexto,texto,TAMANIO_MARCO);
+	strcat(tamTexto,"\0");
 	ptrMarco = list_get(listaMarco, marco);
 	ptrMarco->processID = processID;
 	ptrMarco->numeroPagina = numeroPagina;

@@ -34,7 +34,7 @@ int socketCrearServidor(char * PUERTO, char * procesoNombre){
 		if(bind(listeningSocket,serverInfo->ai_addr, serverInfo->ai_addrlen) < 0)
 		{
 			//print the error message
-			printf("%s: No puede bindear socket server.\n",procesoNombre);
+			printf("%s: No puede enlazar socket server.\n",procesoNombre);
 			perror("Error - Enlazando servidor.");
 		} else {
 			printf("%s: Socket server enlazado.\n",procesoNombre);

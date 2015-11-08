@@ -45,3 +45,4 @@
 [INFO] 19:12:10:393 Memoria/(21126:21139): Proceso ID 1, cantidad de paginas 8. Inicio: Exito
 [INFO] 19:14:24:557 Memoria/(21126:21139): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor 'tlb'
 [INFO] 19:16:08:774 Memoria/(21126:21139): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'tlb'
+[INFO] 20:01:41:646 Memoria/(23499:23600): Proceso ID 1, cantidad de paginas 50. Inicio: Exito
