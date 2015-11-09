@@ -1,19 +1,6 @@
 #include "swap.h"
 
 
-//valores cfg
-char * puertoEscucha;
-char * nombreSwap;
-int cantPaginas;
-int tamanioPaginas;
-int retardoSwap;
-int retardoCompactacion;
-
-
-char instruccion[20];
-int nbytes;
-char respuesta[30];
-
 int main() {
 
 	archivoLog = log_create("swap.log", "Swap", false, 2);
@@ -24,11 +11,10 @@ int main() {
 	listaEspera = list_create();
 	//carga Cfgs
 	levantarCfgInicial();
-
+	t_nodo_mem_swap * nodoMemSwap = malloc(sizeof(t_nodo_mem_swap));
 	//creacion archivo particion
 	crearParticion();
 	for(;(socketMemoria > 0);){
-		t_nodo_mem_swap * nodoMemSwap = malloc(sizeof(t_nodo_mem_swap));
 		recibirNodoDeMem(nodoMemSwap);
 		estructuraRecibida(nodoMemSwap);
 	}
@@ -49,7 +35,6 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 			leerPaginaProceso(nodoMemSwap->pid,nodoMemSwap->pagina);
 			break;
 		case ESCRIBIR:
-			nodoRespuesta->tipo = ESCRIBIR;
 			escribirPagina(nodoMemSwap->pid,nodoMemSwap->pagina, nodoMemSwap->contenido);
 		break;
 		case FINALIZAR:
@@ -63,8 +48,8 @@ void levantarCfgInicial(){
 	//Levanta sus puertos cfg e ip para conectarse
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
-	strcat(directorioActual, "/swap/src/config.cfg");//Consola
-	//strcat(directorioActual, "/src/config.cfg");//Eclipse
+	//strcat(directorioActual, "/swap/src/config.cfg");//Consola
+	strcat(directorioActual, "/src/config.cfg");//Eclipse
 	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
 	nombreSwap = configObtenerNombreArchivoSwap(directorioActual);
 	cantPaginas = configObtenerCantPaginasSwap(directorioActual);
@@ -81,7 +66,6 @@ void crearParticion(){
 
 	//modificar para el directorio real
 	particion=fopen("swap.data","wb+");
-	//putc('A',particion);
 	for (i = 0; i < cantPaginas * tamanioPaginas; i++){
 		putc('\0',particion);
 	}
@@ -134,6 +118,8 @@ void recibirProceso(int idProc, int cantPagProceso)
 		//hay lugar para alojarlo
 		list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
 		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
+		//TODO MODIFICAR LA LISTA DE DISPONIBLES
+		//TODO MODIFICAR LA LISTA DE DISPONIBLES
 		//TODO MODIFICAR LA LISTA DE DISPONIBLES
 		nodoRespuesta->exito = 1;
 	} else {
@@ -190,7 +176,7 @@ void leerPaginaProceso(int idProc, int pagina){
 
 	if (nodoProceso != NULL){
 		indiceProceso = nodoProceso->indice;
-		int ubicacion = indiceProceso + (pagina * tamanioPaginas);
+		int ubicacion = indiceProceso + (tamanioPaginas*pagina);
 		//modificar para el directorio real
 		//TODO cuidado con las direciones relativas
 		particion=fopen("swap.data","r");
@@ -201,7 +187,7 @@ void leerPaginaProceso(int idProc, int pagina){
 			//Se ubica en +1 así que tiene que ser -1
 			fseek(particion, SEEK_SET, ubicacion-1);
 			//leer esa posicion como una lectura normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
-			if (fread(leerDelArchivo, sizeof(tamanioPaginas), 1, particion) > 0){
+			if (fread(leerDelArchivo, tamanioPaginas, ubicacion, particion) > 0){
 				//enviar mensaje
 				strcat(leerDelArchivo,"\0");
 				strcpy(respuesta,leerDelArchivo);
@@ -237,22 +223,22 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	t_nodoProceso * nodoProceso = NULL;
 	nodoProceso = list_find(listaProcesos,(void*) condicionLeer);
 
-	int ubicacion = nodoProceso->indice + (pagina * tamanioPaginas);
-
+	int ubicacion = nodoProceso->indice + (tamanioPaginas*pagina);
+	char * tamTexto = malloc(sizeof("")+1);
 	int err;
 	if ((err = fseek(particion, ubicacion, SEEK_SET) == 0))
 	{//se ubica bien
 		//fwrite((const char *)texto, strlen((const char *)texto), 1, particion);
-		fputs((const char *)texto, particion);
-		nodoRespuesta->exito = 1;
+		strncpy(tamTexto,texto,tamanioPaginas);
+		strcat(tamTexto,"\0");
+		fputs((const char *)tamTexto, particion);
 	} else {
 		//no se puede ubicar en esa posicion
-		nodoRespuesta->exito = 0;
 	}
 
     fclose(particion);
     //enviarMensajeRtaAMem(nodoRespuesta);
-    log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, texto, idProc, pagina);
+    log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, tamTexto, idProc, pagina);
 }
 
 

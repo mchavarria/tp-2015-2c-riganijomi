@@ -46,3 +46,16 @@
 [INFO] 19:14:24:557 Memoria/(21126:21139): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor 'tlb'
 [INFO] 19:16:08:774 Memoria/(21126:21139): Se ha leido una pagina: process ID 1, pagina leida 4 con el valor 'tlb'
 [INFO] 20:01:41:646 Memoria/(23499:23600): Proceso ID 1, cantidad de paginas 50. Inicio: Exito
+[INFO] 20:24:51:195 Memoria/(24167:24202): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 20:24:56:953 Memoria/(24167:24202): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'hola'
+[INFO] 20:25:05:320 Memoria/(24167:24202): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'reemplazo'
+[INFO] 20:27:21:336 Memoria/(24301:24307): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 20:28:24:519 Memoria/(24301:24307): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'fuiste'
+[INFO] 20:29:39:423 Memoria/(24301:24307): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'fuiste'
+[INFO] 20:31:12:818 Memoria/(24301:24307): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'NULL'
+[INFO] 20:32:15:155 Memoria/(24301:24307): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'reemplazo'
+[INFO] 20:32:44:930 Memoria/(24301:24307): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'hola'
+[INFO] 20:33:06:356 Memoria/(24301:24307): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'fuiste'
+[INFO] 20:33:14:878 Memoria/(24301:24307): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'fuiste'
+[INFO] 20:33:23:498 Memoria/(24301:24307): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'hola'
+[INFO] 20:33:31:143 Memoria/(24301:24307): Se ha finalizado el proceso con ID: 1.

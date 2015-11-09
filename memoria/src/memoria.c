@@ -160,14 +160,6 @@ void rutina (int n) {
 	}
 }
 
-static t_marcoLibre * marcoLibre_create(int numeroMarco) {
-	t_marcoLibre * new = malloc(sizeof(t_marcoLibre));
-
-	new->numeroMarco = numeroMarco;
-
-	return new;
-}
-
 static t_tablaPaginasProceso * nodoTablaPaginaProceso_create(int numeroMarco, int numeroPagina, int ingreso) {
 	t_tablaPaginasProceso * new = malloc(sizeof(t_tablaPaginasProceso));
 
@@ -178,7 +170,7 @@ static t_tablaPaginasProceso * nodoTablaPaginaProceso_create(int numeroMarco, in
 	return new;
 }
 
-int inicializarTablaDePaginas(int cantidadPaginas, int pid) {
+void inicializarTablaDePaginas(int cantidadPaginas, int pid) {
 	t_tablasPaginas * nodoTablaPaginas = malloc(sizeof(t_tablasPaginas));
 	nodoTablaPaginas->processID = pid;
 	nodoTablaPaginas->listaPaginas = list_create();
@@ -381,6 +373,15 @@ void desasignarMarco(int processID, int marco) {
 	t_marco * nodoMarco = list_get(listaMarco, marco);
 	if (nodoMarco->bitModificacion == 1){
 		//TODO escribir en SWAP
+		printf("PageFault (REEMPLAZO): Guardando contenido modificado a Swap: Proceso %d - Pagina %d - Contenido %s.\n",processID,nodoMarco->numeroPagina,nodoMarco->valor);
+		t_nodo_mem_swap * nodito = malloc(sizeof(t_nodo_mem_swap));
+		nodito->tipo = ESCRIBIR;
+		nodito->pagina = nodoMarco->numeroPagina;
+		nodito->pid = processID;
+		nodito->contenido = nodoMarco->valor;
+		enviarMensajeDeNodoASWAP(nodito);
+		free(nodito);
+		//recibirNodoDeRtaSwap(nodoRtaSwap);
 	}
 
 	nodoPagina->ingreso = NULO;
@@ -451,6 +452,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			marco = detectarPageFault(nodoInst,pagina);
 			if (marco == NULL)
 			{//Hay page fault
+				printf("PageFault: Solicitando contenido a Swap: Proceso %d - Pagina %d\n",pid,pagina);
 				nodoASwap->tipo = LEER;
 				nodoASwap->pagina = pagina;
 				enviarMensajeDeNodoASWAP(nodoASwap);

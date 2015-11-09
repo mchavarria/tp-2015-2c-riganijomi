@@ -1,4 +1,11 @@
-iniciar 50;
-escribir 33 "LoVemosEl28deNov";
-leer 33;
+iniciar 3;
+leer 2;
+escribir 2 "fuiste";
+leer 1;
+escribir 3 "reemplazo";
+escribir 1 "hola";
+escribir 1 "noesHola";
+leer 2;
+leer 3;
+leer 1;
 finalizar;

@@ -160,7 +160,7 @@ void configurarSockets();
 
 int interpretarLinea(t_nodo_mem * nodoInst);
 void inicializarTLB();
-int inicializarTablaDePaginas();
+void inicializarTablaDePaginas();
 void inicializarMarco();
 void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina);
 void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, int tipo);

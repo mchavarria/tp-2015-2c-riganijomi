@@ -97,6 +97,20 @@ void leerPaginaProceso(int idProc, int pagina);
 void escribirPagina (int idProc, int pagina, char * texto);
 //Condicion para el list_find en nodos libres
 
+
+//valores cfg
+char * puertoEscucha;
+char * nombreSwap;
+int cantPaginas;
+int tamanioPaginas;
+int retardoSwap;
+int retardoCompactacion;
+
+
+char instruccion[20];
+int nbytes;
+char respuesta[30];
+
 void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap);
 int recibirNodoDeMem(t_nodo_mem_swap * nodo);
 void desempaquetarNodoDeMem(unsigned char *buffer,t_nodo_mem_swap * nodo);
