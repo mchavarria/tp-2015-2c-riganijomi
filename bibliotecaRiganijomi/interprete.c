@@ -2,9 +2,12 @@
 
 
 int esElComando(char * linea, char * comando) {
-	string_to_lower(linea);
-	strtok(linea, "\n");
-	if (string_starts_with(linea, comando)) {
+        char * temp;
+        strcpy(temp,linea);
+	string_to_lower(temp);
+	strtok(temp, "\n");
+        strtok(temp,";");
+	if (string_starts_with(temp, comando)) {
 		return 1;
 	}
 	return 0;
@@ -46,4 +49,3 @@ char * traducirExitoStatus(int exito){
 	}
 	return resultado;
 }
-
