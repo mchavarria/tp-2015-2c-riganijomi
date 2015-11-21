@@ -58,6 +58,7 @@ typedef struct CPU {
 	int disponible;
 	int retardo;
 	int pcb;
+	int instruccionesLeidas;
 } t_cpu;
 
 /* el estado puede ser:
@@ -95,6 +96,30 @@ typedef struct NODO_RTA_CPU_PLAN {
 	int pc;
 	char *respuesta;
 } t_resp_cpu_plan;
+
+typedef struct porcentajeCPU {
+	int pid;
+	int retardo;
+	int instruccionesLeidas;
+} t_porcentaje_cpu;
+
+
+
+
+typedef struct clockTiempoEjecucion {
+	clock_t tiempoInicial;
+	int processID;
+} t_ejecucion_clock;
+
+typedef struct clockTiempoEspera {
+	clock_t tiempoInicial;
+	int processID;
+} t_espera_clock;
+
+typedef struct clockTiempoRespuesta {
+	clock_t tiempoInicial;
+	int processID;
+} t_respuesta_clock;
 
 int contadorPID = 0;
 int clientePlanificador = 0;
@@ -134,6 +159,9 @@ void informarDesconexionCPU(int socket);
 
 void* buscarPCBEjecutandoPorPID(int PID);
 
+t_list * listaTiempoDeRespuesta;
+t_list * listaTiempoDeEjecucion;
+t_list * listaTiempoDeEspera;
 t_list * listaDeListo;
 t_list * listaDeBloqueado;
 t_list * listaDeEjecutado;

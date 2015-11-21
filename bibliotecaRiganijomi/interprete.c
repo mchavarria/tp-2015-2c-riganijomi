@@ -2,12 +2,13 @@
 
 
 int esElComando(char * linea, char * comando) {
-        char * temp;
-        strcpy(temp,linea);
-	string_to_lower(temp);
-	strtok(temp, "\n");
-        strtok(temp,";");
-	if (string_starts_with(temp, comando)) {
+    /*char * temp;
+    temp = malloc(sizeof(strlen(linea)+1));
+    strcpy(temp,linea);*/
+	string_to_lower(linea);
+	strtok(linea, "\n");
+        strtok(linea,";");
+	if (string_starts_with(linea, comando)) {
 		return 1;
 	}
 	return 0;
@@ -40,7 +41,7 @@ int devolverIntInstruccion(char * linea, int desde) {
 
 char * traducirExitoStatus(int exito){
 	char * resultado;
-	resultado = malloc(strlen("")+1);
+	resultado = malloc(strlen("Exito")+1);
 	if (exito)
 	{
 		strcpy(resultado,"Exito");
