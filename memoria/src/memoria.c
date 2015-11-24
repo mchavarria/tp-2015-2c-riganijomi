@@ -311,10 +311,14 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 		tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 		resultadoBusqueda = nodoPagina->numeroMarco;
-	}//Encontrado en TLB
+	}
+	//Encontrado en TLB
 	if (resultadoBusqueda != NULO){
 		//No hubo PF
 		nodoMarco = list_find(listaMarco, (void*) devolverValor);
+		if(string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")){
+			nodoPagina->ingreso = 0;
+		}
 	}
 
 	return nodoMarco;
@@ -334,7 +338,7 @@ int algoritmoReemplazo(int processID){
 
 int algoritmoReemplazoLRU(int processID) {
 	bool ordenarParaLRU(t_tablaPaginasProceso * nodo1, t_tablaPaginasProceso * nodo2) {
-		return (nodo1->ingreso < nodo2->ingreso);
+		return (nodo1->ingreso > nodo2->ingreso);
 	}
 	t_tablasPaginas * tablaDeProceso = NULL;
 
@@ -345,16 +349,6 @@ int algoritmoReemplazoLRU(int processID) {
 
 	//es el que va a ser reemplazado
 	int numMarcoPa = nodoPagina->numeroMarco;
-
-	int conMarcosAsignados(t_tablaPaginasProceso * nodo) {
-		return (nodo->ingreso != NULO);
-	}
-	t_list * listaPaginasAlgoritmo = list_filter(tablaDeProceso->listaPaginas, (void*) conMarcosAsignados);
-	int i;
-	for (i=1; i<listaPaginasAlgoritmo->elements_count; i++) {
-		t_tablaPaginasProceso * nodoPagina2 = list_get(listaPaginasAlgoritmo, i);
-		nodoPagina2->ingreso--;
-	}
 
 	return numMarcoPa;
 }
@@ -436,6 +430,17 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina) {
 	}
 
 	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+
+		int conMarcosAsignados(t_tablaPaginasProceso * nodo) {
+			return (nodo->ingreso != NULO);
+		}
+		t_list * listaPaginasAlgoritmo = list_filter(tablaDeProceso->listaPaginas, (void*) conMarcosAsignados);
+		int i;
+		for (i=1; i<listaPaginasAlgoritmo->elements_count; i++) {
+			t_tablaPaginasProceso * nodoPagina2 = list_get(listaPaginasAlgoritmo, i);
+			nodoPagina2->ingreso++;
+		}
+
 		nodoPagina->ingreso = 0;
 	}
 
