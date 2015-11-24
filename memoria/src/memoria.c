@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
 	signal(SIGINT, flushTLBActivacion);
 	signal(SIGUSR1, flushMarcosActivacion);*/
 	//signal(SIGUSR2, dumpMemoria);
+	sem_init(&mutexFlushTLB, 0, 1);
 	sem_init(&cantSolicitudes,0,0);
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
@@ -152,10 +153,20 @@ void rutina (int n) {
 		case SIGUSR1:
 			printf("LLEGO SIGUSR1\n");
 			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR1: %d",SIGUSR1);
+			pthread_t threadFlushTLB;
+			char *m1 = "threadFlushTLB";
+			int r5;
+
+			r5 = pthread_create( &threadFlushTLB, NULL, flushTLB, (void*) m1);
 		break;
 		case SIGUSR2:
 			printf("LLEGO SIGUSR2\n");
 			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR2: %d",SIGUSR2);
+			int pid = fork();
+
+			if (pid == 0) {
+				dumpMemoria();
+			}
 		break;
 	}
 }
@@ -544,6 +555,8 @@ static t_marco * seleccionarMarcoVictima(int pid)
  }
 
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
+	sem_wait(&mutexFlushTLB);
+
 	int devolverNodoTLBLibre(t_tlb * nodo) {
 		return (nodo->processID == 0);
 	}
@@ -558,7 +571,7 @@ void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
 	nodoTLB->processID = nodoInstruccion->pid;
 	nodoTLB->numeroPagina = marco->numeroPagina;
 	nodoTLB->marco = marco->numeroMarco;
-
+	sem_post(&mutexFlushTLB);
 }
 
 int valorPagina(char * instruccion){
@@ -595,13 +608,22 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 	}
 }
 
-void flushMarcosActivacion() {
-	sem_post(&mutexFlushMarcos);
+void dumpMemoria(){
+	int pid = fork();
+	if (pid == 0) {
+		int i;
+		for (i = 0; i < listaMarco->elements_count; i++) {
+			t_marco * nodoMarco = list_get(listaMarco, i);
+			log_info(archivoLog,"Volcado de memoria del marco: %d con un valor de %s",nodoMarco->numeroMarco, nodoMarco->valor);
+		}
+	}
 }
 
 void* flushTLB() {
 	sem_wait(&mutexFlushTLB);
+	list_clean(listaTLB);
 	inicializarTLB();
+	sem_post(&mutexFlushTLB);
 }
 
 void* flushMarcos() {
@@ -620,10 +642,6 @@ void desasignarTodosLosProcesos() {
 			nodoPagina->numeroMarco = NULO;
 		}
 	}
-}
-
-void flushTLBActivacion() {
-	sem_post(&mutexFlushTLB);
 }
 
 
