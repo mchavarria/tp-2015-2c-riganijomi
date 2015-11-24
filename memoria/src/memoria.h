@@ -166,6 +166,7 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina);
 void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, int tipo);
 int algoritmoReemplazo(int processID);
 int algoritmoReemplazoFIFO(int processID);
+int algoritmoReemplazoLRU(int processID);
 void desasignarMarco(int processID, int marco);
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo);
 static t_tablaPaginasProceso * obtenerPaginaPorNumMarco(int marco, t_tablasPaginas * nodoTablasPagina);
