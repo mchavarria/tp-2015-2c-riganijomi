@@ -21,6 +21,9 @@ int main() {
 	listaDeEjecutado = list_create();
 	listaDeListo = list_create();
 	listaDeCPUs = list_create();
+	listaTiempoDeEjecucion = list_create();
+	listaTiempoDeEspera = list_create();
+	listaTiempoDeRespuesta = list_create();
 
 
 	pthread_t thread1;
@@ -105,6 +108,7 @@ int programaValido(char * programa){
 	char *directorioActual = malloc(strlen(dir)+strlen(mprog)+1);
 	strcpy(directorioActual,dir);
 	strcat(directorioActual,mprog);
+	puts(directorioActual); //BORRAR
 	fp = fopen(directorioActual, "r");
 	if (fp == NULL){
 		resultado = 0;
@@ -156,6 +160,14 @@ void* agregarPCBALista(char * programa) {
 	strcat(programa, "\0");
 	pcb->contextoEjecucion = programa;
 
+	//Agregar nodo a la listaDeRespuesta para despues calcular ese tiempo.
+
+	t_respuesta_clock * nodoClockRespuesta = malloc(sizeof(t_respuesta_clock));
+
+	nodoClockRespuesta->processID = pcb->PID;
+	nodoClockRespuesta->tiempoInicial = clock();
+
+	list_add(listaTiempoDeRespuesta, nodoClockRespuesta);
 
 	pcb->pc=0;
 	pcb->estado=LISTO;
@@ -224,6 +236,9 @@ void* consola() {
 			imprimeEstado(listaDeEjecutado,"ejecutando");
 	    } else if (esElComando(comando, "cpu")) {
 			imprimePorcentajeCPU();
+	    } else if (esElComando(comando, "finalizar")) {
+	    	resultado = devolverParteUsable(comando, 10);
+	    	//finalizarProceso(resultado);
 	    } else {
 			perror("Comando no valido.");
 		}
@@ -289,6 +304,7 @@ float porcentajeCPU(t_cpu *nodoCPU){
 	  {
 		  total = total + interpretarLineaSegunRetardo(linea,nodoCPU->retardo);
 		  if (pc < nodoPCB->pc){
+			 usado = usado + total;
 		     pc++;
 		  }
 	  }
@@ -374,9 +390,30 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 	t_cpu * nodoCPU = NULL;
 	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporPid);//Para actualizar si está disponible o no
 
+	int buscarClockDelProceso(t_ejecucion_clock * nodo) {
+		return (nodo->processID == PID);
+	}
+
     switch (tipoResp) {
     		case INICIAR:
 				if (exito){
+					//Se calcula el tiempo de respuesta del proceso
+					t_respuesta_clock * nodoClockRespuesta = malloc(sizeof(t_respuesta_clock));
+
+					nodoClockRespuesta = list_find(listaTiempoDeRespuesta, (void*) buscarClockDelProceso);
+
+					list_remove_by_condition(listaTiempoDeRespuesta, (void*) buscarClockDelProceso);
+
+					clock_t tiempoTranscurrido =  (double)(clock() - nodoClockRespuesta->tiempoInicial) / CLOCKS_PER_SEC;
+
+					log_info(archivoLog,"El tiempo de respuesta del proceso %d fue %g de la CPU %d", PID, tiempoTranscurrido, idCPU);
+
+					//Agregar el nodo para poder calcular despues el tiempo total de ejecucion.
+					t_ejecucion_clock * nodoClockEjecucion = malloc(sizeof(t_ejecucion_clock));
+					nodoClockEjecucion->tiempoInicial = clock();
+					nodoClockEjecucion->processID = PID;
+					list_add(listaTiempoDeEjecucion, nodoClockEjecucion);
+
 					//el nodo cpu tendra como parametro el retardo
 					nodoCPU->retardo = pagRW;
 					nodoCPU->disponible = 0;
@@ -427,6 +464,15 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
 					tiempoBloqueo = pagRW;
 
+					//Inicializamos el clock para calcular la cantidad de tiempo que va a estar en entrada-salida.
+
+					t_espera_clock * nodoClockEspera = malloc(sizeof(t_espera_clock));
+
+					nodoClockEspera->tiempoInicial = clock();
+					nodoClockEspera->processID = PID;
+
+					list_add(listaTiempoDeEspera, nodoClockEspera);
+
 					list_add(listaDeBloqueado,nodoPCB);
 
 					pthread_t thread_I_O;
@@ -461,6 +507,16 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 				}
 				break;
     		case FINALIZAR:
+    			;
+				t_ejecucion_clock * nodoClockEjecucion = malloc(sizeof(t_ejecucion_clock));
+				nodoClockEjecucion = list_find(listaTiempoDeEjecucion, (void*) buscarClockDelProceso);
+
+				list_remove_by_condition(listaTiempoDeEjecucion, (void*) buscarClockDelProceso);
+
+				clock_t tiempoTranscurrido =  (double)(clock() - nodoClockEjecucion->tiempoInicial) / CLOCKS_PER_SEC;
+
+				log_info(archivoLog,"El tiempo de ejecucion del proceso %d fue %g de la CPU %d", PID, tiempoTranscurrido, idCPU);
+
     			if (exito){
        				log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
 				} else {
@@ -555,6 +611,23 @@ void* bloquearPCB()
 	list_add(listaDeListo,nodoPCB );
 	sem_post(&semProgramas);
 	list_remove(listaDeBloqueado,0);
+
+	//Loguea el timepo que estuvo en entrada-salida.
+
+	int buscarClockPorProcessID(t_espera_clock * nodo) {
+		return (nodo->processID == nodoPCB->PID);
+	}
+
+	t_espera_clock * nodoClockEspera = malloc(sizeof(t_espera_clock));
+
+	nodoClockEspera = list_find(listaTiempoDeEspera, (void*) buscarClockPorProcessID);
+
+	clock_t tiempoTranscurrido =  (double)(clock() - nodoClockEspera->tiempoInicial) / CLOCKS_PER_SEC;
+
+	log_info(archivoLog,"El tiempo de espera del proceso %d fue %g.", nodoPCB->PID, tiempoTranscurrido);
+
+	//Fin de logueo de que estuvo en entrada-salida.
+
 	sem_post(&mutexListaListo);
 
 }
