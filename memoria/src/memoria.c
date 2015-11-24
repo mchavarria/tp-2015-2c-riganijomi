@@ -336,8 +336,38 @@ int algoritmoReemplazo(int processID){
 	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "FIFO")) {
 		marco = algoritmoReemplazoFIFO(processID);
 	}
+	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+		marco = algoritmoReemplazoLRU(processID);
+	}
 
 	return marco;
+}
+
+int algoritmoReemplazoLRU(int processID) {
+	bool ordenarParaLRU(t_tablaPaginasProceso * nodo1, t_tablaPaginasProceso * nodo2) {
+		return (nodo1->ingreso < nodo2->ingreso);
+	}
+	t_tablasPaginas * tablaDeProceso = NULL;
+
+	tablaDeProceso = buscarTablaPaginas(processID);
+	list_sort(tablaDeProceso->listaPaginas, (void*) ordenarParaLRU);
+
+	t_tablaPaginasProceso * nodoPagina = list_get(tablaDeProceso->listaPaginas, 0);
+
+	//es el que va a ser reemplazado
+	int numMarcoPa = nodoPagina->numeroMarco;
+
+	int conMarcosAsignados(t_tablaPaginasProceso * nodo) {
+		return (nodo->ingreso != NULO);
+	}
+	t_list * listaPaginasAlgoritmo = list_filter(tablaDeProceso->listaPaginas, (void*) conMarcosAsignados);
+	int i;
+	for (i=1; i<listaPaginasAlgoritmo->elements_count; i++) {
+		t_tablaPaginasProceso * nodoPagina2 = list_get(listaPaginasAlgoritmo, i);
+		nodoPagina2->ingreso--;
+	}
+
+	return numMarcoPa;
 }
 
 int algoritmoReemplazoFIFO(int processID) {
@@ -408,11 +438,18 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina) {
 	nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 
 	int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
-			return (nodo->numeroMarco != NULO);
-		}
-	int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
+		return (nodo->numeroMarco != NULO);
+	}
 
-	nodoPagina->ingreso = valor;
+	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "FIFO") ) {
+		int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
+		nodoPagina->ingreso = valor;
+	}
+
+	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+		nodoPagina->ingreso = 0;
+	}
+
 	nodoPagina->numeroMarco = indiceMarco;
 }
 
@@ -542,7 +579,7 @@ static t_marco * seleccionarMarcoVictima(int pid)
 	{
 		indiceMarco = obtenerUnMarcoLibre(listaMarco);
 	} else if (cantMarcosAsignados == MAXIMO_MARCOS_POR_PROCESO) {
-		//ejecuta algoritmo de reemplazo FIFO.
+		//ejecuta algoritmo de reemplazo solicitado
 		//elimina numero de marco en la pagina victima
 		indiceMarco = algoritmoReemplazo(pid);
 		//Debe escribirlo en swap en caso de haber sido escrita
