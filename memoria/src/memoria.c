@@ -576,9 +576,11 @@ void finalizarProceso(int pid){
 		return (nodo->processID == pid);
 	}
 
-	for (i = 0; i <CANTIDAD_MARCOS - 1; i++) {
+	for (i = 0; i <MAXIMO_MARCOS_POR_PROCESO - 1; i++) {
 		marco = list_find(listaMarco,(void *) buscarMarcoPorProceso);
-		marco->processID = NULO;
+		if (marco != NULL) {
+			marco->processID = NULO;
+		}
 	}
 	//FIN Joaquin
 

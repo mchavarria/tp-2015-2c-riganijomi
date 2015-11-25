@@ -74,3 +74,25 @@
 [INFO] 02:07:19:164 Memoria/(5537:5537): ingreso el mensaje rutina SIGUSR1: 10
 [INFO] 02:08:44:886 Memoria/(5636:5636): ingreso el mensaje rutina SIGUSR1: 10
 [INFO] 02:09:25:982 Memoria/(5721:5721): ingreso el mensaje rutina SIGUSR1: 10
+[INFO] 21:13:34:24 Memoria/(3274:3280): Proceso ID 1, cantidad de paginas 10. Inicio: Exito
+[INFO] 21:13:36:28 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'hola'
+[INFO] 21:13:41:34 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'chau'
+[INFO] 21:13:46:51 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'adios'
+[INFO] 21:13:51:66 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'hello'
+[INFO] 21:14:04:740 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor 'chau'
+[INFO] 21:14:12:531 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'bye'
+[INFO] 21:14:22:191 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 6 con el valor 'jj'
+[INFO] 21:14:27:201 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 7 con el valor 'miercoles'
+[INFO] 21:14:32:227 Memoria/(3274:3280): Se ha escrito una pagina: process ID 1, pagina escrita 8 con el valor 'kaiser'
+[INFO] 21:17:36:86 Memoria/(3497:3508): Proceso ID 1, cantidad de paginas 10. Inicio: Exito
+[INFO] 21:17:38:99 Memoria/(3497:3508): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'hola'
+[INFO] 21:17:43:113 Memoria/(3497:3508): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'chau'
+[INFO] 21:18:23:893 Memoria/(3551:3558): Proceso ID 1, cantidad de paginas 10. Inicio: Exito
+[INFO] 21:18:25:911 Memoria/(3551:3558): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'hola'
+[INFO] 21:18:30:921 Memoria/(3551:3558): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'chau'
+[INFO] 21:19:58:622 Memoria/(3602:3608): Proceso ID 1, cantidad de paginas 10. Inicio: Exito
+[INFO] 21:20:00:630 Memoria/(3602:3608): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'hola'
+[INFO] 21:20:05:645 Memoria/(3602:3608): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'chau'
+[INFO] 21:22:50:461 Memoria/(3602:3608): Proceso ID 1, cantidad de paginas 10. Inicio: Exito
+[INFO] 21:22:52:467 Memoria/(3602:3608): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'hola'
+[INFO] 21:22:57:472 Memoria/(3602:3608): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'chau'
