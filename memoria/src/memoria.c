@@ -92,8 +92,8 @@ void inicializarMarco() {
 
 void levantarCfgInicial()
 {
-	//char cfgFin[] ="/memoria/src/config.cfg";//Consola
-	char cfgFin[] ="/src/config.cfg";
+	char cfgFin[] ="/memoria/src/config.cfg";//Consola
+	//char cfgFin[] ="/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -328,7 +328,7 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 		//No hubo PF
 		nodoMarco = list_find(listaMarco, (void*) devolverValor);
 		if(string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")){
-			nodoPagina->ingreso = 0;
+			nodoPagina->ingreso = LRU;
 		}
 	}
 
@@ -341,6 +341,7 @@ int algoritmoReemplazo(int processID){
 		marco = algoritmoReemplazoFIFO(processID);
 	}
 	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+		puts("Entro a algoritmoReemplazo LRU");
 		marco = algoritmoReemplazoLRU(processID);
 	}
 
@@ -349,7 +350,7 @@ int algoritmoReemplazo(int processID){
 
 int algoritmoReemplazoLRU(int processID) {
 	bool ordenarParaLRU(t_tablaPaginasProceso * nodo1, t_tablaPaginasProceso * nodo2) {
-		return (nodo1->ingreso > nodo2->ingreso);
+		return (nodo1->ingreso < nodo2->ingreso);
 	}
 	t_tablasPaginas * tablaDeProceso = NULL;
 
@@ -442,17 +443,9 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina) {
 
 	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
 
-		int conMarcosAsignados(t_tablaPaginasProceso * nodo) {
-			return (nodo->ingreso != NULO);
-		}
-		t_list * listaPaginasAlgoritmo = list_filter(tablaDeProceso->listaPaginas, (void*) conMarcosAsignados);
-		int i;
-		for (i=1; i<listaPaginasAlgoritmo->elements_count; i++) {
-			t_tablaPaginasProceso * nodoPagina2 = list_get(listaPaginasAlgoritmo, i);
-			nodoPagina2->ingreso++;
-		}
+		modificarBitIngresoLRU(processID);
 
-		nodoPagina->ingreso = 0;
+		nodoPagina->ingreso = LRU;
 	}
 
 	nodoPagina->numeroMarco = indiceMarco;
@@ -576,7 +569,7 @@ void finalizarProceso(int pid){
 		return (nodo->processID == pid);
 	}
 
-	for (i = 0; i <MAXIMO_MARCOS_POR_PROCESO - 1; i++) {
+	for (i = 0; i <MAXIMO_MARCOS_POR_PROCESO ; i++) {
 		marco = list_find(listaMarco,(void *) buscarMarcoPorProceso);
 		if (marco != NULL) {
 			marco->processID = NULO;
@@ -598,6 +591,10 @@ static t_marco * seleccionarMarcoVictima(int pid)
 	if ( cantMarcosAsignados < MAXIMO_MARCOS_POR_PROCESO)
 	{
 		indiceMarco = obtenerUnMarcoLibre(listaMarco);
+		if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
+			modificarBitIngresoLRU(pid);
+		}
+
 	} else if (cantMarcosAsignados == MAXIMO_MARCOS_POR_PROCESO) {
 		//ejecuta algoritmo de reemplazo solicitado
 		//elimina numero de marco en la pagina victima
@@ -899,3 +896,25 @@ void recibirSolicitudDeCpu(int socket, int * nbytes){
 		nodoInstruccion = nodo;
 	}
 }
+
+void modificarBitIngresoLRU (int pid){
+
+	 t_tablasPaginas * tablaPagProceso = buscarTablaPaginas(pid);
+
+	 int conMarcosAsignados(t_tablaPaginasProceso * nodo) {
+		return (nodo->ingreso != NULO);
+	}
+	t_list * listaPaginasAlgoritmo = list_filter(tablaPagProceso->listaPaginas, (void*) conMarcosAsignados);
+	int i;
+	for (i=0; i<listaPaginasAlgoritmo->elements_count; i++) {
+		t_tablaPaginasProceso * nodoPagina2 = list_get(listaPaginasAlgoritmo, i);
+		nodoPagina2->ingreso--;
+		printf("Ingreso: %d" , nodoPagina2->ingreso);
+		printf("Numero Marco: %d" , nodoPagina2->numeroMarco);
+	}
+
+ }
+
+
+
+

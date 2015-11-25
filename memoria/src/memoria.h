@@ -30,6 +30,8 @@
 
 #define SECUENCIA_CPU_MEM "hhhs"
 
+#define LRU 50
+
 
 //CFG
 char* PUERTO_SWAP;
@@ -171,6 +173,7 @@ void desasignarMarco(int processID, int marco);
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo);
 static t_tablaPaginasProceso * obtenerPaginaPorNumMarco(int marco, t_tablasPaginas * nodoTablasPagina);
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco);
+void modificarBitIngresoLRU (int pid);
 
 void flushMarcosActivacion();
 void* flushTLB();
