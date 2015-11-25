@@ -328,6 +328,8 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 		//No hubo PF
 		nodoMarco = list_find(listaMarco, (void*) devolverValor);
 		if(string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")){
+			tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
+			nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 			nodoPagina->ingreso = LRU;
 		}
 	}
