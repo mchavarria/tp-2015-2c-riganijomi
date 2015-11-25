@@ -92,8 +92,8 @@ void inicializarMarco() {
 
 void levantarCfgInicial()
 {
-	char cfgFin[] ="/memoria/src/config.cfg";//Consola
-	//char cfgFin[] ="/src/config.cfg";
+	//char cfgFin[] ="/memoria/src/config.cfg";//Consola
+	char cfgFin[] ="/src/config.cfg";
 
 	char *dir = getcwd(NULL, 0);
 
@@ -569,6 +569,19 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 }
 
 void finalizarProceso(int pid){
+	//Se borra los marcos de ese proceso. INICIO
+	int i=0;
+	t_marco * marco = NULL;
+	bool buscarMarcoPorProceso(t_marco * nodo) {
+		return (nodo->processID == pid);
+	}
+
+	for (i = 0; i <CANTIDAD_MARCOS - 1; i++) {
+		marco = list_find(listaMarco,(void *) buscarMarcoPorProceso);
+		marco->processID = NULO;
+	}
+	//FIN Joaquin
+
 	bool procesoActual(t_tablasPaginas * nodo) {
 		return (nodo->processID == pid);
 	}
