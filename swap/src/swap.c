@@ -238,9 +238,6 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	if ((err = fseek(particion, ubicacion, SEEK_SET) == 0))
 	{//se ubica bien
 		//fwrite((const char *)texto, strlen((const char *)texto), 1, particion);
-		t_metricas * metricas;
-		metricas = buscarMetricas(idProc);
-		metricas->paginasEscritas++;
 		strncpy(tamTexto,texto,tamanioPaginas);
 		strcat(tamTexto,"\0");
 		fputs((const char *)tamTexto, particion);
@@ -250,6 +247,9 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 
     fclose(particion);
     //enviarMensajeRtaAMem(nodoRespuesta);
+	t_metricas * metricas;
+	metricas = buscarMetricas(idProc);
+	metricas->paginasEscritas++;
     log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, tamTexto, idProc, pagina);
 }
 

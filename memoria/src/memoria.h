@@ -52,6 +52,8 @@ t_log* archivoLog;
 int socketCpu;
 int socketSwap;
 int socketServidor;
+double comandosTotales = 0;
+double aciertosTLB = 0;
 
 /*
  * Tipo indica la operación que se realiza
@@ -106,7 +108,7 @@ typedef struct tablasPaginas {
 	t_list * listaPaginas;
 	int contadorPageFault;
 	int paginasAccedidas;
-} __attribute__ ((packed)) t_tablasPaginas;
+} t_tablasPaginas;
 
 typedef struct marco {
 	uint32_t processID;
@@ -216,6 +218,7 @@ static t_marco * seleccionarMarcoVictima(int pid);
 void finalizarProceso(int pid);
 void modificarBitsClock (int pid, t_list * listaMarcos,int indiceMarco);
 int algoritmoReemplazoClock(int processID);
+void * calcularTasaAciertos();
 
 #endif /* MEMORIA_H_ */
 

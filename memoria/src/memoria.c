@@ -6,22 +6,7 @@
 #include <sys/time.h>
 
 int main(int argc, char* argv[]) {
-	/*
-	pthread_t thread1;
-	char *m1 = "";
-	int r1;
-
-	r1 = pthread_create(&thread1,NULL, flushTLB, (void *) m1);
-
-	pthread_t thread2;
-	char *m2 = "";
-	int r2;
-
-	r2 = pthread_create(&thread2,NULL, flushMarcos, (void *) m2);
-
-	signal(SIGINT, flushTLBActivacion);
-	signal(SIGUSR1, flushMarcosActivacion);*/
-	//signal(SIGUSR2, dumpMemoria);
+	sem_init(&mutexFlushMarcos, 0, 1);
 	sem_init(&mutexFlushTLB, 0, 1);
 	sem_init(&cantSolicitudes,0,0);
 	listaTablasPaginas = list_create();
@@ -42,6 +27,12 @@ int main(int argc, char* argv[]) {
 	signal(SIGUSR1, rutina);
 	signal(SIGUSR2, rutina);
 
+	pthread_t tasaDeAciertos;
+	char *m10 = "tasaDeAciertos";
+	int r10;
+
+	r10 = pthread_create( &tasaDeAciertos, NULL, calcularTasaAciertos, (void*) m10);
+
 	pthread_t monitor;
 	char *m3 = "monitor";
 	int r3;
@@ -55,6 +46,17 @@ int main(int argc, char* argv[]) {
 	r1 = pthread_create( &atenderSol, NULL, atenderSolicitudes, (void*) m2);
 	pthread_join(atenderSol,NULL);
 	return 1;
+}
+
+void * calcularTasaAciertos() {
+	while(1) {
+		sleep(60);
+		if (comandosTotales > 0) {
+			printf("Tasa de aciertos de la TLB historica: %g %\n", (double)((aciertosTLB / comandosTotales) * 100));
+		} else {
+			printf("Tasa de aciertos de la TLB historica: no se ha ejecutado ningun programa\n");
+		}
+	}
 }
 
 static t_marco * marco_create(int numeroMarco) {
@@ -154,12 +156,17 @@ void configurarSockets()
 void rutina (int n) {
 	switch (n) {
 		case SIGINT:
-			printf("En tu cara, no salgo nada…\n");
-			log_info(archivoLog,"ingreso el mensaje rutina SIGINT: %d",SIGINT);
+			printf("Flush de marcos.\n");
+			pthread_t threadFlushMarcos;
+			char *m2 = "threadFlushMarcos";
+			int r7;
+
+			r7 = pthread_create( &threadFlushMarcos, NULL, flushMarcos, (void*) m2);
+			log_info(archivoLog,"Flush de Marcos.");
 		break;
 		case SIGUSR1:
-			printf("LLEGO SIGUSR1\n");
-			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR1: %d",SIGUSR1);
+			printf("Flush de TLB.\n");
+			log_info(archivoLog,"Flush de TLB.");
 			pthread_t threadFlushTLB;
 			char *m1 = "threadFlushTLB";
 			int r5;
@@ -167,8 +174,8 @@ void rutina (int n) {
 			r5 = pthread_create( &threadFlushTLB, NULL, flushTLB, (void*) m1);
 		break;
 		case SIGUSR2:
-			printf("LLEGO SIGUSR2\n");
-			log_info(archivoLog,"ingreso el mensaje rutina SIGUSR2: %d",SIGUSR2);
+			printf("Dump de memoria.\n");
+			log_info(archivoLog,"Dump de memoria.");
 			int pid = fork();
 
 			if (pid == 0) {
@@ -345,6 +352,7 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 	//Encontrado en TLB
 	if (resultadoBusqueda != NULO){
 		//No hubo PF
+		aciertosTLB++;
 		nodoMarco = list_find(listaMarco, (void*) devolverValor);
 		tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
 		tablaDeProceso->paginasAccedidas++;
@@ -380,8 +388,8 @@ int algoritmoReemplazo(int processID){
 
 int algoritmoReemplazoClock(int processID) {
 	int numeroMarco = NULO;
-	int indiceMarco = 0;
-	int contadorMarco = 0;
+	int indiceMarco = -1;
+	int contadorMarco = 1;
 	bool marcosPorProceso(t_marco * nodo) {
 		return (nodo->processID == processID);
 	}
@@ -391,37 +399,39 @@ int algoritmoReemplazoClock(int processID) {
 	}
 	t_list * listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
 	list_find(listaMarcoFiltrados, (void*) devolverMarcoPuntero);
-	while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO) {
-		t_marco * marco = list_get(listaMarcoFiltrados, indiceMarco + 1);
-		if (marco->bitLeido == 0 && marco->bitModificacion == 0) {
-			numeroMarco = marco->numeroMarco;
+	puts("Despues del find");
+	printf("Lista %d", list_size(listaMarcoFiltrados));
+	while (numeroMarco == NULO) {
+		while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO) {
+			if ((indiceMarco + 1) >= MAXIMO_MARCOS_POR_PROCESO) {
+				indiceMarco = 0;
+			} else {
+				indiceMarco++;
+			}
+			printf("Indice Marco: %d", indiceMarco);
+			t_marco * marco = list_get(listaMarcoFiltrados, indiceMarco);
+			puts("Despues primera suma");
+			if (marco->bitLeido == 0 && marco->bitModificacion == 0) {
+				numeroMarco = marco->numeroMarco;
+			}
+			contadorMarco++;
 		}
-		if (indiceMarco + 1 >= MAXIMO_MARCOS_POR_PROCESO) {
-			indiceMarco = -1;
-		} else {
-			indiceMarco++;
+		contadorMarco = 1;
+		while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO) {
+			if ((indiceMarco + 1) >= MAXIMO_MARCOS_POR_PROCESO) {
+				indiceMarco = 0;
+			} else {
+				indiceMarco++;
+			}
+			t_marco * marco = list_get(listaMarcoFiltrados, indiceMarco);
+			if (marco->bitLeido == 0 && marco->bitModificacion == 1) {
+				numeroMarco = marco->numeroMarco;
+			} else {
+				marco->bitLeido = 0;
+			}
+			contadorMarco++;
 		}
-		contadorMarco++;
 	}
-	contadorMarco = 0;
-	while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO) {
-		t_marco * marco = list_get(listaMarcoFiltrados, indiceMarco + 1);
-		if (marco->bitLeido == 0 && marco->bitModificacion == 1) {
-			numeroMarco = marco->numeroMarco;
-		} else {
-			marco->bitLeido = 0;
-		}
-		if (indiceMarco + 1 >= MAXIMO_MARCOS_POR_PROCESO) {
-			indiceMarco = -1;
-		} else {
-			indiceMarco++;
-		}
-		contadorMarco++;
-	}
-	if (numeroMarco == NULO) {
-		algoritmoReemplazoClock(processID);
-	}
-
 	return numeroMarco;
 }
 
@@ -568,19 +578,20 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 		case FINALIZAR:
 			nodoASwap->tipo = FINALIZAR;
 			nodoRtaSwap->tipo = FINALIZAR;
+			t_tablasPaginas * tablaDeProceso;
+			tablaDeProceso = buscarTablaPaginas(pid);
+			log_info(archivoLog, "Cantidad de paginas accedidas: %d del proceso %d.", tablaDeProceso->paginasAccedidas, pid);
+			log_info(archivoLog, "Cantidad de page faults: %d, del proceso %d", tablaDeProceso->contadorPageFault, pid);
 			finalizarProceso(pid);//Finaliza el proceso
 			nodoASwap->pagina = 0;
 			enviarMensajeDeNodoASWAP(nodoASwap);
 			log_info(archivoLog, "Se ha finalizado el proceso con ID: %d.", pid);
-			//t_tablasPaginas * tablaDeProceso;
-			//tablaDeProceso = buscarTablaPaginas(pid);
-			//log_info(archivoLog, "Paginas accedidas: %d.", tablaDeProceso->paginasAccedidas);
-			//log_info(archivoLog, "PageFaults: %d.", tablaDeProceso->contadorPageFault);
-			puts("PELOTUDOS");
 			printf("Se ha finalizado el proceso con ID: %d.\n", pid);
 			break;
 		default:
+			sem_wait(&mutexFlushMarcos);
 			//Lectura o Escritura
+			comandosTotales++; //para calcuar la tasa de aciertos de la TLB
 			marco = detectarPageFault(nodoInst,pagina);
 			if (marco == NULL)
 			{//Hay page fault
@@ -595,7 +606,6 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				recibirNodoDeRtaSwap(nodoRtaSwap);
 				marco = seleccionarMarcoVictima(pid);
 				if (marco == NULL){
-					puts("Finalizar por null");
 					//No se pudo asignar un marco
 					finalizarProceso(pid);
 					//Se finaliza el proceso
@@ -643,6 +653,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				//actualiza TLB con el uso reciente.
 				cargarTlb(nodoInstruccion, marco);
 			}
+			sem_post(&mutexFlushMarcos);
 			break;
 	}
 
@@ -774,27 +785,29 @@ void dumpMemoria(){
 
 void* flushTLB() {
 	sem_wait(&mutexFlushTLB);
-	list_clean(listaTLB);
+	listaTLB = list_create();
 	inicializarTLB();
 	sem_post(&mutexFlushTLB);
 }
 
 void* flushMarcos() {
 	sem_wait(&mutexFlushMarcos);
+	listaMarco = list_create();
 	inicializarMarco();
 	desasignarTodosLosProcesos();
+	sem_post(&mutexFlushMarcos);
 }
 
 void desasignarTodosLosProcesos() {
-	int i;
-	int j;
-	for (i=0; i<listaTablasPaginas->elements_count; i++) {
-		t_tablasPaginas * nodoTabla = list_get(listaTablasPaginas, i);
-		for (j=0; nodoTabla->listaPaginas; j++) {
-			t_tablaPaginasProceso * nodoPagina = list_get(nodoTabla->listaPaginas, j);
+	void limpiarTodo(t_tablasPaginas * nodo) {
+		void limpiarPaginas(t_tablaPaginasProceso * nodoPagina) {
+			nodoPagina->ingreso = NULO;
 			nodoPagina->numeroMarco = NULO;
 		}
+		list_iterate(nodo->listaPaginas, limpiarPaginas);
 	}
+	list_iterate(listaTablasPaginas, limpiarTodo);
+
 }
 
 
