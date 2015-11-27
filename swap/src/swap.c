@@ -9,6 +9,7 @@ int main() {
 	listaLibres = list_create();
 	listaProcesos = list_create();
 	listaEspera = list_create();
+	listaMetricas = list_create();
 	//carga Cfgs
 	levantarCfgInicial();
 	t_nodo_mem_swap * nodoMemSwap = malloc(sizeof(t_nodo_mem_swap));
@@ -38,6 +39,7 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 			escribirPagina(nodoMemSwap->pid,nodoMemSwap->pagina, nodoMemSwap->contenido);
 		break;
 		case FINALIZAR:
+			puts("Entro");
 			nodoRespuesta->tipo = FINALIZAR;
 			eliminarProceso(nodoMemSwap->pid);
 		break;
@@ -48,8 +50,8 @@ void levantarCfgInicial(){
 	//Levanta sus puertos cfg e ip para conectarse
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
-	//strcat(directorioActual, "/swap/src/config.cfg");//Consola
-	strcat(directorioActual, "/src/config.cfg");//Eclipse
+	strcat(directorioActual, "/swap/src/config.cfg");//Consola
+	//strcat(directorioActual, "/src/config.cfg");//Eclipse
 	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
 	nombreSwap = configObtenerNombreArchivoSwap(directorioActual);
 	cantPaginas = configObtenerCantPaginasSwap(directorioActual);
@@ -115,6 +117,7 @@ void recibirProceso(int idProc, int cantPagProceso)
 	nodoLibre = list_find(listaLibres,(void*) condicionRecibir);
 	printf("cant listaProc: %d \n",listaProcesos->elements_count);
 	if (nodoLibre != NULL){
+		list_add(listaMetricas, metricas_create(idProc));
 		//hay lugar para alojarlo
 		list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
 		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
@@ -141,7 +144,10 @@ void eliminarProceso(int pid)
 	t_nodoProceso * nodoProceso = NULL;
 	nodoProceso = list_find(listaProcesos,(void*) condicionProcAEliminar);
 	if (nodoProceso != NULL){
-
+		t_metricas * metricas = malloc(sizeof(t_metricas));
+		metricas = buscarMetricas(pid);
+		log_info(archivoLog, "PID: %d, Cantidad de paginas leidas: %d \n", pid, metricas->paginasLeidas);
+		log_info(archivoLog, "PID: %d, Cantidad de paginas escritas: %d \n", pid, metricas->paginasEscritas);
 		//encontro el nodo a eliminar
 		//TODO crear el nodo libre correspondiente al espacio liberado
 		list_add(listaLibres, crearNodoLibre(nodoProceso->indice, nodoProceso->tamanio));
@@ -175,6 +181,9 @@ void leerPaginaProceso(int idProc, int pagina){
 	nodoRespuesta->exito = 0;
 
 	if (nodoProceso != NULL){
+		t_metricas * metricas;
+		metricas = buscarMetricas(idProc);
+		metricas->paginasLeidas++;
 		indiceProceso = nodoProceso->indice;
 		int ubicacion = indiceProceso + (tamanioPaginas*pagina);
 		//modificar para el directorio real
@@ -229,6 +238,9 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	if ((err = fseek(particion, ubicacion, SEEK_SET) == 0))
 	{//se ubica bien
 		//fwrite((const char *)texto, strlen((const char *)texto), 1, particion);
+		t_metricas * metricas;
+		metricas = buscarMetricas(idProc);
+		metricas->paginasEscritas++;
 		strncpy(tamTexto,texto,tamanioPaginas);
 		strcat(tamTexto,"\0");
 		fputs((const char *)tamTexto, particion);
@@ -292,4 +304,22 @@ void empaquetarNodoRtaAMem(unsigned char *buffer,t_resp_swap_mem * nodo)
 			nodo->tipo,nodo->exito,nodo->pagina,nodo->contenido);
 }
 
+static t_metricas * metricas_create(int pid) {
+	t_metricas *new = malloc(sizeof(t_metricas));
+    new->idProc = pid;
+    new->paginasEscritas = 0;
+    new->paginasLeidas = 0;
+    return new;
+}
 
+t_metricas * buscarMetricas(int processID){
+
+	int devolverTablaMetricas(t_metricas * nodo){
+		return (nodo->idProc == processID);
+	}
+
+	t_metricas * nodoMetricas = NULL;
+	nodoMetricas = list_find(listaMetricas, (void *) devolverTablaMetricas);
+
+	return nodoMetricas;
+}

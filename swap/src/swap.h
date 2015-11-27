@@ -69,6 +69,12 @@ typedef struct envioPaginaSwap {
 	uint32_t tamanioTexto;
 } __attribute__ ((packed)) t_envioPaginaSwap;
 
+typedef struct metricas {
+	int idProc;
+	uint32_t paginasLeidas;
+	uint32_t paginasEscritas;
+} t_metricas;
+
 //sockets
 int socketMemoria;
 int socketServidor;
@@ -82,6 +88,7 @@ void configurarSocketServer();
 static t_nodoLibre *crearNodoLibre(int indice, int tamanio);
 static t_nodoEspera *crearNodoEspera(int idProc, int cantPagProceso);
 static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProceso);
+static t_metricas * metricas_create(int pid);
 
 //Recibe un proceso, en caso de aceptarlo crea un nodoProceso y lo agrega a la lista
 //En caso de rechazarlo nada jajaja
@@ -95,6 +102,7 @@ void eliminarProceso(int pid);
 
 void leerPaginaProceso(int idProc, int pagina);
 void escribirPagina (int idProc, int pagina, char * texto);
+t_metricas * buscarMetricas(int processID);
 //Condicion para el list_find en nodos libres
 
 
@@ -121,6 +129,7 @@ void escribir(t_envioPaginaSwap * nodoEscribir);
 t_list * listaLibres;
 t_list * listaProcesos;
 t_list * listaEspera;
+t_list * listaMetricas;
 
 #endif /* SWAP_H_ */
 

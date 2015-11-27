@@ -104,6 +104,8 @@ typedef struct tablaPaginasProceso {
 typedef struct tablasPaginas {
 	uint32_t processID;
 	t_list * listaPaginas;
+	int contadorPageFault;
+	int paginasAccedidas;
 } __attribute__ ((packed)) t_tablasPaginas;
 
 typedef struct marco {
@@ -113,6 +115,7 @@ typedef struct marco {
 	uint32_t numeroPagina;
 	uint32_t bitModificacion;
 	uint32_t bitLeido;
+	uint32_t punteroClock;
 } __attribute__ ((packed)) t_marco;
 
 typedef struct envioPaginaSwap {
@@ -211,6 +214,8 @@ void recibirSolicitudDeCpu(int socket, int * nbytes);
 int obtenerPaginaLeeroEscribir(char * linea);
 static t_marco * seleccionarMarcoVictima(int pid);
 void finalizarProceso(int pid);
+void modificarBitsClock (int pid, t_list * listaMarcos,int indiceMarco);
+int algoritmoReemplazoClock(int processID);
 
 #endif /* MEMORIA_H_ */
 
