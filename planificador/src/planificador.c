@@ -65,6 +65,7 @@ void* enviarPCBaCPU()
 		if (nodoCPU != NULL){
 			//CPU disponible, envío el PCB
 			//sem_wait(sem_CPU_conectada);
+			sleep(2);
 			t_pcb * nodoPCB =  list_get(listaDeListo, 0);
 			int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
 			if (err <= 0){

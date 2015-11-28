@@ -97,6 +97,10 @@ typedef struct TLB{
 	uint32_t marco;
 } __attribute__ ((packed)) t_tlb;
 
+void imprimirTLB();
+
+int pageFaultLecturaClock = 0;
+
 typedef struct tablaPaginasProceso {
 	uint32_t numeroPagina;
 	uint32_t numeroMarco;
@@ -177,7 +181,7 @@ int algoritmoReemplazoLRU(int processID);
 void desasignarMarco(int processID, int marco);
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo);
 static t_tablaPaginasProceso * obtenerPaginaPorNumMarco(int marco, t_tablasPaginas * nodoTablasPagina);
-void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco);
+void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco, int pid);
 void modificarBitIngresoLRU (int pid);
 
 void flushMarcosActivacion();

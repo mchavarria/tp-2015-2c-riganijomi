@@ -96,3 +96,114 @@
 [INFO] 21:22:50:461 Memoria/(3602:3608): Proceso ID 1, cantidad de paginas 10. Inicio: Exito
 [INFO] 21:22:52:467 Memoria/(3602:3608): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor 'hola'
 [INFO] 21:22:57:472 Memoria/(3602:3608): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'chau'
+[INFO] 15:16:22:910 Memoria/(7029:7038): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 15:16:24:926 Memoria/(7029:7038): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 15:16:29:931 Memoria/(7029:7038): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 15:16:34:956 Memoria/(7029:7038): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 15:16:39:961 Memoria/(7029:7038): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 15:16:44:977 Memoria/(7029:7038): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 15:16:49:980 Memoria/(7029:7038): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 15:19:47:540 Memoria/(7258:7266): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 15:19:49:563 Memoria/(7258:7266): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 15:19:54:571 Memoria/(7258:7266): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 15:19:59:598 Memoria/(7258:7266): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 15:20:04:607 Memoria/(7258:7266): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 15:20:09:631 Memoria/(7258:7266): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 15:20:14:637 Memoria/(7258:7266): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 15:22:42:492 Memoria/(7258:7266): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 15:24:34:415 Memoria/(7258:7266): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'cinco'
+[INFO] 15:25:24:949 Memoria/(7258:7266): Finalizado por asignacion de marcos: process ID 1
+[INFO] 15:33:47:162 Memoria/(7677:7686): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 15:42:46:831 Memoria/(7992:8001): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 15:43:19:128 Memoria/(7992:8001): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 15:44:29:929 Memoria/(7992:8001): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 15:47:56:705 Memoria/(7992:8001): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 15:49:43:850 Memoria/(7992:8001): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 15:51:10:143 Memoria/(7992:8001): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 15:52:31:849 Memoria/(7992:8001): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 15:56:03:542 Memoria/(7992:8001): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 16:03:09:173 Memoria/(8659:8668): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 16:08:12:629 Memoria/(7677:7686): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 16:08:27:255 Memoria/(7677:7686): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 16:09:51:411 Memoria/(8999:9017): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 16:10:29:274 Memoria/(8999:9017): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 16:11:29:781 Memoria/(8999:9017): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 16:13:12:369 Memoria/(8999:9017): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 16:13:39:546 Memoria/(8999:9017): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 16:14:39:506 Memoria/(8999:9017): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 16:15:16:29 Memoria/(8999:9017): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 16:23:31:166 Memoria/(8999:9017): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 16:25:44:456 Memoria/(8999:9017): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'cinco'
+[INFO] 16:30:16:935 Memoria/(8999:9017): Finalizado por asignacion de marcos: process ID 1
+[INFO] 16:30:50:594 Memoria/(8999:9017): Proceso ID 2, cantidad de paginas 6. Inicio: Exito
+[INFO] 16:30:57:768 Memoria/(8999:9017): Se ha escrito una pagina: process ID 2, pagina escrita 2 con el valor 'dos'
+[INFO] 16:31:06:446 Memoria/(8999:9017): Se ha leido una pagina: process ID 2, pagina leida 2 con el valor 'dos'
+[INFO] 16:31:19:363 Memoria/(8999:9017): Se ha escrito una pagina: process ID 2, pagina escrita 3 con el valor 'tres'
+[INFO] 16:31:28:218 Memoria/(8999:9017): Se ha leido una pagina: process ID 2, pagina leida 2 con el valor 'dos'
+[INFO] 16:31:48:11 Memoria/(8999:9017): Se ha escrito una pagina: process ID 2, pagina escrita 1 con el valor 'uno'
+[INFO] 16:31:55:976 Memoria/(8999:9017): Se ha leido una pagina: process ID 2, pagina leida 1 con el valor 'uno'
+[INFO] 16:36:34:281 Memoria/(8999:9017): Se ha escrito una pagina: process ID 2, pagina escrita 5 con el valor 'cinco'
+[INFO] 16:39:53:196 Memoria/(8999:9017): Se ha leido una pagina: process ID 2, pagina leida 2 con el valor 'cinco'
+[INFO] 16:42:03:209 Memoria/(8999:9017): Finalizado por asignacion de marcos: process ID 2
+[INFO] 16:42:58:480 Memoria/(8999:9017): Proceso ID 3, cantidad de paginas 6. Inicio: Exito
+[INFO] 16:43:07:168 Memoria/(8999:9017): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor 'dos'
+[INFO] 16:43:15:40 Memoria/(8999:9017): Se ha leido una pagina: process ID 3, pagina leida 2 con el valor 'dos'
+[INFO] 16:43:26:305 Memoria/(8999:9017): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor 'tres'
+[INFO] 16:43:34:275 Memoria/(8999:9017): Se ha leido una pagina: process ID 3, pagina leida 2 con el valor 'dos'
+[INFO] 16:43:57:596 Memoria/(8999:9017): Se ha escrito una pagina: process ID 3, pagina escrita 1 con el valor 'uno'
+[INFO] 16:44:08:142 Memoria/(8999:9017): Se ha leido una pagina: process ID 3, pagina leida 1 con el valor 'uno'
+[INFO] 16:47:42:434 Memoria/(8999:9017): Se ha escrito una pagina: process ID 3, pagina escrita 5 con el valor 'cinco'
+[INFO] 16:51:22:744 Memoria/(8999:9017): Se ha leido una pagina: process ID 3, pagina leida 2 con el valor 'cinco'
+[INFO] 16:51:32:349 Memoria/(8999:9017): Finalizado por asignacion de marcos: process ID 3
+[INFO] 16:56:33:878 Memoria/(10574:10582): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 16:56:39:990 Memoria/(10574:10582): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 16:56:49:59 Memoria/(10574:10582): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 16:57:02:126 Memoria/(10574:10582): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 16:57:11:871 Memoria/(10574:10582): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 16:57:26:385 Memoria/(10574:10582): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 16:57:35:197 Memoria/(10574:10582): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 16:58:46:32 Memoria/(10574:10582): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 16:58:57:415 Memoria/(10574:10582): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'cinco'
+[INFO] 17:00:08:585 Memoria/(10574:10582): Finalizado por asignacion de marcos: process ID 1
+[INFO] 17:31:08:358 Memoria/(11336:11343): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 17:31:19:508 Memoria/(11336:11343): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 17:31:32:875 Memoria/(11336:11343): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 17:31:45:626 Memoria/(11336:11343): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 17:31:50:631 Memoria/(11336:11343): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 17:32:08:121 Memoria/(11336:11343): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 17:32:13:126 Memoria/(11336:11343): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 17:32:58:855 Memoria/(11336:11343): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 17:34:40:5 Memoria/(11336:11343): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'cinco'
+[INFO] 17:48:51:324 Memoria/(11679:11687): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 17:50:39:814 Memoria/(11679:11687): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 17:52:25:977 Memoria/(11679:11687): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 17:58:35:116 Memoria/(12178:12186): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 17:58:55:619 Memoria/(12178:12186): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 17:59:29:675 Memoria/(12178:12186): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:01:12:303 Memoria/(12340:12350): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 18:01:27:627 Memoria/(12340:12350): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 18:01:39:12 Memoria/(12340:12350): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:03:32:157 Memoria/(12551:12559): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 18:03:41:281 Memoria/(12551:12559): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 18:03:51:136 Memoria/(12551:12559): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:04:11:463 Memoria/(12551:12559): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 18:04:22:933 Memoria/(12551:12559): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:07:49:647 Memoria/(12741:12748): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 18:07:56:954 Memoria/(12741:12748): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 18:08:19:405 Memoria/(12741:12748): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:14:20:217 Memoria/(13066:13074): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 18:14:25:939 Memoria/(13066:13074): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 18:14:35:980 Memoria/(13066:13074): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:16:24:173 Memoria/(13229:13239): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 18:16:31:196 Memoria/(13229:13239): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 18:16:38:692 Memoria/(13229:13239): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:16:50:538 Memoria/(13229:13239): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 18:16:57:555 Memoria/(13229:13239): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 18:17:09:620 Memoria/(13229:13239): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 18:17:17:398 Memoria/(13229:13239): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 18:17:32:499 Memoria/(13229:13239): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 18:17:42:396 Memoria/(13229:13239): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'cinco'
+[INFO] 18:19:35:798 Memoria/(13229:13239): Finalizado por asignacion de marcos: process ID 1
+[INFO] 18:45:11:441 Memoria/(13915:13923): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 18:45:13:461 Memoria/(13915:13923): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 18:45:25:839 Memoria/(13915:13923): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
