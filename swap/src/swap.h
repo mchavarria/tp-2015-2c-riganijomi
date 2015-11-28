@@ -8,11 +8,15 @@
 #include <commons/collections/list.h>
 #include <stdbool.h>
 #include <commons/log.h>
+
 #include "socketServidor.h"
 #include "socketCliente.h"
 #include "interprete.h"
 #include "configuracion.h"
 #include "serializacion.h"
+#include <pthread.h>
+#include <semaphore.h>
+
 
 #define INICIAR 1
 #define LEER 2
@@ -114,16 +118,21 @@ int tamanioPaginas;
 int retardoSwap;
 int retardoCompactacion;
 
-
+sem_t mutexAtendiendoEspera;
 char instruccion[20];
 int nbytes;
 char respuesta[30];
-
+int hayFragmentacion = 0;
 void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap);
 int recibirNodoDeMem(t_nodo_mem_swap * nodo);
 void desempaquetarNodoDeMem(unsigned char *buffer,t_nodo_mem_swap * nodo);
 int enviarMensajeRtaAMem(t_resp_swap_mem * nodo);
 void empaquetarNodoRtaAMem(unsigned char *buffer,t_resp_swap_mem * nodo);
+void detectarHuecosContiguos(int indice, int tamanio);
+int fragmentacionExterna(int tam);
+void compactarSwap(int cantPagProceso);
+void desplazarYcompactar(int indice);
+void* compactacion();
 
 void escribir(t_envioPaginaSwap * nodoEscribir);
 t_list * listaLibres;
