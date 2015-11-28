@@ -13,6 +13,7 @@ int main() {
 	//carga Cfgs
 	levantarCfgInicial();
 	t_nodo_mem_swap * nodoMemSwap = malloc(sizeof(t_nodo_mem_swap));
+	nodoMemSwap->contenido = malloc(1);
 	//creacion archivo particion
 	crearParticion();
 	for(;(socketMemoria > 0);){
@@ -24,7 +25,7 @@ int main() {
 
 void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 	nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
-	nodoRespuesta->contenido = malloc(strlen("")+1);
+	nodoRespuesta->contenido = malloc(1);
 	strcpy(nodoRespuesta->contenido,"\0");
 	switch (nodoMemSwap->tipo) {
 		case INICIAR:

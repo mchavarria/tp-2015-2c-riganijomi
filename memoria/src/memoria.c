@@ -229,7 +229,7 @@ int buscarEnTLB(int processID, int numeroPagina) {
 	nodoTLB = list_find(listaTLB, (void *) devolverValorDeTLB);
 
 	if (nodoTLB != NULL) {
-		printf("encontrado en TLB marco %d",nodoTLB->marco);
+		printf("encontrado en TLB marco %d\n",nodoTLB->marco);
 		return nodoTLB->marco;
 	}
 	return NULO;
@@ -638,7 +638,6 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					printf("Finalizado por asignacion de marcos: process ID %d\n", pid);
 					finalizaPorError = 1;
 				} else {
-					perror("entreeee");
 					strcpy(marco->valor, nodoRtaSwap->contenido);
 				}
 			}
@@ -752,7 +751,7 @@ static t_marco * seleccionarMarcoVictima(int pid)
 		//elimina numero de marco en la pagina victima
 		indiceMarco = algoritmoReemplazo(pid);
 		//Debe escribirlo en swap en caso de haber sido escrita
-		printf("La victima es: %d", indiceMarco);
+		printf("La victima es: %d\n", indiceMarco);
 		desasignarMarco(pid,indiceMarco);
 		puts("Lugar 2");
 	} else {
@@ -784,7 +783,7 @@ void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco, int pid){
 		nodoTLB->marco = marco->numeroMarco;
 		nodoTLB->processID = nodoInstruccion->pid;
 		nodoTLB->numeroPagina = marco->numeroPagina;
-		printf("Marco: %d, processID: %d, Numero Pagina: %d", nodoTLB->marco, nodoTLB->processID, nodoTLB->numeroPagina);
+		printf("Marco: %d, processID: %d, Numero Pagina: %d\n", nodoTLB->marco, nodoTLB->processID, nodoTLB->numeroPagina);
 		if (nodoTLB == NULL){
 			nodoTLB = list_remove(listaTLB,0);
 			list_add(listaTLB,nodoTLB);
@@ -792,7 +791,7 @@ void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco, int pid){
 	} else {
 		nodoTLB->numeroPagina = marco->numeroPagina;
 		nodoTLB->processID = nodoInstruccion->pid;
-		printf("processID: %d, Numero Pagina: %d", nodoTLB->processID, nodoTLB->numeroPagina);
+		printf("processID: %d, Numero Pagina: %d\n", nodoTLB->processID, nodoTLB->numeroPagina);
 	}
 
 

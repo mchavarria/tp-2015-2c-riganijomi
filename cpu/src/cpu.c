@@ -104,25 +104,25 @@ void cpu_func(void *idCpu) {
 
 				if (pcNuevoInicial++ >= pcbProc->pc)
 				{
+					pcbProc->pc++;  //actualiza el pgm counter
 					if (pcbProc->quantum == 0){
 						//FIFO
-						pcbProc->pc++;  //actualiza el pgm counter
 						//Lee linea y ejecuta
 						interpretarLinea(linea,pcbProc,socketADM,socketPlanificador,&continuarLeyendo);
-						sleep(retardo);
 					} else {
 						//RR
-						if (controlQuantum++ <= pcbProc->quantum){
-							pcbProc->pc++;  //actualiza el pgm counter
+						if (controlQuantum <= pcbProc->quantum){
 							//Lee linea y ejecuta
+							controlQuantum++;
 							interpretarLinea(linea,pcbProc,socketADM,socketPlanificador,&continuarLeyendo);
-							sleep(retardo);
+
 						}
 					}
+					sleep(retardo);
 				}
 
 				if ((pcbProc->quantum != 0) && (controlQuantum > pcbProc->quantum) && (continuarLeyendo != 0)){
-					sacarPorQuantum(pcbProc,socketPlanificador);
+					sacarPorQuantum(pcbProc,socketPlanificador,controlQuantum);
 					continuarLeyendo = 0;
 				}
 			}//while
@@ -158,14 +158,14 @@ void notificarNoInicioPCB(t_pcb * pcbProc,int socketPlanificador){
 	free(nodoRtaCpuPlan);
 }
 
-void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador){
+void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador,int controlQuantum){
 	t_resp_cpu_plan * nodoRtaCpuPlan;
 	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
 	int exito;
 	nodoRtaCpuPlan->PID = pcbProc->PID;
 	nodoRtaCpuPlan->idCPU = 0;
 	nodoRtaCpuPlan->tipo = QUANTUM_ACABADO;
-	nodoRtaCpuPlan->pc = pcbProc->pc;
+	nodoRtaCpuPlan->pc = controlQuantum - 1;
 	nodoRtaCpuPlan->pagRW = 0;
 	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
@@ -347,7 +347,7 @@ void instruccionEntradaSalida (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pla
 void instruccionFinalizarProceso(char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_nodo_mem * nodoInstruccion, int socketADM, int paginaInstruccion,int socketPlanificador) {
 	int exito;
 	nodoRtaCpuPlan->tipo = FINALIZAR;
-	nodoRtaCpuPlan->pc = pcbProc->pc;
+	nodoRtaCpuPlan->pc = 10000;
 	nodoRtaCpuPlan->idCPU = 0;
 	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");

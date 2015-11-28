@@ -51,6 +51,12 @@ int main() {
 
 	r3 = pthread_create( &thread3, NULL, consola, (void*) m3);
 
+	//Enviar PCB a CPU
+	pthread_t threadPcbACpu;
+	int rcp;
+	//usa el valor de nodo respuesta como tiempo de entrada salida
+	rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
+
 	pthread_join( thread3, NULL);
 
 	return 1;
@@ -207,11 +213,7 @@ void* agregarPCBALista(char * programa) {
 		//sem_post(&semProgramas);
 		//incrementar buffer de pcbs a consumir
 		sem_post(&semProgramas);
-		//Enviar PCB a CPU
-		pthread_t threadPcbACpu;
-		int rcp;
-		//usa el valor de nodo respuesta como tiempo de entrada salida
-		rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
+
 	} else {
 		perror("Lista no agregada.");
 	}
@@ -502,7 +504,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					pthread_t thread_I_O;
 					int r3;
 					//usa el valor de nodo respuesta como tiempo de entrada salida
-					r3 = pthread_create( &thread_I_O, NULL, bloquearPCB, (void*)"bloqueo" );
+					r3 = pthread_create( &thread_I_O, NULL, bloquearPCB, (void*)nodoPCB );
 
 				} else {
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo instruccion entrada-salida %d ",idCPU,PID,pagRW);
@@ -646,16 +648,19 @@ void* buscarPCBListoPorPID(int PID){
 	return nodoPCB;
 }
 
-void* bloquearPCB()
+void* bloquearPCB(t_pcb * nodoPCB)
 {
 	sleep(tiempoBloqueo);//Viene de interpretar linea y usa pagRW para dormirlo
 	//se agrega a la lista de listo
 	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
-	t_pcb * nodoPCB =  list_get(listaDeBloqueado, 0);
 	sem_wait(&mutexListaListo);
 	list_add(listaDeListo,nodoPCB );
 	sem_post(&semProgramas);
-	list_remove(listaDeBloqueado,0);
+
+	bool sacarPorPID(t_pcb * nodo) {
+		return (nodo->PID == nodoPCB->PID);
+	}
+	list_remove_by_condition(listaDeBloqueado,(void*)sacarPorPID);
 
 	//Loguea el timepo que estuvo en entrada-salida.
 
