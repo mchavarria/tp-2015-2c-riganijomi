@@ -157,7 +157,7 @@ int totalInstruccionesArchivo(char * programa);
 void* eliminaCadaMinuto();
 void recibirRespuestaCPU(int socketCpu, int * nbytes);
 void informarDesconexionCPU(int socket);
-
+void* buscarBloqueado(int PID);
 void* buscarPCBEjecutandoPorPID(int PID);
 void* buscarPCBListoPorPID(int PID);
 t_list * listaTiempoDeRespuesta;

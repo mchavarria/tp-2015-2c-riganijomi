@@ -88,7 +88,7 @@ void* enviarPCBaCPU()
 				//se agrega a la lista de ejecucion
 				list_add(listaDeEjecutado,nodoPCB);
 
-
+				printf("PCB %d enviado a CPU %d \n",nodoCPU->pcb,nodoCPU->pid);
 
 			}//Cierra el err
 		} else {
@@ -275,26 +275,21 @@ void* consola() {
 
 void finalizarProceso (int pidProceso)
 {
-	if(list_is_empty(listaDeListo)==1)
-	{
-		puts("no hay ningun proceso");
-	}
-	else
-	{
+
 		t_pcb * nodoPCB = NULL;
 		nodoPCB = buscarPCBListoPorPID(pidProceso);
 		if (nodoPCB != NULL){
-			nodoPCB->pc = nodoPCB->totalInstrucciones;
+			nodoPCB->pc = nodoPCB->totalInstrucciones - 1;
 		} else {
 			nodoPCB = buscarPCBEjecutandoPorPID(pidProceso);
 			if (nodoPCB != NULL){
 				printf("El pid %d se encuentra ejecutando\n",pidProceso);
 				printf("Intente nuevamente en unos instantes\n");
 			} else {
-				printf("El pid %d ya ha finalizado\n",pidProceso);
+				nodoPCB = buscarBloqueado(pidProceso);
+				nodoPCB->pc = nodoPCB->totalInstrucciones - 1;
 			}
 		}
-	}
 }
 
 
@@ -337,10 +332,13 @@ void imprimePorcentajeCPU()
 float porcentajeCPU(t_cpu *nodoCPU){
 
   float respuesta;
-  int instruccionesLeidas=nodoCPU->instruccionesLeidas;
-  int maximasInstrucciones = 60 / nodoCPU->retardo;
-  respuesta = (float)(100*instruccionesLeidas / maximasInstrucciones);
-
+  if (nodoCPU->retardo != 0){
+	  int instruccionesLeidas=nodoCPU->instruccionesLeidas;
+	  int maximasInstrucciones = 60 / nodoCPU->retardo;
+	  respuesta = (100*instruccionesLeidas / maximasInstrucciones);
+  } else {
+	  respuesta = 0;
+  }
   return respuesta;
 }
 
@@ -396,7 +394,7 @@ void levantarCfg(){
 void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
 	int PID = nodoRespuesta->PID;
-	int idCPU = nodoRespuesta->idCPU;
+
     int tipoResp = nodoRespuesta->tipo;
     int exito = nodoRespuesta->exito;
     int pagRW = nodoRespuesta->pagRW;
@@ -415,7 +413,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 	    	}
 	t_cpu * nodoCPU = NULL;
 	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporPid);//Para actualizar si está disponible o no
-
+	int idCPU = nodoCPU->pid;
 	int buscarClockDelProceso(t_ejecucion_clock * nodo) {
 		return (nodo->processID == PID);
 	}
@@ -617,6 +615,17 @@ int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta){
 	return nbytes;
 }
 
+void* buscarBloqueado(int PID){
+	bool buscarPCBporPID(t_pcb * nodoPCB) {
+			return (nodoPCB->PID == PID);
+		}
+
+	t_pcb* nodoPCB=NULL;
+	nodoPCB = list_find(listaDeBloqueado,(void*)buscarPCBporPID);
+	return nodoPCB;
+}
+
+
 void* buscarPCBEjecutandoPorPID(int PID){
 	bool buscarPCBporPID(t_pcb * nodoPCB) {
 			return (nodoPCB->PID == PID);
@@ -673,6 +682,7 @@ void agregarCPUALista(int socketCpu) {
 	nodoCpu->pid = listaDeCPUs->elements_count;
 	nodoCpu->socket = socketCpu;
 	nodoCpu->retardo = 0;
+	nodoCpu->instruccionesLeidas = 0;
 	nodoCpu->disponible = 1;
 	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
 	list_add(listaDeCPUs, nodoCpu);
