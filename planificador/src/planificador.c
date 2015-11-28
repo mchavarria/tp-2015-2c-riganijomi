@@ -26,6 +26,13 @@ int main() {
 	listaTiempoDeRespuesta = list_create();
 
 
+	pthread_t thread4;
+	int r4;
+	char *n1="instruccion";
+	r4 = pthread_create( &thread4, NULL, eliminaCadaMinuto, (void*) n1);
+
+
+
 	pthread_t thread1;
 	char *m1 = "monitor";
 	int r1;
@@ -79,6 +86,9 @@ void* enviarPCBaCPU()
 				list_remove(listaDeListo, 0);
 				//se agrega a la lista de ejecucion
 				list_add(listaDeEjecutado,nodoPCB);
+
+
+
 			}//Cierra el err
 		} else {
 			//No hay cpu disponible, vuelve a iniciar el while
@@ -91,9 +101,19 @@ void recibirRespuestaCPU(int socketCpu, int * nbytes){
 	t_resp_cpu_plan * nodoRespuesta;
 	nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
 	*nbytes = recibirRtadeCPU(socketCpu, nodoRespuesta);//Dereferencia del puntero para cambmiarle el valor
+	actualizarNodoCpu(socketCpu);
 	interpretarLinea(nodoRespuesta);
 }
 
+void actualizarNodoCpu(int socketCpu)
+{
+	bool buscarCPUporSocket(t_cpu * nodoCPU) {
+		return (nodoCPU->socket == socketCpu);
+	}
+	t_cpu* nodoCPU=NULL;
+	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporSocket);
+	nodoCPU->instruccionesLeidas++;
+}
 
 /*
  * Verifica que el programa dado esté en la PC
@@ -210,6 +230,7 @@ void crearThreadParaComando(char * comando) {
 */
 void* consola() {
 	char * resultado;
+	int valorPID;
 	puts("Ingrese 'correr xxxx.cod' para ejecutar.");
 	puts("Ingrese 'exit' para salir");
 	fgets(comando, 100, stdin);
@@ -237,8 +258,8 @@ void* consola() {
 	    } else if (esElComando(comando, "cpu")) {
 			imprimePorcentajeCPU();
 	    } else if (esElComando(comando, "finalizar")) {
-	    	resultado = devolverParteUsable(comando, 10);
-	    	//finalizarProceso(resultado);
+	       	valorPID = devolverParteUsableInt(comando,10);
+	      	finalizarProceso(valorPID);
 	    } else {
 			perror("Comando no valido.");
 		}
@@ -250,9 +271,50 @@ void* consola() {
 }
 
 
+
+void finalizarProceso (int pidProceso)
+{
+	if(list_is_empty(listaDeListo)==1)
+	{
+		puts("no hay ningun proceso");
+	}
+	else
+	{
+		t_pcb * nodoPCB = NULL;
+		nodoPCB = buscarPCBListoPorPID(pidProceso);
+		if (nodoPCB != NULL){
+			nodoPCB->pc = nodoPCB->totalInstrucciones;
+		} else {
+			nodoPCB = buscarPCBEjecutandoPorPID(pidProceso);
+			if (nodoPCB != NULL){
+				printf("El pid %d se encuentra ejecutando\n",pidProceso);
+				printf("Intente nuevamente en unos instantes\n");
+			} else {
+				printf("El pid %d ya ha finalizado\n",pidProceso);
+			}
+		}
+	}
+}
+
+
+void* eliminaCadaMinuto()
+{
+	void limpiar(t_cpu * nodoCPU) {
+		nodoCPU->instruccionesLeidas = 0;
+	}
+	while(1)
+	{
+		list_iterate(listaDeCPUs,limpiar);
+		sleep(60);
+	}
+
+}
+
+
 void imprimePorcentajeCPU()
 {
 	int i;
+
 	if(listaDeCPUs->elements_count > 0)
 	{
 		 int tamanio = listaDeCPUs->elements_count;
@@ -272,50 +334,13 @@ void imprimePorcentajeCPU()
 
 //funcion q calcula el porcentaje de cpu usada
 float porcentajeCPU(t_cpu *nodoCPU){
-  int total=0;
-  int usado=0;
+
   float respuesta;
-  if(nodoCPU->disponible==1)
-  {
-	  respuesta = 0;
-  } else {
-	  t_pcb* nodoPCB = buscarPCBEjecutandoPorPID(nodoCPU->pcb);
+  int instruccionesLeidas=nodoCPU->instruccionesLeidas;
+  int maximasInstrucciones = 60 / nodoCPU->retardo;
+  respuesta = (float)(100*instruccionesLeidas / maximasInstrucciones);
 
-	  FILE * fp;
-	  int pc = 0;
-	  char * linea = NULL;
-	  size_t len = 0;
-	  ssize_t read;
-
-	  //Configuro el archivo para abrir el mProg
-	  char *mprog = malloc(strlen(nodoPCB->contextoEjecucion)+8+1);
-	  strcpy(mprog,"/mProgs/");
-	  strcat(mprog,nodoPCB->contextoEjecucion);
-
-	  char *dir = getcwd(NULL, 0);
-	  char *contextoEjecucion = malloc(strlen(dir)+strlen(mprog)+1);
-	  strcpy(contextoEjecucion,dir);
-	  strcat(contextoEjecucion,mprog);
-	  //Hasta aca el arlchivo
-
-	  fp = fopen(contextoEjecucion, "r");
-
-	  while (((read = getline(&linea, &len, fp)) != -1))
-	  {
-		  total = total + interpretarLineaSegunRetardo(linea,nodoCPU->retardo);
-		  if (pc < nodoPCB->pc){
-			 usado = usado + total;
-		     pc++;
-		  }
-	  }
-
-	  fclose(fp);
-	  if (linea){
-	      free(linea);
-	  }
-      respuesta = usado * 100 / total;
-  }
-     return respuesta;
+  return respuesta;
 }
 
 int interpretarLineaSegunRetardo(char * linea, int retardo) {
@@ -598,6 +623,16 @@ void* buscarPCBEjecutandoPorPID(int PID){
 
 	t_pcb* nodoPCB=NULL;
 	nodoPCB = list_find(listaDeEjecutado,(void*)buscarPCBporPID);
+	return nodoPCB;
+}
+
+void* buscarPCBListoPorPID(int PID){
+	bool buscarPCBporPID(t_pcb * nodoPCB) {
+			return (nodoPCB->PID == PID);
+		}
+
+	t_pcb* nodoPCB=NULL;
+	nodoPCB = list_find(listaDeListo,(void*)buscarPCBporPID);
 	return nodoPCB;
 }
 

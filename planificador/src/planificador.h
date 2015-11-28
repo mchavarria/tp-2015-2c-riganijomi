@@ -150,15 +150,16 @@ void* bloquearPCB();
 void imprimeEstado(t_list *lista, char*estado );
 void imprimePorcentajeCPU();
 float porcentajeCPU(t_cpu *nodoCPU);
+void finalizarProceso (int pidProceso);
 int interpretarLineaSegunRetardo(char * linea, int retardo);
 int devolverParteUsableInt(char * linea, int desde);
 int totalInstruccionesArchivo(char * programa);
-
+void* eliminaCadaMinuto();
 void recibirRespuestaCPU(int socketCpu, int * nbytes);
 void informarDesconexionCPU(int socket);
 
 void* buscarPCBEjecutandoPorPID(int PID);
-
+void* buscarPCBListoPorPID(int PID);
 t_list * listaTiempoDeRespuesta;
 t_list * listaTiempoDeEjecucion;
 t_list * listaTiempoDeEspera;
