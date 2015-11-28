@@ -39,7 +39,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bibliotecaRiganijomi/Debug}&quot;"/>
 								</option>
 								<option id="gnu.c.link.option.libs.1831387938" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="bibliotecaRiganijomi"/>
+									<listOptionValue builtIn="false" value="bibliotecaRiganijomi"/>
+									<listOptionValue builtIn="false" value="pthread"/>
 									<listOptionValue builtIn="false" value="commons"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.691421729" superClass="cdt.managedbuild.tool.gnu.c.linker.input">

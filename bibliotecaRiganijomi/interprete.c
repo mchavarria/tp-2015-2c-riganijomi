@@ -5,7 +5,7 @@ int esElComando(char * linea, char * comando) {
     /*char * temp;
     temp = malloc(sizeof(strlen(linea)+1));
     strcpy(temp,linea);*/
-	string_to_lower(linea);
+	//string_to_lower(linea);
 	strtok(linea, "\n");
         strtok(linea,";");
 	if (string_starts_with(linea, comando)) {

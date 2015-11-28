@@ -3,12 +3,14 @@
 
 int main() {
 
+	sem_init(&mutexAtendiendoEspera,0,1);
 	archivoLog = log_create("swap.log", "Swap", false, 2);
 
 	//Creación de listas
 	listaLibres = list_create();
 	listaProcesos = list_create();
 	listaEspera = list_create();
+	listaMetricas = list_create();
 	//carga Cfgs
 	levantarCfgInicial();
 	t_nodo_mem_swap * nodoMemSwap = malloc(sizeof(t_nodo_mem_swap));
@@ -28,7 +30,10 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 	switch (nodoMemSwap->tipo) {
 		case INICIAR:
 			nodoRespuesta->tipo = INICIAR;
+			sem_wait(&mutexAtendiendoEspera);
 			recibirProceso(nodoMemSwap->pid,nodoMemSwap->pagina);
+			sem_post(&mutexAtendiendoEspera);
+
 			break;
 		case LEER:
 			nodoRespuesta->tipo = LEER;
@@ -38,6 +43,7 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 			escribirPagina(nodoMemSwap->pid,nodoMemSwap->pagina, nodoMemSwap->contenido);
 		break;
 		case FINALIZAR:
+			puts("Entro");
 			nodoRespuesta->tipo = FINALIZAR;
 			eliminarProceso(nodoMemSwap->pid);
 		break;
@@ -48,8 +54,8 @@ void levantarCfgInicial(){
 	//Levanta sus puertos cfg e ip para conectarse
 	char directorioActual[1024];
 	getcwd(directorioActual, sizeof(directorioActual));
-	//strcat(directorioActual, "/swap/src/config.cfg");//Consola
-	strcat(directorioActual, "/src/config.cfg");//Eclipse
+	strcat(directorioActual, "/swap/src/config.cfg");//Consola
+	//strcat(directorioActual, "/src/config.cfg");//Eclipse
 	puertoEscucha = configObtenerPuertoEscucha(directorioActual);
 	nombreSwap = configObtenerNombreArchivoSwap(directorioActual);
 	cantPaginas = configObtenerCantPaginasSwap(directorioActual);
@@ -106,30 +112,58 @@ static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProces
 void recibirProceso(int idProc, int cantPagProceso)
 {
 	//Salvo en la auxiliar para poder usarla en condicion
-	bool condicionRecibir(t_nodoLibre * nodoLibre) {
+	if (hayFragmentacion == 0){
+		bool condicionRecibir(t_nodoLibre * nodoLibre) {
 
-		return (nodoLibre->tamanio >= cantPagProceso);
+			return (nodoLibre->tamanio >= cantPagProceso);
 
-	}
-	t_nodoLibre * nodoLibre = NULL;
-	nodoLibre = list_find(listaLibres,(void*) condicionRecibir);
-	printf("cant listaProc: %d \n",listaProcesos->elements_count);
-	if (nodoLibre != NULL){
-		//hay lugar para alojarlo
-		list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
-		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
-		//TODO MODIFICAR LA LISTA DE DISPONIBLES
-		//TODO MODIFICAR LA LISTA DE DISPONIBLES
-		//TODO MODIFICAR LA LISTA DE DISPONIBLES
-		nodoRespuesta->exito = 1;
+		}
+		t_nodoLibre * nodoLibre = NULL;
+		nodoLibre = list_find(listaLibres,(void*) condicionRecibir);
+		if (nodoLibre != NULL){
+			list_add(listaMetricas, metricas_create(idProc));
+			//hay lugar para alojarlo
+			list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
+			log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
+			nodoLibre->indice = nodoLibre->indice + cantPagProceso;
+			nodoLibre->tamanio = nodoLibre->tamanio - cantPagProceso;
+			nodoRespuesta->exito = 1;
+		} else {
+			hayFragmentacion = fragmentacionExterna(cantPagProceso);
+			if (hayFragmentacion){
+				//necesito compactar
+				list_add(listaEspera, crearNodoEspera(idProc, cantPagProceso));
+				compactarSwap(cantPagProceso);
+			} else {
+				//No hay elementos libres, no puedo alojar.. Rechazo
+				nodoRespuesta->exito = 0;
+				perror("no hay espacio para el proceso");
+				log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
+			}
+		}
 	} else {
-		//No hay elementos libres, no puedo alojar.. Rechazo
-		nodoRespuesta->exito = 0;
-		perror("no hay espacio para el proceso");
-		log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
+		//Esta fragmentando pongo en Espera
+		list_add(listaEspera, crearNodoEspera(idProc, cantPagProceso));
 	}
-	enviarMensajeRtaAMem(nodoRespuesta);
-	printf("lista procesos (elementos) : %d \n",listaProcesos->elements_count);
+	if (hayFragmentacion == 0){
+		enviarMensajeRtaAMem(nodoRespuesta);
+	}
+}
+
+void atenderProcesosEnEspera(){
+	sem_wait(&mutexAtendiendoEspera);
+
+	int i;
+	int cantidad = listaEspera->elements_count;
+	for (i = 1; i == cantidad; i++){
+		t_nodoEspera * nodoEspera = NULL;
+		nodoEspera = list_get(listaEspera, i);
+		recibirProceso(nodoEspera->idProc,nodoEspera->tamanio);
+		list_remove(listaEspera, i);
+		free(nodoEspera);
+	}
+	sem_post(&mutexAtendiendoEspera);
+
 }
 
 void eliminarProceso(int pid)
@@ -141,14 +175,17 @@ void eliminarProceso(int pid)
 	t_nodoProceso * nodoProceso = NULL;
 	nodoProceso = list_find(listaProcesos,(void*) condicionProcAEliminar);
 	if (nodoProceso != NULL){
-
+		t_metricas * metricas = malloc(sizeof(t_metricas));
+		metricas = buscarMetricas(pid);
+		log_info(archivoLog, "PID: %d, Cantidad de paginas leidas: %d \n", pid, metricas->paginasLeidas);
+		log_info(archivoLog, "PID: %d, Cantidad de paginas escritas: %d \n", pid, metricas->paginasEscritas);
 		//encontro el nodo a eliminar
-		//TODO crear el nodo libre correspondiente al espacio liberado
 		list_add(listaLibres, crearNodoLibre(nodoProceso->indice, nodoProceso->tamanio));
+		detectarHuecosContiguos(nodoProceso->indice, nodoProceso->tamanio);
 		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", pid, nodoProceso->indice, nodoProceso->tamanio);
 		list_remove_by_condition(listaProcesos,(void*) condicionProcAEliminar);
-		//TODO falta eliminar el nodo de memoria!!!!
 		nodoRespuesta->exito = 1;
+		free(nodoProceso);
 	} else {
 		//no encontro el proceso indicado
 		nodoRespuesta->exito = 0;
@@ -158,6 +195,103 @@ void eliminarProceso(int pid)
 	printf("listaLibre (nodos): %d \n",listaLibres->elements_count);
 	printf("lista procesos (elementos) : %d \n",listaProcesos->elements_count);
 	//enviarMensajeRtaAMem(nodoRespuesta);
+}
+
+int fragmentacionExterna(int tam){
+	int i;
+	int resp = 0;
+	int tamanio = 0;
+	t_nodoLibre * nodoLibre = NULL;
+
+	for (i = 1; i == listaLibres->elements_count; i++){
+		nodoLibre = list_get(listaLibres, i);
+		tamanio = tamanio + nodoLibre->tamanio;
+
+	}
+	if (tamanio >= tam){
+		resp = 1;
+	}
+	return resp;
+}
+
+void compactarSwap(int cantPagProceso){
+
+	pthread_t thread1;
+	char *m1 = "compactar";
+	int r1;
+	r1 = pthread_create(&thread1, NULL, compactacion, (void*) m1);
+}
+
+void* compactacion(){
+
+	int i;
+	int elementos = listaLibres->elements_count;
+	for (i = 1; i == elementos; i++){
+		desplazarYcompactar(i);
+	}
+	sleep(retardoCompactacion);
+	hayFragmentacion = 0;
+	atenderProcesosEnEspera();
+}
+
+void desplazarYcompactar(int indice){
+
+	t_nodoLibre * nodoLibre1 = NULL;
+	t_nodoProceso * nodoProceso = NULL;
+	nodoLibre1 = list_get(listaLibres,indice);
+	int tamCalc;
+	tamCalc = nodoLibre1->indice + nodoLibre1->tamanio;
+	bool condicionLibre(t_nodoLibre * nodoLibre) {
+
+		return (nodoLibre->indice >= tamCalc);
+
+	}
+	nodoProceso = list_find(listaProcesos,(void*) condicionLibre);
+	nodoProceso->indice = nodoLibre1->indice;
+	nodoLibre1->indice = tamCalc;
+	nodoLibre1->tamanio = nodoProceso->tamanio - nodoLibre1->tamanio;
+	t_nodoLibre * nodoLibre2 = NULL;
+	nodoLibre2 = list_find(listaLibres,(void*) condicionLibre);
+	if (nodoLibre2 != NULL){
+		nodoLibre2->indice = nodoLibre1->indice;
+		nodoLibre2->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
+		list_remove(listaLibres, indice);
+		free(nodoLibre1);
+		//Modifica el indice del elemento encontrado
+
+	} else {
+		tamCalc = nodoLibre1->indice + nodoLibre1->tamanio;
+		//se llama de vuelta
+		desplazarYcompactar(indice);
+	}
+
+}
+
+void detectarHuecosContiguos(int indice, int tamanio){
+
+	int valor;
+	bool condicionNodoAEliminar(t_nodoLibre * nodoLibre) {
+		return (nodoLibre->indice == valor);
+	}
+
+	bool condicionBusqueda(t_nodoLibre * nodoLibre) {
+
+		return (nodoLibre->indice == valor);
+	}
+
+	t_nodoLibre * nodoLibre1 = NULL;
+	t_nodoLibre * nodoLibre2 = NULL;
+	valor = indice;
+	nodoLibre1 = list_find(listaLibres,(void*) condicionBusqueda);
+	valor = indice + tamanio;
+	nodoLibre2 = list_find(listaLibres,(void*) condicionBusqueda);
+	if (nodoLibre1 != NULL && nodoLibre2 != NULL){
+		nodoLibre1->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
+		valor = nodoLibre2->indice;
+		list_remove_by_condition(listaLibres,(void*) condicionNodoAEliminar);
+		free(nodoLibre2);
+	}
+
 }
 
 void leerPaginaProceso(int idProc, int pagina){
@@ -175,6 +309,9 @@ void leerPaginaProceso(int idProc, int pagina){
 	nodoRespuesta->exito = 0;
 
 	if (nodoProceso != NULL){
+		t_metricas * metricas;
+		metricas = buscarMetricas(idProc);
+		metricas->paginasLeidas++;
 		indiceProceso = nodoProceso->indice;
 		int ubicacion = indiceProceso + (tamanioPaginas*pagina);
 		//modificar para el directorio real
@@ -238,6 +375,9 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 
     fclose(particion);
     //enviarMensajeRtaAMem(nodoRespuesta);
+	t_metricas * metricas;
+	metricas = buscarMetricas(idProc);
+	metricas->paginasEscritas++;
     log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, tamTexto, idProc, pagina);
 }
 
@@ -292,4 +432,22 @@ void empaquetarNodoRtaAMem(unsigned char *buffer,t_resp_swap_mem * nodo)
 			nodo->tipo,nodo->exito,nodo->pagina,nodo->contenido);
 }
 
+static t_metricas * metricas_create(int pid) {
+	t_metricas *new = malloc(sizeof(t_metricas));
+    new->idProc = pid;
+    new->paginasEscritas = 0;
+    new->paginasLeidas = 0;
+    return new;
+}
 
+t_metricas * buscarMetricas(int processID){
+
+	int devolverTablaMetricas(t_metricas * nodo){
+		return (nodo->idProc == processID);
+	}
+
+	t_metricas * nodoMetricas = NULL;
+	nodoMetricas = list_find(listaMetricas, (void *) devolverTablaMetricas);
+
+	return nodoMetricas;
+}

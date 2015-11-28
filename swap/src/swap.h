@@ -8,11 +8,15 @@
 #include <commons/collections/list.h>
 #include <stdbool.h>
 #include <commons/log.h>
+
 #include "socketServidor.h"
 #include "socketCliente.h"
 #include "interprete.h"
 #include "configuracion.h"
 #include "serializacion.h"
+#include <pthread.h>
+#include <semaphore.h>
+
 
 #define INICIAR 1
 #define LEER 2
@@ -69,6 +73,12 @@ typedef struct envioPaginaSwap {
 	uint32_t tamanioTexto;
 } __attribute__ ((packed)) t_envioPaginaSwap;
 
+typedef struct metricas {
+	int idProc;
+	uint32_t paginasLeidas;
+	uint32_t paginasEscritas;
+} t_metricas;
+
 //sockets
 int socketMemoria;
 int socketServidor;
@@ -82,6 +92,7 @@ void configurarSocketServer();
 static t_nodoLibre *crearNodoLibre(int indice, int tamanio);
 static t_nodoEspera *crearNodoEspera(int idProc, int cantPagProceso);
 static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProceso);
+static t_metricas * metricas_create(int pid);
 
 //Recibe un proceso, en caso de aceptarlo crea un nodoProceso y lo agrega a la lista
 //En caso de rechazarlo nada jajaja
@@ -95,6 +106,7 @@ void eliminarProceso(int pid);
 
 void leerPaginaProceso(int idProc, int pagina);
 void escribirPagina (int idProc, int pagina, char * texto);
+t_metricas * buscarMetricas(int processID);
 //Condicion para el list_find en nodos libres
 
 
@@ -106,21 +118,27 @@ int tamanioPaginas;
 int retardoSwap;
 int retardoCompactacion;
 
-
+sem_t mutexAtendiendoEspera;
 char instruccion[20];
 int nbytes;
 char respuesta[30];
-
+int hayFragmentacion = 0;
 void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap);
 int recibirNodoDeMem(t_nodo_mem_swap * nodo);
 void desempaquetarNodoDeMem(unsigned char *buffer,t_nodo_mem_swap * nodo);
 int enviarMensajeRtaAMem(t_resp_swap_mem * nodo);
 void empaquetarNodoRtaAMem(unsigned char *buffer,t_resp_swap_mem * nodo);
+void detectarHuecosContiguos(int indice, int tamanio);
+int fragmentacionExterna(int tam);
+void compactarSwap(int cantPagProceso);
+void desplazarYcompactar(int indice);
+void* compactacion();
 
 void escribir(t_envioPaginaSwap * nodoEscribir);
 t_list * listaLibres;
 t_list * listaProcesos;
 t_list * listaEspera;
+t_list * listaMetricas;
 
 #endif /* SWAP_H_ */
 

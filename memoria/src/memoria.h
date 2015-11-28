@@ -30,6 +30,8 @@
 
 #define SECUENCIA_CPU_MEM "hhhs"
 
+#define LRU 50
+
 
 //CFG
 char* PUERTO_SWAP;
@@ -50,6 +52,8 @@ t_log* archivoLog;
 int socketCpu;
 int socketSwap;
 int socketServidor;
+double comandosTotales = 0;
+double aciertosTLB = 0;
 
 /*
  * Tipo indica la operación que se realiza
@@ -102,7 +106,9 @@ typedef struct tablaPaginasProceso {
 typedef struct tablasPaginas {
 	uint32_t processID;
 	t_list * listaPaginas;
-} __attribute__ ((packed)) t_tablasPaginas;
+	int contadorPageFault;
+	int paginasAccedidas;
+} t_tablasPaginas;
 
 typedef struct marco {
 	uint32_t processID;
@@ -111,6 +117,7 @@ typedef struct marco {
 	uint32_t numeroPagina;
 	uint32_t bitModificacion;
 	uint32_t bitLeido;
+	uint32_t punteroClock;
 } __attribute__ ((packed)) t_marco;
 
 typedef struct envioPaginaSwap {
@@ -166,10 +173,12 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina);
 void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, int tipo);
 int algoritmoReemplazo(int processID);
 int algoritmoReemplazoFIFO(int processID);
+int algoritmoReemplazoLRU(int processID);
 void desasignarMarco(int processID, int marco);
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo);
 static t_tablaPaginasProceso * obtenerPaginaPorNumMarco(int marco, t_tablasPaginas * nodoTablasPagina);
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco);
+void modificarBitIngresoLRU (int pid);
 
 void flushMarcosActivacion();
 void* flushTLB();
@@ -207,6 +216,9 @@ void recibirSolicitudDeCpu(int socket, int * nbytes);
 int obtenerPaginaLeeroEscribir(char * linea);
 static t_marco * seleccionarMarcoVictima(int pid);
 void finalizarProceso(int pid);
+void modificarBitsClock (int pid, t_list * listaMarcos,int indiceMarco);
+int algoritmoReemplazoClock(int processID);
+void * calcularTasaAciertos();
 
 #endif /* MEMORIA_H_ */
 
