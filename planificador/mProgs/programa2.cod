@@ -1,8 +1,0 @@
-iniciar 80;
-escribir 1 'gay';
-escribir 2 'es';
-escribir 4 'Ricardo';
-leer 4;
-leer 2;
-leer 1;
-finalizar;
