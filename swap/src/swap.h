@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <stdint.h>
 #include <commons/collections/list.h>
 #include <stdbool.h>
@@ -14,8 +16,7 @@
 #include "interprete.h"
 #include "configuracion.h"
 #include "serializacion.h"
-#include <pthread.h>
-#include <semaphore.h>
+
 
 
 #define INICIAR 1
