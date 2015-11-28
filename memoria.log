@@ -1,0 +1,205 @@
+[INFO] 12:49:17:301 Memoria/(28160:28163): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 12:49:22:213 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 12:49:27:236 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor '1'
+[INFO] 12:49:32:241 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 12:49:37:246 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 12:49:42:250 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 12:49:47:254 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '00'
+[INFO] 12:49:52:256 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor '11'
+[INFO] 12:49:57:258 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '22'
+[INFO] 12:50:02:261 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '000'
+[INFO] 12:50:07:267 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor '111'
+[INFO] 12:50:12:269 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '222'
+[INFO] 12:50:17:272 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0000'
+[INFO] 12:50:22:275 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor '1111'
+[INFO] 12:50:27:277 Memoria/(28160:28163): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2222'
+[INFO] 12:51:34:291 Memoria/(28160:28163): Cantidad de paginas accedidas: 14 del proceso 1.
+[INFO] 12:51:34:291 Memoria/(28160:28163): Cantidad de page faults: 5, del proceso 1
+[INFO] 12:51:34:312 Memoria/(28160:28163): Se ha finalizado el proceso con ID: 1.
+[INFO] 12:52:50:865 Memoria/(28291:28291): Flush de Marcos.
+[INFO] 12:54:19:811 Memoria/(28333:28336): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 12:54:26:708 Memoria/(28333:28336): Proceso ID 2, cantidad de paginas 5. Inicio: Exito
+[INFO] 12:54:33:844 Memoria/(28333:28336): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 12:54:40:862 Memoria/(28333:28336): Proceso ID 3, cantidad de paginas 5. Inicio: Exito
+[INFO] 12:54:47:870 Memoria/(28333:28336): Proceso ID 4, cantidad de paginas 5. Inicio: Exito
+[INFO] 12:59:51:740 Memoria/(28659:28662): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 12:59:58:640 Memoria/(28659:28662): Proceso ID 2, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:00:05:783 Memoria/(28659:28662): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 13:00:12:801 Memoria/(28659:28662): Proceso ID 3, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:05:22:725 Memoria/(28762:28765): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:05:27:758 Memoria/(28762:28765): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 13:05:32:795 Memoria/(28762:28765): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor '1'
+[INFO] 13:05:39:811 Memoria/(28762:28765): Proceso ID 2, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:05:44:815 Memoria/(28762:28765): Se ha escrito una pagina: process ID 2, pagina escrita 0 con el valor '0'
+[INFO] 13:05:49:819 Memoria/(28762:28765): Se ha escrito una pagina: process ID 2, pagina escrita 1 con el valor '1'
+[INFO] 13:05:56:828 Memoria/(28762:28765): Proceso ID 3, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:06:01:831 Memoria/(28762:28765): Se ha escrito una pagina: process ID 3, pagina escrita 0 con el valor '0'
+[INFO] 13:06:06:842 Memoria/(28762:28765): Se ha escrito una pagina: process ID 3, pagina escrita 1 con el valor '1'
+[INFO] 13:08:42:191 Memoria/(28893:28896): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:08:47:199 Memoria/(28893:28896): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 13:08:52:219 Memoria/(28893:28896): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor '1'
+[INFO] 13:08:59:239 Memoria/(28893:28896): Proceso ID 2, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:09:04:243 Memoria/(28893:28896): Se ha escrito una pagina: process ID 2, pagina escrita 0 con el valor '0'
+[INFO] 13:09:09:247 Memoria/(28893:28896): Se ha escrito una pagina: process ID 2, pagina escrita 1 con el valor '1'
+[INFO] 13:09:16:253 Memoria/(28893:28896): Proceso ID 3, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:09:21:257 Memoria/(28893:28896): Se ha escrito una pagina: process ID 3, pagina escrita 0 con el valor '0'
+[INFO] 13:09:26:260 Memoria/(28893:28896): Se ha escrito una pagina: process ID 3, pagina escrita 1 con el valor '1'
+[INFO] 13:12:13:813 Memoria/(29025:29028): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:12:18:808 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 13:12:23:857 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor '1'
+[INFO] 13:12:30:875 Memoria/(29025:29028): Proceso ID 2, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:12:35:879 Memoria/(29025:29028): Se ha escrito una pagina: process ID 2, pagina escrita 0 con el valor '0'
+[INFO] 13:12:40:884 Memoria/(29025:29028): Se ha escrito una pagina: process ID 2, pagina escrita 1 con el valor '1'
+[INFO] 13:12:47:894 Memoria/(29025:29028): Proceso ID 3, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:12:52:898 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 0 con el valor '0'
+[INFO] 13:12:57:902 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 1 con el valor '1'
+[INFO] 13:13:04:913 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:13:09:921 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:13:14:926 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:13:21:938 Memoria/(29025:29028): Se ha escrito una pagina: process ID 2, pagina escrita 2 con el valor '2'
+[INFO] 13:13:26:950 Memoria/(29025:29028): Finalizado por asignacion de marcos: process ID 2
+[INFO] 13:13:31:956 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor '2'
+[INFO] 13:13:36:961 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor '3'
+[INFO] 13:13:41:967 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 4 con el valor '4'
+[INFO] 13:13:48:979 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:13:53:981 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:13:58:984 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:14:05:991 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor '2'
+[INFO] 13:14:10:993 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor '3'
+[INFO] 13:14:15:995 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 4 con el valor '4'
+[INFO] 13:14:23:10 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:14:28:12 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:14:33:14 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:14:40:26 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor '2'
+[INFO] 13:14:45:28 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor '3'
+[INFO] 13:14:50:31 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 4 con el valor '4'
+[INFO] 13:14:57:42 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:15:02:44 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:15:07:46 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:15:14:58 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor '2'
+[INFO] 13:15:19:60 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor '3'
+[INFO] 13:15:24:62 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 4 con el valor '4'
+[INFO] 13:15:31:74 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:15:36:76 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:15:41:79 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:15:48:90 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor '2'
+[INFO] 13:15:53:92 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor '3'
+[INFO] 13:15:58:95 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 4 con el valor '4'
+[INFO] 13:16:05:116 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:16:10:118 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:16:15:121 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:16:22:130 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor '2'
+[INFO] 13:16:27:132 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor '3'
+[INFO] 13:16:32:134 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 4 con el valor '4'
+[INFO] 13:16:39:146 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:16:44:148 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:16:49:151 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:16:56:166 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 2 con el valor '2'
+[INFO] 13:17:01:168 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 3 con el valor '3'
+[INFO] 13:17:06:171 Memoria/(29025:29028): Se ha escrito una pagina: process ID 3, pagina escrita 4 con el valor '4'
+[INFO] 13:17:13:182 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:17:18:184 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:17:23:186 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:17:30:200 Memoria/(29025:29028): Cantidad de paginas accedidas: 23 del proceso 3.
+[INFO] 13:17:30:200 Memoria/(29025:29028): Cantidad de page faults: 5, del proceso 3
+[INFO] 13:17:30:209 Memoria/(29025:29028): Se ha finalizado el proceso con ID: 3.
+[INFO] 13:17:35:213 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:17:40:215 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:17:45:217 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor '4'
+[INFO] 13:17:52:221 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor '2'
+[INFO] 13:17:57:223 Memoria/(29025:29028): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor '3'
+[INFO] 13:18:48:270 Memoria/(29178:29181): Proceso ID 1, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:18:55:171 Memoria/(29178:29181): Proceso ID 2, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:19:02:183 Memoria/(29178:29181): Proceso ID 3, cantidad de paginas 5. Inicio: Exito
+[INFO] 13:19:09:319 Memoria/(29178:29181): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 13:19:16:352 Memoria/(29178:29181): Se ha escrito una pagina: process ID 2, pagina escrita 0 con el valor '0'
+[INFO] 13:19:23:363 Memoria/(29178:29181): Se ha escrito una pagina: process ID 3, pagina escrita 0 con el valor '0'
+[INFO] 13:19:30:375 Memoria/(29178:29181): Se ha escrito una pagina: process ID 1, pagina escrita 0 con el valor '0'
+[INFO] 13:19:37:384 Memoria/(29178:29181): Se ha escrito una pagina: process ID 2, pagina escrita 0 con el valor '0'
+[INFO] 13:22:35:483 Memoria/(29274:29277): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 13:22:40:463 Memoria/(29274:29277): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 13:22:45:473 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:22:50:484 Memoria/(29274:29277): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 13:22:55:487 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:23:00:492 Memoria/(29274:29277): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 13:23:05:499 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 13:23:10:523 Memoria/(29274:29277): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 13:23:15:525 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:23:20:533 Memoria/(29274:29277): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor 'cuatro'
+[INFO] 13:23:25:540 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 5 con el valor 'NULL'
+[INFO] 13:23:30:547 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 3 con el valor 'NULL'
+[INFO] 13:23:35:554 Memoria/(29274:29277): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 13:23:40:555 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 5 con el valor 'NULL'
+[INFO] 13:23:45:557 Memoria/(29274:29277): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:23:48:549 Memoria/(29274:29274): Dump de memoria.
+[INFO] 13:23:48:611 Memoria/(29274:29313): Volcado de memoria del marco: 0 con un valor de NULL
+[INFO] 13:23:48:612 Memoria/(29274:29313): Volcado de memoria del marco: 1 con un valor de dos
+[INFO] 13:23:48:613 Memoria/(29274:29313): Volcado de memoria del marco: 2 con un valor de NULL
+[INFO] 13:23:48:614 Memoria/(29274:29313): Volcado de memoria del marco: 3 con un valor de NULL
+[INFO] 13:23:48:614 Memoria/(29274:29313): Volcado de memoria del marco: 4 con un valor de NULL
+[INFO] 13:23:48:614 Memoria/(29274:29313): Volcado de memoria del marco: 5 con un valor de NULL
+[INFO] 13:23:48:614 Memoria/(29274:29313): Volcado de memoria del marco: 6 con un valor de NULL
+[INFO] 13:23:48:615 Memoria/(29274:29313): Volcado de memoria del marco: 7 con un valor de NULL
+[INFO] 13:23:48:615 Memoria/(29274:29313): Volcado de memoria del marco: 8 con un valor de NULL
+[INFO] 13:23:48:615 Memoria/(29274:29313): Volcado de memoria del marco: 9 con un valor de NULL
+[INFO] 13:24:12:566 Memoria/(29274:29277): Cantidad de paginas accedidas: 14 del proceso 1.
+[INFO] 13:24:12:567 Memoria/(29274:29277): Cantidad de page faults: 8, del proceso 1
+[INFO] 13:24:12:581 Memoria/(29274:29277): Se ha finalizado el proceso con ID: 1.
+[INFO] 13:28:04:997 Memoria/(29516:29519): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 13:28:09:945 Memoria/(29516:29519): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 13:28:14:955 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:28:19:967 Memoria/(29516:29519): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 13:28:24:970 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:28:29:974 Memoria/(29516:29519): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 13:28:34:977 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 13:28:39:0 Memoria/(29516:29519): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 13:28:45:6 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'NULL'
+[INFO] 13:28:50:11 Memoria/(29516:29519): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor 'cuatro'
+[INFO] 13:28:55:16 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 5 con el valor 'NULL'
+[INFO] 13:29:00:21 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 3 con el valor 'NULL'
+[INFO] 13:29:05:24 Memoria/(29516:29519): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 13:29:10:26 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 5 con el valor 'NULL'
+[INFO] 13:29:15:28 Memoria/(29516:29519): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:29:38:328 Memoria/(29516:29516): Dump de memoria.
+[INFO] 13:29:38:376 Memoria/(29516:29558): Volcado de memoria del marco: 0, pagina: 3, valor de NULL
+[INFO] 13:29:38:381 Memoria/(29516:29558): Volcado de memoria del marco: 1, pagina: 2, valor de dos
+[INFO] 13:29:38:381 Memoria/(29516:29558): Volcado de memoria del marco: 2, pagina: 5, valor de NULL
+[INFO] 13:29:38:382 Memoria/(29516:29558): Volcado de memoria del marco: 3, pagina: 0, valor de NULL
+[INFO] 13:29:38:383 Memoria/(29516:29558): Volcado de memoria del marco: 4, pagina: 0, valor de NULL
+[INFO] 13:29:38:383 Memoria/(29516:29558): Volcado de memoria del marco: 5, pagina: 0, valor de NULL
+[INFO] 13:29:38:383 Memoria/(29516:29558): Volcado de memoria del marco: 6, pagina: 0, valor de NULL
+[INFO] 13:29:38:383 Memoria/(29516:29558): Volcado de memoria del marco: 7, pagina: 0, valor de NULL
+[INFO] 13:29:38:383 Memoria/(29516:29558): Volcado de memoria del marco: 8, pagina: 0, valor de NULL
+[INFO] 13:29:38:384 Memoria/(29516:29558): Volcado de memoria del marco: 9, pagina: 0, valor de NULL
+[INFO] 13:29:42:39 Memoria/(29516:29519): Cantidad de paginas accedidas: 14 del proceso 1.
+[INFO] 13:29:42:40 Memoria/(29516:29519): Cantidad de page faults: 8, del proceso 1
+[INFO] 13:29:42:53 Memoria/(29516:29519): Se ha finalizado el proceso con ID: 1.
+[INFO] 13:46:36:344 Memoria/(29720:29723): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 13:46:41:281 Memoria/(29720:29723): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 13:46:46:295 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:46:51:306 Memoria/(29720:29723): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 13:46:56:309 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:47:01:313 Memoria/(29720:29723): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 13:47:06:319 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 13:47:11:333 Memoria/(29720:29723): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 13:47:16:335 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:47:21:339 Memoria/(29720:29723): Se ha escrito una pagina: process ID 1, pagina escrita 4 con el valor 'cuatro'
+[INFO] 13:47:26:342 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 5 con el valor 'cinco'
+[INFO] 13:47:31:347 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 3 con el valor 'NULL'
+[INFO] 13:47:36:351 Memoria/(29720:29723): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 13:47:41:353 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 5 con el valor 'cinco'
+[INFO] 13:47:46:355 Memoria/(29720:29723): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 13:48:13:365 Memoria/(29720:29723): Cantidad de paginas accedidas: 14 del proceso 1.
+[INFO] 13:48:13:366 Memoria/(29720:29723): Cantidad de page faults: 7, del proceso 1
+[INFO] 13:48:13:374 Memoria/(29720:29723): Se ha finalizado el proceso con ID: 1.
+[INFO] 13:48:40:73 Memoria/(29720:29720): Dump de memoria.
+[INFO] 13:48:40:133 Memoria/(29720:29759): Volcado de memoria del marco: 0, pagina: 3, valor de NULL
+[INFO] 13:48:40:133 Memoria/(29720:29759): Volcado de memoria del marco: 1, pagina: 5, valor de cinco
+[INFO] 13:48:40:133 Memoria/(29720:29759): Volcado de memoria del marco: 2, pagina: 2, valor de dos
+[INFO] 13:48:40:133 Memoria/(29720:29759): Volcado de memoria del marco: 3, pagina: 0, valor de NULL
+[INFO] 13:48:40:134 Memoria/(29720:29759): Volcado de memoria del marco: 4, pagina: 0, valor de NULL
+[INFO] 13:48:40:134 Memoria/(29720:29759): Volcado de memoria del marco: 5, pagina: 0, valor de NULL
+[INFO] 13:48:40:134 Memoria/(29720:29759): Volcado de memoria del marco: 6, pagina: 0, valor de NULL
+[INFO] 13:48:40:140 Memoria/(29720:29759): Volcado de memoria del marco: 7, pagina: 0, valor de NULL
+[INFO] 13:48:40:140 Memoria/(29720:29759): Volcado de memoria del marco: 8, pagina: 0, valor de NULL
+[INFO] 13:48:40:141 Memoria/(29720:29759): Volcado de memoria del marco: 9, pagina: 0, valor de NULL

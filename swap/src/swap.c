@@ -330,9 +330,9 @@ void leerPaginaProceso(int idProc, int pagina){
 				strcpy(respuesta,leerDelArchivo);
 				nodoRespuesta->exito = 1;
 
-				if (strlen(leerDelArchivo) == 0) {
+				/*if (strlen(leerDelArchivo) == 0) {
 					strcpy(leerDelArchivo, "NULL");
-				}
+				}*/
 				strcpy(nodoRespuesta->contenido,leerDelArchivo);
 
 				//log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, tamanioPaginas);

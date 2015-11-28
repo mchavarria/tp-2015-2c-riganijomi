@@ -868,7 +868,7 @@ void dumpMemoria(){
 		int i;
 		for (i = 0; i < listaMarco->elements_count; i++) {
 			t_marco * nodoMarco = list_get(listaMarco, i);
-			log_info(archivoLog,"Volcado de memoria del marco: %d con un valor de %s",nodoMarco->numeroMarco, nodoMarco->valor);
+			log_info(archivoLog,"Volcado de memoria del marco: %d, pagina: %d, valor de %s",nodoMarco->numeroMarco,nodoMarco->numeroPagina, nodoMarco->valor);
 		}
 	}
 }
