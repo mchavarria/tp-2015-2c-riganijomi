@@ -75,9 +75,9 @@ static t_marco * marco_create(int numeroMarco) {
 
 static t_tlb * tlb_create() {
 	t_tlb * new = malloc(sizeof(t_tlb));
-    new->processID = 0;
-    new->numeroPagina = 0;
-    new->marco = 0;
+    new->processID = NULO;
+    new->numeroPagina = NULO;
+    new->marco = NULO;
     return new;
 }
 
@@ -102,7 +102,7 @@ void inicializarMarco() {
 void levantarCfgInicial()
 {
 	char cfgFin[] ="/memoria/src/config.cfg";//Consola
-	//char cfgFin[] ="/src/config.cfg";
+	//char cfgFin[] ="/src/config.cfg"; //eclipse
 
 	char *dir = getcwd(NULL, 0);
 
@@ -114,7 +114,7 @@ void levantarCfgInicial()
 	puts(directorioActual);
 
 	archConfig = malloc(sizeof(t_config));
-	archivoLog = log_create("memoria.log", "Memoria", false, 2);//Eclipse
+	archivoLog = log_create("memoria.log", "Memoria", false, 2);
 	archConfig = config_create(directorioActual);
 
 	int largo = strlen(config_get_string_value(archConfig, "PUERTO_SWAP"));
@@ -229,6 +229,7 @@ int buscarEnTLB(int processID, int numeroPagina) {
 	nodoTLB = list_find(listaTLB, (void *) devolverValorDeTLB);
 
 	if (nodoTLB != NULL) {
+		printf("encontrado en TLB marco %d",nodoTLB->marco);
 		return nodoTLB->marco;
 	}
 	return NULO;
@@ -304,6 +305,7 @@ int cantidadMarcosAsignados(int processID) {
 	tablaDeProceso = buscarTablaPaginas(processID);
 
 	int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
+		printf("La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
 		return (nodo->numeroMarco != NULO);
 	}
 	int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
@@ -364,8 +366,8 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 		if(string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")){
 			nodoMarco->bitLeido = 1;
 			t_list * listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
-			list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
-			nodoMarco->punteroClock = 1;
+			//list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
+			//nodoMarco->punteroClock = 1;
 		}
 	}
 
@@ -397,27 +399,25 @@ int algoritmoReemplazoClock(int processID) {
 		indiceMarco++;
 		return (nodo->punteroClock == 1);
 	}
-	t_list * listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
+	t_list * listaMarcoFiltrados = list_create();
+	listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
 	list_find(listaMarcoFiltrados, (void*) devolverMarcoPuntero);
-	puts("Despues del find");
-	printf("Lista %d", list_size(listaMarcoFiltrados));
 	while (numeroMarco == NULO) {
-		while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO) {
+		contadorMarco = 1;
+		while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO && numeroMarco == NULO) {
 			if ((indiceMarco + 1) >= MAXIMO_MARCOS_POR_PROCESO) {
 				indiceMarco = 0;
 			} else {
 				indiceMarco++;
 			}
-			printf("Indice Marco: %d", indiceMarco);
 			t_marco * marco = list_get(listaMarcoFiltrados, indiceMarco);
-			puts("Despues primera suma");
 			if (marco->bitLeido == 0 && marco->bitModificacion == 0) {
 				numeroMarco = marco->numeroMarco;
 			}
 			contadorMarco++;
 		}
 		contadorMarco = 1;
-		while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO) {
+		while (contadorMarco <= MAXIMO_MARCOS_POR_PROCESO && numeroMarco == NULO) {
 			if ((indiceMarco + 1) >= MAXIMO_MARCOS_POR_PROCESO) {
 				indiceMarco = 0;
 			} else {
@@ -432,6 +432,7 @@ int algoritmoReemplazoClock(int processID) {
 			contadorMarco++;
 		}
 	}
+
 	return numeroMarco;
 }
 
@@ -483,11 +484,36 @@ void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, in
 {
 		escribirMarco(pid, indiceMarco, texto, numeroPagina,tipo);
 		actualizarNodoPaginas(indiceMarco, pid, numeroPagina);
+		if (tipo == ESCRIBIR) {
+			///////TESTING
+			t_tablasPaginas * tablaDeProceso = malloc(sizeof(t_tablasPaginas));
+
+			tablaDeProceso = buscarTablaPaginas(pid);
+
+			int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
+				printf(" ESCRITURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
+				return (nodo->numeroMarco != NULO);
+			}
+			int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
+			//////FIN TESTING
+		} else {
+			///////TESTING
+			t_tablasPaginas * tablaDeProceso = malloc(sizeof(t_tablasPaginas));
+
+			tablaDeProceso = buscarTablaPaginas(pid);
+
+			int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
+				printf(" LECTURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
+				return (nodo->numeroMarco != NULO);
+			}
+			int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
+			//////FIN TESTING
+		}
 }
 
 void desasignarMarco(int processID, int marco) {
 	t_tablasPaginas * tablaDeProceso;
-	t_tablaPaginasProceso * nodoPagina;
+	t_tablaPaginasProceso * nodoPagina = malloc(sizeof(t_tablaPaginasProceso));
 
 	tablaDeProceso = buscarTablaPaginas(processID);
 
@@ -506,7 +532,6 @@ void desasignarMarco(int processID, int marco) {
 		free(nodito);
 		//recibirNodoDeRtaSwap(nodoRtaSwap);
 	}
-
 	nodoPagina->ingreso = NULO;
 	nodoPagina->numeroMarco = NULO;
 }
@@ -534,11 +559,10 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina) {
 
 		nodoPagina->ingreso = LRU;
 	}
-
+	/*
 	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
 		modificarBitsClock(processID,listaMarco,indiceMarco);
-	}
-
+	}*/
 	nodoPagina->numeroMarco = indiceMarco;
 }
 
@@ -595,6 +619,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			marco = detectarPageFault(nodoInst,pagina);
 			if (marco == NULL)
 			{//Hay page fault
+				pageFaultLecturaClock = 1;
 				t_tablasPaginas * tablaDeProceso;
 				tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
 				tablaDeProceso->contadorPageFault++;
@@ -612,6 +637,9 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					log_info(archivoLog, "Finalizado por asignacion de marcos: process ID %d", pid);
 					printf("Finalizado por asignacion de marcos: process ID %d\n", pid);
 					finalizaPorError = 1;
+				} else {
+					perror("entreeee");
+					strcpy(marco->valor, nodoRtaSwap->contenido);
 				}
 			}
 			if (nodoInst->instruccion == LEER)
@@ -619,9 +647,10 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				nodoRtaSwap->tipo = LEER;
 				if (!finalizaPorError){
 					nodoRtaSwap->exito = 1;
-					strcpy(nodoRtaSwap->contenido,marco->valor);
+					strcpy(nodoRtaSwap->contenido, marco->valor);
 					log_info(archivoLog, "Se ha leido una pagina: process ID %d, pagina leida %d con el valor '%s'", pid, pagina, marco->valor);
 					printf("Se ha leido una pagina: process ID %d, pagina leida %d con el valor '%s'\n", pid, pagina, marco->valor);
+
 				} else {
 					//Si falla la CPU debe finalizarlo
 					nodoRtaSwap->exito = 0;
@@ -640,6 +669,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					strcpy(nodoRtaSwap->contenido,tamTexto);
 					log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", pid, pagina, marco->valor);
 					printf("Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'\n", pid, pagina, marco->valor);
+
 				} else {
 					//Si falla la CPU debe finalizarlo
 					nodoRtaSwap->exito = 0;
@@ -651,9 +681,12 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				//Actualizar el bit de uso y/o Modificacion
 				actualizarMarco(marco->valor,pid,pagina,marco->numeroMarco,nodoRtaSwap->tipo);
 				//actualiza TLB con el uso reciente.
-				cargarTlb(nodoInstruccion, marco);
+				cargarTlb(nodoInstruccion, marco, pid);
 			}
 			sem_post(&mutexFlushMarcos);
+
+			imprimirTLB();
+
 			break;
 	}
 
@@ -661,6 +694,14 @@ int interpretarLinea(t_nodo_mem * nodoInst)
     free(nodoASwap);
 
     return 1;
+}
+
+void imprimirTLB() {
+	void imprimirla(t_tlb * nodo) {
+		printf("El marco es: %d, con el numero de pagina %d.\n", nodo->marco, nodo->numeroPagina);
+	}
+
+	list_iterate(listaTLB, imprimirla);
 }
 
 void finalizarProceso(int pid){
@@ -699,18 +740,23 @@ static t_marco * seleccionarMarcoVictima(int pid)
 		if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
 			modificarBitIngresoLRU(pid);
 		}
+		/*
 		if(string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")){
 			if (indiceMarco != NULO) {
 				modificarBitsClock(pid, listaMarco, indiceMarco);
 			}
-		}
-
+		}*/
+		puts("Lugar 1");
 	} else if (cantMarcosAsignados == MAXIMO_MARCOS_POR_PROCESO) {
 		//ejecuta algoritmo de reemplazo solicitado
 		//elimina numero de marco en la pagina victima
 		indiceMarco = algoritmoReemplazo(pid);
 		//Debe escribirlo en swap en caso de haber sido escrita
+		printf("La victima es: %d", indiceMarco);
 		desasignarMarco(pid,indiceMarco);
+		puts("Lugar 2");
+	} else {
+		puts("Error de cantidad de marcos");
 	}
 	if (indiceMarco != NULO) {
 		marco = list_get(listaMarco,indiceMarco);
@@ -718,23 +764,38 @@ static t_marco * seleccionarMarcoVictima(int pid)
 	return marco;
  }
 
-void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco){
+void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco, int pid){
 	sem_wait(&mutexFlushTLB);
 
-	int devolverNodoTLBLibre(t_tlb * nodo) {
-		return (nodo->processID == 0);
-	}
-
 	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
-	nodoTLB = list_find(listaTLB, (void *) devolverNodoTLBLibre);
 
-	if(nodoTLB == NULL){
-		nodoTLB = list_remove(listaTLB,0);
-		list_add(listaTLB,nodoTLB);
+	int devolverNodoTLBLibre(t_tlb * nodo) {
+		return (nodo->processID == NULO);
 	}
-	nodoTLB->processID = nodoInstruccion->pid;
-	nodoTLB->numeroPagina = marco->numeroPagina;
-	nodoTLB->marco = marco->numeroMarco;
+	//buscar si ya existe ese marco asignado a ese proceso
+	int encontrarMarcoRepetido(t_tlb * nodo) {
+		return (nodo->marco == marco->numeroMarco);
+	}
+
+	nodoTLB = list_find(listaTLB, (void *) encontrarMarcoRepetido);
+
+	if (nodoTLB == NULL) {
+		nodoTLB = list_find(listaTLB, (void *) devolverNodoTLBLibre);
+		nodoTLB->marco = marco->numeroMarco;
+		nodoTLB->processID = nodoInstruccion->pid;
+		nodoTLB->numeroPagina = marco->numeroPagina;
+		printf("Marco: %d, processID: %d, Numero Pagina: %d", nodoTLB->marco, nodoTLB->processID, nodoTLB->numeroPagina);
+		if (nodoTLB == NULL){
+			nodoTLB = list_remove(listaTLB,0);
+			list_add(listaTLB,nodoTLB);
+		}
+	} else {
+		nodoTLB->numeroPagina = marco->numeroPagina;
+		nodoTLB->processID = nodoInstruccion->pid;
+		printf("processID: %d, Numero Pagina: %d", nodoTLB->processID, nodoTLB->numeroPagina);
+	}
+
+
 	sem_post(&mutexFlushTLB);
 }
 
@@ -763,10 +824,37 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 			ptrMarco->bitLeido = 1;
 			//Si hubo PF guardo el valor
 			strcpy(ptrMarco->valor,tamTexto);
+			if (pageFaultLecturaClock && string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
+				bool marcosPorProceso(t_marco * nodo) {
+					return (nodo->processID == processID);
+				}
+				void limpiarPunterosClock(t_marco * nodo){
+					nodo->punteroClock = 0;
+				}
+				t_list * listaMarcoFiltrados = list_create();
+				listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
+				list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
+				ptrMarco->punteroClock = 1;
+				pageFaultLecturaClock = 0;
+			}
+
 		} else {
 			//es escritura
 			ptrMarco->bitLeido = 1;
 			ptrMarco->bitModificacion = 1;
+			if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
+				bool marcosPorProceso(t_marco * nodo) {
+					return (nodo->processID == processID);
+				}
+				void limpiarPunterosClock(t_marco * nodo){
+					nodo->punteroClock = 0;
+				}
+				t_list * listaMarcoFiltrados = list_create();
+				listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
+				list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
+				ptrMarco->punteroClock = 1;
+			}
+
 			strcpy(ptrMarco->valor,tamTexto);
 		}
 	}
@@ -1026,7 +1114,7 @@ void modificarBitIngresoLRU (int pid){
 }
 
 void modificarBitsClock (int pid, t_list * listaMarcos,int indiceMarco){
-	bool marcosPorProceso(t_marco * nodo) {
+	/*bool marcosPorProceso(t_marco * nodo) {
 		return (nodo->processID == pid);
 	}
 	void limpiarPunterosClock(t_marco * nodo){
@@ -1035,9 +1123,10 @@ void modificarBitsClock (int pid, t_list * listaMarcos,int indiceMarco){
 	bool buscarIndiceMarco(t_marco * nodo){
 		return (nodo->numeroMarco == indiceMarco);
 	}
-	t_list * listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
+	t_list * listaMarcoFiltrados = list_create();
+	listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
 	list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
 	t_marco * marco = list_find(listaMarco, (void*) buscarIndiceMarco);
 	marco->bitLeido = 1;
-	marco->punteroClock = 1;
+	marco->punteroClock = 1;*/
 }
