@@ -97,11 +97,6 @@ typedef struct NODO_RTA_MEM_CPU {
 	uint32_t exito;
 } t_resp_mem_cpu;
 
-t_resp_cpu_plan * nodoRtaCpuPlan;
-t_resp_mem_cpu * nodoRtaMemCpu;
-t_resp_swap_mem * nodoRta;
-t_pcb * pcbProc;
-t_nodo_mem * nodoInstruccion;
 t_list * listaHilosCPU;
 
 //Log
@@ -110,30 +105,29 @@ t_log* archivoLog;
 void ejecutarInstrucciones();
 void cargarCfgs();
 
-void instruccionIniciarProceso (char * instruccion);
-void instruccionLeerPagina (char * instruccion);
-void instruccionEscribirPagina (char * instruccion);
-void instruccionEntradaSalida (char * tiempo);
-void instruccionFinalizarProceso(char * instruccion);
-void interpretarLinea(char * line);
-void hiloCPUs();
-void cpu_func();
-void sacarPorQuantum();
+void instruccionIniciarProceso (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo);
+void instruccionLeerPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo);
+void instruccionEscribirPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,char * texto, int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo);
+void instruccionEntradaSalida (char * tiempo,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,int socketPlanificador);
+void instruccionFinalizarProceso(char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_nodo_mem * nodoInstruccion,int socketADM, int paginaInstruccion,int socketPlanificador);
+void interpretarLinea(char * line,t_pcb * pcbProc,int socketADM,int socketPlanificador,int * continuarLeyendo);
+void cpu_func(void *idCpu);
+void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador);
 static t_hilos_CPU *hilos_create();
 
 //Serializacion
-int recibirPCBdePlanificador(t_pcb * nodoPCB);
-void notificarNoInicioPCB(t_pcb * pcbProc);
+int recibirPCBdePlanificador(t_pcb * nodoPCB,int socketPlanificador);
+void notificarNoInicioPCB(t_pcb * pcbProc,int socketPlanificador);
 void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta);
 void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
-int enviarMensajeDeNodoAMem(t_nodo_mem * nodo);
-void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo);
-int recibirNodoDeMEM(t_resp_swap_mem * nodo);
+int enviarMensajeDeNodoAMem(int socketADM, t_nodo_mem * nodo,char * texto, int paginaInstruccion);
+void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo,char * texto, int paginaInstruccion);
+int recibirNodoDeMEM(int socketADM, t_resp_swap_mem * nodo);
 void desempaquetarNodoMem(unsigned char *buffer,t_resp_swap_mem * nodo);
 char * traducirInstruccion(int tipo);
 int valorPaginaEnEscritura(char * instruccion);
-void textoAEscribir(char * instruccion);
+void textoAEscribir(char * instruccion, char * texto);
 //Variables globales
 char directorioActual[1024];
 char * ipPlanificador;
@@ -143,11 +137,5 @@ char * puertoADM;
 int cantidadHilos;
 int retardo;
 
-int socketADM;
-int socketPlanificador = 0;
-int continuarLeyendo = 1;
-int pc;
-int paginaInstruccion = 0;
-char * texto;
 
 #endif /* CPU_H_ */
