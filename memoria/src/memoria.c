@@ -305,7 +305,7 @@ int cantidadMarcosAsignados(int processID) {
 	tablaDeProceso = buscarTablaPaginas(processID);
 
 	int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
-		printf("La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
+		//printf("La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
 		return (nodo->numeroMarco != NULO);
 	}
 	int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
@@ -484,14 +484,14 @@ void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, in
 {
 		escribirMarco(pid, indiceMarco, texto, numeroPagina,tipo);
 		actualizarNodoPaginas(indiceMarco, pid, numeroPagina);
-		if (tipo == ESCRIBIR) {
+		/**if (tipo == ESCRIBIR) {
 			///////TESTING
 			t_tablasPaginas * tablaDeProceso = malloc(sizeof(t_tablasPaginas));
 
 			tablaDeProceso = buscarTablaPaginas(pid);
 
 			int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
-				printf(" ESCRITURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
+				//printf(" ESCRITURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
 				return (nodo->numeroMarco != NULO);
 			}
 			int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
@@ -503,12 +503,12 @@ void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, in
 			tablaDeProceso = buscarTablaPaginas(pid);
 
 			int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
-				printf(" LECTURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
+				//printf(" LECTURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
 				return (nodo->numeroMarco != NULO);
 			}
 			int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
 			//////FIN TESTING
-		}
+		}*/
 }
 
 void desasignarMarco(int processID, int marco) {
@@ -685,7 +685,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			}
 			sem_post(&mutexFlushMarcos);
 
-			imprimirTLB();
+			//imprimirTLB();
 
 			break;
 	}
@@ -824,6 +824,7 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 			ptrMarco->bitLeido = 1;
 			//Si hubo PF guardo el valor
 			strcpy(ptrMarco->valor,tamTexto);
+			/**
 			if (pageFaultLecturaClock && string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
 				bool marcosPorProceso(t_marco * nodo) {
 					return (nodo->processID == processID);
@@ -837,11 +838,13 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 				ptrMarco->punteroClock = 1;
 				pageFaultLecturaClock = 0;
 			}
+			*/
 
 		} else {
 			//es escritura
 			ptrMarco->bitLeido = 1;
 			ptrMarco->bitModificacion = 1;
+			/**
 			if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
 				bool marcosPorProceso(t_marco * nodo) {
 					return (nodo->processID == processID);
@@ -854,7 +857,7 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 				list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
 				ptrMarco->punteroClock = 1;
 			}
-
+			*/
 			strcpy(ptrMarco->valor,tamTexto);
 		}
 	}

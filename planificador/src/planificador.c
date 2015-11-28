@@ -101,6 +101,7 @@ void* enviarPCBaCPU()
 void recibirRespuestaCPU(int socketCpu, int * nbytes){
 	t_resp_cpu_plan * nodoRespuesta;
 	nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
+	nodoRespuesta->respuesta = malloc(1);
 	*nbytes = recibirRtadeCPU(socketCpu, nodoRespuesta);//Dereferencia del puntero para cambmiarle el valor
 	actualizarNodoCpu(socketCpu);
 	interpretarLinea(nodoRespuesta);
@@ -111,7 +112,7 @@ void actualizarNodoCpu(int socketCpu)
 	bool buscarCPUporSocket(t_cpu * nodoCPU) {
 		return (nodoCPU->socket == socketCpu);
 	}
-	t_cpu* nodoCPU=NULL;
+	nodoCPU=NULL;
 	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporSocket);
 	nodoCPU->instruccionesLeidas++;
 }
@@ -296,6 +297,8 @@ void finalizarProceso (int pidProceso)
 void* eliminaCadaMinuto()
 {
 	void limpiar(t_cpu * nodoCPU) {
+		float porc = porcentajeCPU(nodoCPU);
+		nodoCPU->porc = porc;
 		nodoCPU->instruccionesLeidas = 0;
 	}
 	while(1)
@@ -318,7 +321,8 @@ void imprimePorcentajeCPU()
 		 {
 			t_cpu * nodoCPU = list_get(listaDeCPUs, i);
 			float porc = porcentajeCPU(nodoCPU);
-			printf("CPU %d porcentaje: %3.2f\n",nodoCPU->pid,porc);
+			printf("CPU %d porcentaje progresivo actual: %3.2f\n",nodoCPU->pid,porc);
+			printf("CPU %d porcentaje ultimo minuto : %3.2f\n",nodoCPU->pid,nodoCPU->porc);
 		 }
 	}
 	else
@@ -408,12 +412,8 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 	//actualizar el pc del nodoPCB con el valor del pc del nodo respuesta
 	nodoPCB->pc = nodoRespuesta->pc;
 
-	bool buscarCPUporPid(t_cpu * nodoCPU) {
-	    		return (nodoCPU->pcb == PID);
-	    	}
-	t_cpu * nodoCPU = NULL;
-	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporPid);//Para actualizar si está disponible o no
-	int idCPU = nodoCPU->pid;
+	int idCPU;
+	idCPU = nodoCPU->pid;
 	int buscarClockDelProceso(t_ejecucion_clock * nodo) {
 		return (nodo->processID == PID);
 	}
@@ -548,7 +548,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 				}
     			nodoCPU->disponible = 1;
     			list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
-    			free(nodoPCB);
+    			//free(nodoPCB);
 			break;
     		default:
     		    perror("mensaje erroneo.");
@@ -683,14 +683,17 @@ void agregarCPUALista(int socketCpu) {
 	nodoCpu->socket = socketCpu;
 	nodoCpu->retardo = 0;
 	nodoCpu->instruccionesLeidas = 0;
+	nodoCpu->porc = 0;
 	nodoCpu->disponible = 1;
 	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
 	list_add(listaDeCPUs, nodoCpu);
 	//Enviar PCB a CPU
+	/*
 	pthread_t threadPcbACpu;
 	int rcp;
 	//usa el valor de nodo respuesta como tiempo de entrada salida
 	rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
+	*/
 }
 
 

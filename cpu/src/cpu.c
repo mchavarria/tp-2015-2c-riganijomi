@@ -147,7 +147,7 @@ void notificarNoInicioPCB(t_pcb * pcbProc,int socketPlanificador){
 	nodoRtaCpuPlan->tipo = INICIAR;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = retardo;
-	nodoRtaCpuPlan->respuesta = malloc(strlen("")+1);
+	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 	nodoRtaCpuPlan->exito = 0;
 
@@ -167,7 +167,7 @@ void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador){
 	nodoRtaCpuPlan->tipo = QUANTUM_ACABADO;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = 0;
-	nodoRtaCpuPlan->respuesta = malloc(strlen("frula2")+1);
+	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 	nodoRtaCpuPlan->exito = 1;
 
@@ -242,7 +242,7 @@ void instruccionIniciarProceso (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pl
 	nodoRtaCpuPlan->tipo = INICIAR;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = retardo;
-	nodoRtaCpuPlan->respuesta = malloc(strlen("frula2")+1);
+	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 	nodoRtaCpuPlan->exito = 0;
 
@@ -276,7 +276,7 @@ void instruccionLeerPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan *
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	int numPag = devolverIntInstruccion(instruccion,5);
 	nodoRtaCpuPlan->pagRW = numPag;
-	nodoRtaCpuPlan->respuesta = malloc(strlen("\0")+1);
+	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 
 	nodoInstruccion->pid = pcbProc->PID;
@@ -284,7 +284,7 @@ void instruccionLeerPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan *
 	int err;
 	err = enviarMensajeDeNodoAMem(socketADM,nodoInstruccion,"",paginaInstruccion);
 
-	nodoRta->contenido = malloc(strlen("")+1);
+	nodoRta->contenido = malloc(1);
 	strcpy(nodoRta->contenido,"\0");
 	err = recibirNodoDeMEM(socketADM,nodoRta);
 	nodoRtaCpuPlan->exito = nodoRta->exito;
@@ -306,7 +306,7 @@ void instruccionEscribirPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pl
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	int numPag = devolverIntInstruccion(instruccion,9);
 	nodoRtaCpuPlan->pagRW = numPag;
-	nodoRtaCpuPlan->respuesta = malloc(strlen("\0")+1);
+	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 
 	nodoInstruccion->pid = pcbProc->PID;
@@ -315,7 +315,7 @@ void instruccionEscribirPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pl
 	int err;
 	err = enviarMensajeDeNodoAMem(socketADM,nodoInstruccion,texto,paginaInstruccion);
 
-	nodoRta->contenido = malloc(strlen("")+1);
+	nodoRta->contenido = malloc(1);
 	strcpy(nodoRta->contenido,"\0");
 	err = recibirNodoDeMEM(socketADM,nodoRta);
 	nodoRtaCpuPlan->exito = nodoRta->exito;
@@ -336,7 +336,7 @@ void instruccionEntradaSalida (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pla
 	nodoRtaCpuPlan->tipo = ENTRADA_SALIDA;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = devolverParteUsableInt(instruccion, 15);
-	nodoRtaCpuPlan->respuesta = malloc(strlen("")+1);
+	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 	nodoRtaCpuPlan->exito = 1;
 
@@ -349,7 +349,7 @@ void instruccionFinalizarProceso(char * instruccion,t_pcb * pcbProc,t_resp_cpu_p
 	nodoRtaCpuPlan->tipo = FINALIZAR;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->idCPU = 0;
-	nodoRtaCpuPlan->respuesta = malloc(strlen("")+1);
+	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 	nodoRtaCpuPlan->PID = pcbProc->PID;
 	nodoRtaCpuPlan->exito = 1;

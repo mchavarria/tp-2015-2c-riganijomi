@@ -59,6 +59,7 @@ typedef struct CPU {
 	int retardo;
 	int pcb;
 	int instruccionesLeidas;
+	float porc;
 } t_cpu;
 
 /* el estado puede ser:
@@ -160,6 +161,7 @@ void informarDesconexionCPU(int socket);
 void* buscarBloqueado(int PID);
 void* buscarPCBEjecutandoPorPID(int PID);
 void* buscarPCBListoPorPID(int PID);
+void actualizarNodoCpu(int socketCpu);
 t_list * listaTiempoDeRespuesta;
 t_list * listaTiempoDeEjecucion;
 t_list * listaTiempoDeEspera;
@@ -169,5 +171,6 @@ t_list * listaDeEjecutado;
 t_list * listaDeHilos;
 t_log * archivoLog;
 t_list * listaDeCPUs;
+t_cpu* nodoCPU;
 
 #endif
