@@ -619,6 +619,8 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			marco = detectarPageFault(nodoInst,pagina);
 			if (marco == NULL)
 			{//Hay page fault
+				pageFaultPa++;
+				printf("pg n: %d",pageFaultPa);
 				pageFaultLecturaClock = 1;
 				t_tablasPaginas * tablaDeProceso;
 				tablaDeProceso = buscarTablaPaginas(nodoInst->pid);

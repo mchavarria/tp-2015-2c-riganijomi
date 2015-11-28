@@ -203,3 +203,12 @@
 [INFO] 13:48:40:140 Memoria/(29720:29759): Volcado de memoria del marco: 7, pagina: 0, valor de NULL
 [INFO] 13:48:40:140 Memoria/(29720:29759): Volcado de memoria del marco: 8, pagina: 0, valor de NULL
 [INFO] 13:48:40:141 Memoria/(29720:29759): Volcado de memoria del marco: 9, pagina: 0, valor de NULL
+[INFO] 14:06:49:195 Memoria/(30201:30204): Proceso ID 1, cantidad de paginas 6. Inicio: Exito
+[INFO] 14:06:54:144 Memoria/(30201:30204): Se ha escrito una pagina: process ID 1, pagina escrita 2 con el valor 'dos'
+[INFO] 14:06:59:163 Memoria/(30201:30204): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 14:07:04:174 Memoria/(30201:30204): Se ha escrito una pagina: process ID 1, pagina escrita 3 con el valor 'tres'
+[INFO] 14:07:09:177 Memoria/(30201:30204): Se ha leido una pagina: process ID 1, pagina leida 2 con el valor 'dos'
+[INFO] 14:07:14:181 Memoria/(30201:30204): Se ha escrito una pagina: process ID 1, pagina escrita 1 con el valor 'uno'
+[INFO] 14:07:19:183 Memoria/(30201:30204): Se ha leido una pagina: process ID 1, pagina leida 1 con el valor 'uno'
+[INFO] 14:07:24:206 Memoria/(30201:30204): Se ha escrito una pagina: process ID 1, pagina escrita 5 con el valor 'cinco'
+[INFO] 14:08:04:377 Memoria/(30319:30319): Flush de Marcos.

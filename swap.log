@@ -129,3 +129,11 @@
 
 [INFO] 13:48:13:374 Swap/(29719:29719): Proceso eliminado PID: 1, Indice: 0, Tamanio: 6 
 
+[INFO] 14:05:03:347 Swap/(29719:29719): No se pudo eliminar el proceso PID: 1
+[INFO] 14:06:48:5 Swap/(30191:30191): Proceso Recibido PID: 1, Indice: 0, Tamanio: 6
+[INFO] 14:06:54:111 Swap/(30191:30191): Lectura en el SWAP: ubicacion 20, valor  del process ID 1, de la pagina 2.
+[INFO] 14:07:04:171 Swap/(30191:30191): Lectura en el SWAP: ubicacion 30, valor  del process ID 1, de la pagina 3.
+[INFO] 14:07:14:179 Swap/(30191:30191): Lectura en el SWAP: ubicacion 10, valor  del process ID 1, de la pagina 1.
+[INFO] 14:07:24:186 Swap/(30191:30191): Lectura en el SWAP: ubicacion 50, valor  del process ID 1, de la pagina 5.
+[INFO] 14:07:24:223 Swap/(30191:30191): Escritura en el SWAP: ubicacion 30, valor tres del process ID 1, de la pagina 3.
+[INFO] 14:07:24:713 Swap/(30191:30191): Escritura en el SWAP: ubicacion 30, valor tres del process ID 1, de la pagina 3.
