@@ -1,6 +1,5 @@
 #include "swap.h"
 
-
 int main() {
 
 	sem_init(&mutexAtendiendoEspera,0,1);
