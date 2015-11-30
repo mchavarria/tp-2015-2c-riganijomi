@@ -64,7 +64,7 @@ static t_marco * marco_create(int numeroMarco) {
     new->processID = NULO;
     new->numeroMarco = numeroMarco;
     new->numeroPagina = 0;
-    new->bitModificacion = 0;
+    new->bitModificacion = 1;
     new->bitLeido = 0;
     new->valor = malloc(sizeof("")+1);
     strcpy(new->valor,"NULL");
@@ -370,7 +370,6 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 			//nodoMarco->punteroClock = 1;
 		}
 	}
-
 	return nodoMarco;
 }
 
@@ -453,6 +452,23 @@ int algoritmoReemplazoLRU(int processID) {
 	return numMarcoPa;
 }
 
+static t_tablaPaginasProceso * buscarElMasAntiguo(t_list * listaDePaginas) {
+	int i;
+	t_tablaPaginasProceso * nodoPagina = malloc(sizeof(t_tablaPaginasProceso));
+	t_tablaPaginasProceso * nodoPagina2 = malloc(sizeof(t_tablaPaginasProceso));
+	for (i=1; i < (list_size(listaDePaginas)-1); i++) {
+		nodoPagina = list_get(listaDePaginas, 0);
+		nodoPagina2 = list_get(listaDePaginas, i);
+		if (nodoPagina->ingreso < nodoPagina2->ingreso) {
+			//no hace nada
+		} else {
+			nodoPagina = nodoPagina2;
+		}
+	}
+
+	return nodoPagina;
+}
+
 int algoritmoReemplazoFIFO(int processID) {
 	bool ordenarParaFIFO(t_tablaPaginasProceso * nodo1, t_tablaPaginasProceso * nodo2) {
 		return (nodo1->ingreso < nodo2->ingreso);
@@ -462,11 +478,13 @@ int algoritmoReemplazoFIFO(int processID) {
 	tablaDeProceso = buscarTablaPaginas(processID);
 	list_sort(tablaDeProceso->listaPaginas, (void*) ordenarParaFIFO);
 
-	t_tablaPaginasProceso * nodoPagina = list_get(tablaDeProceso->listaPaginas, 0);
+	t_tablaPaginasProceso * nodoPagina = buscarElMasAntiguo(tablaDeProceso->listaPaginas);
+
+	//t_tablaPaginasProceso * nodoPagina = list_get(tablaDeProceso->listaPaginas, 0);
 
 	//es el que va a ser reemplazado
 	int numMarcoPa = nodoPagina->numeroMarco;
-
+	/*
 	int conMarcosAsignados(t_tablaPaginasProceso * nodo) {
 		return (nodo->ingreso != NULO);
 	}
@@ -475,7 +493,7 @@ int algoritmoReemplazoFIFO(int processID) {
 	for (i=1; i<listaPaginasAlgoritmo->elements_count; i++) {
 		t_tablaPaginasProceso * nodoPagina2 = list_get(listaPaginasAlgoritmo, i);
 		nodoPagina2->ingreso--;
-	}
+	}*/
 
 	return numMarcoPa;
 }
@@ -484,14 +502,15 @@ void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, in
 {
 		escribirMarco(pid, indiceMarco, texto, numeroPagina,tipo);
 		actualizarNodoPaginas(indiceMarco, pid, numeroPagina);
-		/**if (tipo == ESCRIBIR) {
+		/*
+		if (tipo == ESCRIBIR) {
 			///////TESTING
 			t_tablasPaginas * tablaDeProceso = malloc(sizeof(t_tablasPaginas));
 
 			tablaDeProceso = buscarTablaPaginas(pid);
 
 			int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
-				//printf(" ESCRITURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
+				printf(" ESCRITURA La pagina %d, con numero de marco %d, ingreso %d \n", nodo->numeroPagina, nodo->numeroMarco, nodo->ingreso);
 				return (nodo->numeroMarco != NULO);
 			}
 			int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
@@ -503,12 +522,13 @@ void actualizarMarco(char * texto,int pid, int numeroPagina, int indiceMarco, in
 			tablaDeProceso = buscarTablaPaginas(pid);
 
 			int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
-				//printf(" LECTURA La pagina %d, con numero de marco %d \n", nodo->numeroPagina, nodo->numeroMarco);
+				printf(" LECTURA La pagina %d, con numero de marco %d, ingreso %d \n", nodo->numeroPagina, nodo->numeroMarco, nodo->ingreso);
 				return (nodo->numeroMarco != NULO);
 			}
 			int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
 			//////FIN TESTING
-		}*/
+		}
+		*/
 }
 
 void desasignarMarco(int processID, int marco) {
@@ -544,14 +564,18 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina) {
 
 	nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
 
+	/*
 	int contarMarcosAsignados(t_tablaPaginasProceso * nodo) {
 		return (nodo->numeroMarco != NULO);
 	}
-
+	*/
+	/*
 	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "FIFO") ) {
-		int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
-		nodoPagina->ingreso = valor;
+		//int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
+		nodoPagina->ingreso = bitIngresoFIFO;
+		bitIngresoFIFO++;
 	}
+	*/
 
 	if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "LRU")) {
 
@@ -621,7 +645,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			{//Hay page fault
 				pageFaultPa++;
 				printf("pg n: %d",pageFaultPa);
-				pageFaultLecturaClock = 1;
+				pageFaultLectura = 1;
 				t_tablasPaginas * tablaDeProceso;
 				tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
 				tablaDeProceso->contadorPageFault++;
@@ -747,7 +771,6 @@ static t_marco * seleccionarMarcoVictima(int pid)
 				modificarBitsClock(pid, listaMarco, indiceMarco);
 			}
 		}*/
-		puts("Lugar 1");
 	} else if (cantMarcosAsignados == MAXIMO_MARCOS_POR_PROCESO) {
 		//ejecuta algoritmo de reemplazo solicitado
 		//elimina numero de marco en la pagina victima
@@ -755,7 +778,6 @@ static t_marco * seleccionarMarcoVictima(int pid)
 		//Debe escribirlo en swap en caso de haber sido escrita
 		printf("La victima es: %d\n", indiceMarco);
 		desasignarMarco(pid,indiceMarco);
-		puts("Lugar 2");
 	} else {
 		puts("Error de cantidad de marcos");
 	}
@@ -825,8 +847,23 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 			ptrMarco->bitLeido = 1;
 			//Si hubo PF guardo el valor
 			strcpy(ptrMarco->valor,tamTexto);
-			/**
-			if (pageFaultLecturaClock && string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
+
+			if (pageFaultLectura == 1 && string_equals_ignore_case(ALGORITMO_REEMPLAZO, "FIFO") ) {
+				//int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
+				t_tablasPaginas * tablaDeProceso = NULL;
+
+				tablaDeProceso = buscarTablaPaginas(processID);
+				t_tablaPaginasProceso * nodoPagina = NULL;
+
+				nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
+				nodoPagina->ingreso = bitIngresoFIFO;
+				bitIngresoFIFO++;
+
+				ptrMarco->bitModificacion = 0;
+
+			}
+
+			if (pageFaultLectura == 1 && string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
 				bool marcosPorProceso(t_marco * nodo) {
 					return (nodo->processID == processID);
 				}
@@ -837,15 +874,29 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 				listaMarcoFiltrados = list_filter(listaMarco, (void*) marcosPorProceso);
 				list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
 				ptrMarco->punteroClock = 1;
-				pageFaultLecturaClock = 0;
+
+				ptrMarco->bitModificacion = 0;
 			}
-			*/
 
 		} else {
 			//es escritura
-			ptrMarco->bitLeido = 1;
-			ptrMarco->bitModificacion = 1;
-			/**
+
+			if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "FIFO")) {
+				if (ptrMarco->bitModificacion == 1) {
+					//int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
+					t_tablasPaginas * tablaDeProceso = NULL;
+
+					tablaDeProceso = buscarTablaPaginas(processID);
+					t_tablaPaginasProceso * nodoPagina = NULL;
+
+					nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
+					nodoPagina->ingreso = bitIngresoFIFO;
+					bitIngresoFIFO++;
+				} else {
+					//no hace nada
+				}
+			}
+
 			if (string_equals_ignore_case(ALGORITMO_REEMPLAZO, "CLOCK")) {
 				bool marcosPorProceso(t_marco * nodo) {
 					return (nodo->processID == processID);
@@ -858,9 +909,14 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 				list_iterate(listaMarcoFiltrados, limpiarPunterosClock);
 				ptrMarco->punteroClock = 1;
 			}
-			*/
+
+			ptrMarco->bitLeido = 1;
+			ptrMarco->bitModificacion = 1;
+
 			strcpy(ptrMarco->valor,tamTexto);
 		}
+		pageFaultLectura = 0;
+		printf("Bit del FIFO: %d \n", bitIngresoFIFO);
 	}
 }
 
@@ -966,8 +1022,8 @@ void desempaquetarNodoRtaSwap(unsigned char *buffer,t_resp_swap_mem * nodo)
 	//t_pcb * pcb = malloc(sizeof(t_pcb));
 	char contenido[50];
 	unpack(buffer,SECUENCIA_NODO_RTA_SWAP_MEM,&nodo->tipo,&nodo->exito,&nodo->pagina,contenido);
-
-	strcpy(nodo->contenido,contenido);
+	nodo->contenido = malloc(sizeof(contenido));
+	strcpy(nodo->contenido, contenido);
 }
 
 

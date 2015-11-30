@@ -321,18 +321,18 @@ void leerPaginaProceso(int idProc, int pagina){
 		if (particion==NULL){
 			perror("No se pudo leer");
 		} else {
-			//Se ubica en +1 así que tiene que ser -1
-			fseek(particion, SEEK_SET, ubicacion-1);
-			//leer esa posicion como una lectura normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
-			if (fread(leerDelArchivo, tamanioPaginas, ubicacion, particion) > 0){
+
+			fseek(particion, ubicacion, SEEK_SET);
+			//leer esa posicion como una lectura1 normal donde el tamaño total a leer es desde paginaReal hasta tamanioPagina (es el tamanio entero de la pag)
+			if (fread(leerDelArchivo, tamanioPaginas, 1, particion) > 0){
 				//enviar mensaje
 				strcat(leerDelArchivo,"\0");
 				strcpy(respuesta,leerDelArchivo);
 				nodoRespuesta->exito = 1;
 
-				/*if (strlen(leerDelArchivo) == 0) {
+				if (strlen(leerDelArchivo) == 0) {
 					strcpy(leerDelArchivo, "NULL");
-				}*/
+				}
 				strcpy(nodoRespuesta->contenido,leerDelArchivo);
 
 				//log_info(archivoLog, "Lectura realizada PID: %d, Indice: %d, Tamanio: %d \n", idProc, nodoProceso->indice, tamanioPaginas);
@@ -404,8 +404,9 @@ void desempaquetarNodoDeMem(unsigned char *buffer,t_nodo_mem_swap * nodo)
 	//t_pcb * pcb = malloc(sizeof(t_pcb));
 	char contenido[50];
 	unpack(buffer,SECUENCIA_NODO_RTA_SWAP_MEM,&nodo->tipo,&nodo->pid,&nodo->pagina,contenido);
-
-	nodo->contenido = contenido;
+	nodo->contenido = malloc(sizeof(tamanioPaginas)+1);
+	strcpy(nodo->contenido, contenido);
+	strcat(nodo->contenido, "\0");
 }
 
 

@@ -55,6 +55,7 @@ int socketServidor;
 double comandosTotales = 0;
 double aciertosTLB = 0;
 int pageFaultPa = 0;
+int bitIngresoFIFO = 0;
 /*
  * Tipo indica la operación que se realiza
  * [INICIAR | LEER | ESCRIBIR | FINALIZAR]
@@ -99,7 +100,7 @@ typedef struct TLB{
 
 void imprimirTLB();
 
-int pageFaultLecturaClock = 0;
+int pageFaultLectura = 0;
 
 typedef struct tablaPaginasProceso {
 	uint32_t numeroPagina;
