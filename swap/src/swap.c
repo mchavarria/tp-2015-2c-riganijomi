@@ -229,7 +229,7 @@ void* compactacion(){
 	for (i = 1; i == elementos; i++){
 		desplazarYcompactar(i);
 	}
-	sleep(retardoCompactacion);
+	usleep(retardoCompactacion);
 	hayFragmentacion = 0;
 	atenderProcesosEnEspera();
 }

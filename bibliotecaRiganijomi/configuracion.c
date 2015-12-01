@@ -75,14 +75,14 @@ int configObtenerRetardoSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
 	int RETARDO_SWAP;
-	RETARDO_SWAP = config_get_int_value(config, "RETARDO_SWAP");
+	RETARDO_SWAP = config_get_double_value(config, "RETARDO_SWAP");
 	return RETARDO_SWAP;
 }
 int configObtenerRetardoCompactacionSwap(char * ruta) {
 	t_config* config;
 	config = config_create(ruta);
 	int RETARDO_COMPACTACION;
-	RETARDO_COMPACTACION = config_get_int_value(config, "RETARDO_COMPACTACION");
+	RETARDO_COMPACTACION = config_get_double_value(config, "RETARDO_COMPACTACION");
 	return RETARDO_COMPACTACION;
 }
 char * configObtenerMaxMarcosProceso(char * ruta) {

@@ -132,7 +132,7 @@ void levantarCfgInicial()
 	memset(PUERTO_ESCUCHA,'\0',largo + 1);
 	PUERTO_ESCUCHA=config_get_string_value(archConfig,"PUERTO_ESCUCHA");
 
-	RETARDO_MEMORIA =config_get_int_value(archConfig,"RETARDO_MEMORIA");
+	RETARDO_MEMORIA =config_get_double_value(archConfig,"RETARDO_MEMORIA");
 
 	CANTIDAD_MARCOS = config_get_long_value(archConfig,"CANTIDAD_MARCOS");
 
@@ -681,7 +681,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					nodoRtaSwap->exito = 0;
 				}
 				enviarMensajeDeNodoACPU(nodoRtaSwap);
-				sleep(RETARDO_MEMORIA);
+				usleep(RETARDO_MEMORIA);
 			} else {
 				//ESCRIBIR
 				nodoRtaSwap->tipo = ESCRIBIR;
@@ -700,8 +700,9 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					nodoRtaSwap->exito = 0;
 				}
 				enviarMensajeDeNodoACPU(nodoRtaSwap);
-				sleep(RETARDO_MEMORIA);
+				usleep(RETARDO_MEMORIA);
 			}
+			//printf("El retardo fue de %g", RETARDO_MEMORIA);
 			if (!finalizaPorError){
 				//Actualizar el bit de uso y/o Modificacion
 				actualizarMarco(marco->valor,pid,pagina,marco->numeroMarco,nodoRtaSwap->tipo);
@@ -916,7 +917,7 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 			strcpy(ptrMarco->valor,tamTexto);
 		}
 		pageFaultLectura = 0;
-		printf("Bit del FIFO: %d \n", bitIngresoFIFO);
+		//printf("Bit del FIFO: %d \n", bitIngresoFIFO);
 	}
 }
 

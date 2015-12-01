@@ -116,8 +116,8 @@ char * puertoEscucha;
 char * nombreSwap;
 int cantPaginas;
 int tamanioPaginas;
-int retardoSwap;
-int retardoCompactacion;
+double retardoSwap;
+double retardoCompactacion;
 
 sem_t mutexAtendiendoEspera;
 char instruccion[20];
