@@ -66,7 +66,9 @@ int main() {
 //INFORMARSE CON UN MONITOR CADA VEZ QUE SE CONECTA UNA
 void* enviarPCBaCPU()
 {
-
+	while (list_is_empty(listaDeCPUs)) {
+		;;
+	}
 	bool buscarCPUDisponible(t_cpu * nodoCPU) {
 		return (nodoCPU->disponible == 1);
 	}
@@ -78,7 +80,10 @@ void* enviarPCBaCPU()
 		if (nodoCPU != NULL){
 			//CPU disponible, envío el PCB
 			//sem_wait(sem_CPU_conectada);
-			sleep(2);
+			//sleep(2);
+			while (list_is_empty(listaDeListo)) {
+				;;
+			}
 			t_pcb * nodoPCB =  list_get(listaDeListo, 0);
 			int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
 			if (err <= 0){
@@ -107,7 +112,7 @@ void* enviarPCBaCPU()
 void recibirRespuestaCPU(int socketCpu, int * nbytes){
 	t_resp_cpu_plan * nodoRespuesta;
 	nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
-	nodoRespuesta->respuesta = malloc(1);
+	//nodoRespuesta->respuesta = malloc(1);
 	*nbytes = recibirRtadeCPU(socketCpu, nodoRespuesta);//Dereferencia del puntero para cambmiarle el valor
 	actualizarNodoCpu(socketCpu);
 	interpretarLinea(nodoRespuesta);
@@ -410,9 +415,14 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     	}
 
     t_pcb* nodoPCB=NULL;
-	nodoPCB = list_find(listaDeEjecutado,(void*)buscarPCBporPID);
+
+    while (nodoPCB == NULL) { //no sale hasta que encuentra algo
+    	nodoPCB = list_find(listaDeEjecutado,(void*)buscarPCBporPID);
+    }
+
 	//actualizar el pc del nodoPCB con el valor del pc del nodo respuesta
 	nodoPCB->pc = nodoRespuesta->pc;
+	//printf("EL PC ES DE: %d", nodoRespuesta->pc);
 
 	int idCPU;
 	idCPU = nodoCPU->pid;
@@ -599,8 +609,8 @@ void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta
 	unpack(buffer,SECUENCIA_NODO_RTA_CPU_PLAN,
 			&nodoRta->PID,&nodoRta->idCPU,&nodoRta->tipo,&nodoRta->exito,
 			&nodoRta->pagRW,&nodoRta->pc,respuesta);
-
-	nodoRta->respuesta = respuesta;
+	nodoRta->respuesta = malloc(sizeof(respuesta));
+	strcpy(nodoRta->respuesta, respuesta);
 }
 
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta){

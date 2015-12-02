@@ -161,6 +161,7 @@ t_list * listaTLB;
 
 sem_t mutexFlushTLB;
 sem_t mutexFlushMarcos;
+sem_t productorSwap;
 
 t_resp_swap_mem * nodoRespuesta;
 t_nodo_mem * nodoInstruccion;

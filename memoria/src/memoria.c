@@ -9,6 +9,7 @@ int main(int argc, char* argv[]) {
 	sem_init(&mutexFlushMarcos, 0, 1);
 	sem_init(&mutexFlushTLB, 0, 1);
 	sem_init(&cantSolicitudes,0,0);
+	sem_init(&productorSwap, 0, 1);
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
 	listaTLB = list_create();
@@ -82,9 +83,11 @@ static t_tlb * tlb_create() {
 }
 
 void inicializarTLB() {
-	int i = 0;
-	for (i=0; i<ENTRADAS_TLB; i++) {
-		list_add(listaTLB, tlb_create());
+	if (string_equals_ignore_case(TLB_HABILITADA, "SI")) {
+		int i = 0;
+		for (i=0; i<ENTRADAS_TLB; i++) {
+			list_add(listaTLB, tlb_create());
+		}
 	}
 }
 
@@ -218,19 +221,22 @@ void assert_valorTLB(t_tlb * nodoTLB, int processID, int numeroPagina, int fueMo
 }
 
 int buscarEnTLB(int processID, int numeroPagina) {
-	int devolverValorDeTLB(t_tlb * nodo) {
-		return (nodo->processID == processID && nodo->numeroPagina == numeroPagina);
-	}
 
-	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
+	if (string_equals_ignore_case(TLB_HABILITADA, "SI")) {
+		int devolverValorDeTLB(t_tlb * nodo) {
+			return (nodo->processID == processID && nodo->numeroPagina == numeroPagina);
+		}
 
-	nodoTLB = NULL;
+		t_tlb * nodoTLB = malloc(sizeof(t_tlb));
 
-	nodoTLB = list_find(listaTLB, (void *) devolverValorDeTLB);
+		nodoTLB = NULL;
 
-	if (nodoTLB != NULL) {
-		printf("encontrado en TLB marco %d\n",nodoTLB->marco);
-		return nodoTLB->marco;
+		nodoTLB = list_find(listaTLB, (void *) devolverValorDeTLB);
+
+		if (nodoTLB != NULL) {
+			printf("encontrado en TLB marco %d\n",nodoTLB->marco);
+			return nodoTLB->marco;
+		}
 	}
 	return NULO;
 }
@@ -643,8 +649,6 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			marco = detectarPageFault(nodoInst,pagina);
 			if (marco == NULL)
 			{//Hay page fault
-				pageFaultPa++;
-				printf("pg n: %d",pageFaultPa);
 				pageFaultLectura = 1;
 				t_tablasPaginas * tablaDeProceso;
 				tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
@@ -681,7 +685,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					nodoRtaSwap->exito = 0;
 				}
 				enviarMensajeDeNodoACPU(nodoRtaSwap);
-				usleep(RETARDO_MEMORIA);
+				usleep(RETARDO_MEMORIA * 1000000);
 			} else {
 				//ESCRIBIR
 				nodoRtaSwap->tipo = ESCRIBIR;
@@ -700,7 +704,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					nodoRtaSwap->exito = 0;
 				}
 				enviarMensajeDeNodoACPU(nodoRtaSwap);
-				usleep(RETARDO_MEMORIA);
+				usleep(RETARDO_MEMORIA * 1000000);
 			}
 			//printf("El retardo fue de %g", RETARDO_MEMORIA);
 			if (!finalizaPorError){
@@ -791,34 +795,37 @@ static t_marco * seleccionarMarcoVictima(int pid)
 void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco, int pid){
 	sem_wait(&mutexFlushTLB);
 
-	t_tlb * nodoTLB = malloc(sizeof(t_tlb));
+	if (string_equals_ignore_case(TLB_HABILITADA, "SI")) {
 
-	int devolverNodoTLBLibre(t_tlb * nodo) {
-		return (nodo->processID == NULO);
-	}
-	//buscar si ya existe ese marco asignado a ese proceso
-	int encontrarMarcoRepetido(t_tlb * nodo) {
-		return (nodo->marco == marco->numeroMarco);
-	}
+		t_tlb * nodoTLB = malloc(sizeof(t_tlb));
 
-	nodoTLB = list_find(listaTLB, (void *) encontrarMarcoRepetido);
-
-	if (nodoTLB == NULL) {
-		nodoTLB = list_find(listaTLB, (void *) devolverNodoTLBLibre);
-		nodoTLB->marco = marco->numeroMarco;
-		nodoTLB->processID = nodoInstruccion->pid;
-		nodoTLB->numeroPagina = marco->numeroPagina;
-		printf("Marco: %d, processID: %d, Numero Pagina: %d\n", nodoTLB->marco, nodoTLB->processID, nodoTLB->numeroPagina);
-		if (nodoTLB == NULL){
-			nodoTLB = list_remove(listaTLB,0);
-			list_add(listaTLB,nodoTLB);
+		int devolverNodoTLBLibre(t_tlb * nodo) {
+			return (nodo->processID == NULO);
 		}
-	} else {
-		nodoTLB->numeroPagina = marco->numeroPagina;
-		nodoTLB->processID = nodoInstruccion->pid;
-		printf("processID: %d, Numero Pagina: %d\n", nodoTLB->processID, nodoTLB->numeroPagina);
-	}
+		//buscar si ya existe ese marco asignado a ese proceso
+		int encontrarMarcoRepetido(t_tlb * nodo) {
+			return (nodo->marco == marco->numeroMarco);
+		}
 
+		nodoTLB = list_find(listaTLB, (void *) encontrarMarcoRepetido);
+
+		if (nodoTLB == NULL) {
+			nodoTLB = list_find(listaTLB, (void *) devolverNodoTLBLibre);
+			if (nodoTLB == NULL){
+				nodoTLB = list_remove(listaTLB,0);
+				list_add(listaTLB,nodoTLB);
+			} else {
+				nodoTLB->marco = marco->numeroMarco;
+				nodoTLB->processID = nodoInstruccion->pid;
+				nodoTLB->numeroPagina = marco->numeroPagina;
+				printf("Marco: %d, processID: %d, Numero Pagina: %d\n", nodoTLB->marco, nodoTLB->processID, nodoTLB->numeroPagina);
+			}
+		} else {
+			nodoTLB->numeroPagina = marco->numeroPagina;
+			nodoTLB->processID = nodoInstruccion->pid;
+			printf("processID: %d, Numero Pagina: %d\n", nodoTLB->processID, nodoTLB->numeroPagina);
+		}
+	}
 
 	sem_post(&mutexFlushTLB);
 }
@@ -1118,8 +1125,10 @@ void* atenderSolicitudes()
 		sem_wait(&cantSolicitudes);
 		nodoInstruccion = list_get(listaSolicitudes,0);
 		if (nodoInstruccion != NULL){
+			sem_wait(&productorSwap);
 			interpretarLinea(nodoInstruccion);
 			list_remove(listaSolicitudes,0);
+			sem_post(&productorSwap);
 		}
 	}
 

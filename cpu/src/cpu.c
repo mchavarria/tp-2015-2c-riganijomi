@@ -165,7 +165,7 @@ void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador,int controlQuantum){
 	nodoRtaCpuPlan->PID = pcbProc->PID;
 	nodoRtaCpuPlan->idCPU = 0;
 	nodoRtaCpuPlan->tipo = QUANTUM_ACABADO;
-	nodoRtaCpuPlan->pc = controlQuantum - 1;
+	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = 0;
 	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");

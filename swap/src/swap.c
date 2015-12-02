@@ -38,9 +38,11 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 		case LEER:
 			nodoRespuesta->tipo = LEER;
 			leerPaginaProceso(nodoMemSwap->pid,nodoMemSwap->pagina);
+			usleep(retardoSwap * 1000000);
 			break;
 		case ESCRIBIR:
 			escribirPagina(nodoMemSwap->pid,nodoMemSwap->pagina, nodoMemSwap->contenido);
+			usleep(retardoSwap * 1000000);
 		break;
 		case FINALIZAR:
 			puts("Entro");
@@ -229,7 +231,7 @@ void* compactacion(){
 	for (i = 1; i == elementos; i++){
 		desplazarYcompactar(i);
 	}
-	usleep(retardoCompactacion);
+	usleep(retardoCompactacion * 1000000);
 	hayFragmentacion = 0;
 	atenderProcesosEnEspera();
 }
@@ -379,6 +381,7 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	metricas = buscarMetricas(idProc);
 	metricas->paginasEscritas++;
     log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, tamTexto, idProc, pagina);
+
 }
 
 
