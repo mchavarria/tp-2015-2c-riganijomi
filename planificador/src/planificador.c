@@ -25,6 +25,10 @@ int main() {
 	listaTiempoDeEspera = list_create();
 	listaTiempoDeRespuesta = list_create();
 
+	pthread_t thread15;
+	int r15;
+	char *n15="cronometro";
+	r15 = pthread_create( &thread15, NULL, cronometro, (void*) n15);
 
 	pthread_t thread4;
 	int r4;
@@ -61,6 +65,14 @@ int main() {
 
 	return 1;
 }
+
+void * cronometro() {
+	while(1) {
+		usleep(1000); //1000 microsegundos es 1 milisegundo.
+		timer += 0.001;
+	}
+}
+
 
 //HACERLO POR CADA CPU CONECTADA
 //INFORMARSE CON UN MONITOR CADA VEZ QUE SE CONECTA UNA
@@ -199,7 +211,7 @@ void* agregarPCBALista(char * programa) {
 	t_respuesta_clock * nodoClockRespuesta = malloc(sizeof(t_respuesta_clock));
 
 	nodoClockRespuesta->processID = pcb->PID;
-	nodoClockRespuesta->tiempoInicial = clock();
+	nodoClockRespuesta->tiempoInicial = timer;
 
 	list_add(listaTiempoDeRespuesta, nodoClockRespuesta);
 
@@ -441,13 +453,13 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
 					list_remove_by_condition(listaTiempoDeRespuesta, (void*) buscarClockDelProceso);
 
-					clock_t tiempoTranscurrido =  (double)(clock() - nodoClockRespuesta->tiempoInicial) / CLOCKS_PER_SEC;
+					double tiempoTranscurrido =  (double)(timer - nodoClockRespuesta->tiempoInicial);
 
-					log_info(archivoLog,"El tiempo de respuesta del proceso %d fue %g de la CPU %d", PID, tiempoTranscurrido, idCPU);
+					log_info(archivoLog,"El tiempo de respuesta del proceso %d fue %g segundos de la CPU %d", PID, tiempoTranscurrido, idCPU);
 
 					//Agregar el nodo para poder calcular despues el tiempo total de ejecucion.
 					t_ejecucion_clock * nodoClockEjecucion = malloc(sizeof(t_ejecucion_clock));
-					nodoClockEjecucion->tiempoInicial = clock();
+					nodoClockEjecucion->tiempoInicial = timer;
 					nodoClockEjecucion->processID = PID;
 					list_add(listaTiempoDeEjecucion, nodoClockEjecucion);
 
@@ -505,7 +517,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
 					t_espera_clock * nodoClockEspera = malloc(sizeof(t_espera_clock));
 
-					nodoClockEspera->tiempoInicial = clock();
+					nodoClockEspera->tiempoInicial = timer;
 					nodoClockEspera->processID = PID;
 
 					list_add(listaTiempoDeEspera, nodoClockEspera);
@@ -550,9 +562,9 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 
 				list_remove_by_condition(listaTiempoDeEjecucion, (void*) buscarClockDelProceso);
 
-				clock_t tiempoTranscurrido =  (double)(clock() - nodoClockEjecucion->tiempoInicial) / CLOCKS_PER_SEC;
+				double tiempoTranscurrido =  (double)(timer - nodoClockEjecucion->tiempoInicial);
 
-				log_info(archivoLog,"El tiempo de ejecucion del proceso %d fue %g de la CPU %d", PID, tiempoTranscurrido, idCPU);
+				log_info(archivoLog,"El tiempo de ejecucion del proceso %d fue de %g segundos de la CPU %d", PID, tiempoTranscurrido, idCPU);
 
     			if (exito){
        				log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
@@ -683,9 +695,9 @@ void* bloquearPCB(t_pcb * nodoPCB)
 
 	nodoClockEspera = list_find(listaTiempoDeEspera, (void*) buscarClockPorProcessID);
 
-	clock_t tiempoTranscurrido =  (double)(clock() - nodoClockEspera->tiempoInicial) / CLOCKS_PER_SEC;
+	double tiempoTranscurrido =  (double)(timer - nodoClockEspera->tiempoInicial);
 
-	log_info(archivoLog,"El tiempo de espera del proceso %d fue %g.", nodoPCB->PID, tiempoTranscurrido);
+	log_info(archivoLog,"El tiempo de espera del proceso %d fue de %d segundos.", nodoPCB->PID, tiempoBloqueo);
 
 	//Fin de logueo de que estuvo en entrada-salida.
 

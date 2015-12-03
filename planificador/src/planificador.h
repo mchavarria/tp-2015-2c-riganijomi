@@ -131,6 +131,7 @@ char comando[100];
 int quantumcfg = 0;
 char algoritmo[4];
 int tiempoBloqueo = 0;
+double timer = 0;
 
 void levantarCfg();
 
@@ -162,6 +163,7 @@ void* buscarBloqueado(int PID);
 void* buscarPCBEjecutandoPorPID(int PID);
 void* buscarPCBListoPorPID(int PID);
 void actualizarNodoCpu(int socketCpu);
+void * cronometro();
 t_list * listaTiempoDeRespuesta;
 t_list * listaTiempoDeEjecucion;
 t_list * listaTiempoDeEspera;
