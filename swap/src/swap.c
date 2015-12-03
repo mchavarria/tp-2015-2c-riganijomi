@@ -228,7 +228,7 @@ void* compactacion(){
 
 	int i;
 	int elementos = listaLibres->elements_count;
-	for (i = 1; i == elementos; i++){
+	for (i = 1; i < elementos; i++){
 		desplazarYcompactar(i);
 	}
 	usleep(retardoCompactacion * 1000000);

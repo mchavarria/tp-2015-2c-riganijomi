@@ -75,6 +75,7 @@ void* enviarPCBaCPU()
 	t_cpu * nodoCPU = NULL;
 	while (1){
 		sem_wait(&semProgramas);
+		nodoCPU = NULL;
 		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
 		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
 		if (nodoCPU != NULL){
@@ -99,7 +100,7 @@ void* enviarPCBaCPU()
 				//se agrega a la lista de ejecucion
 				list_add(listaDeEjecutado,nodoPCB);
 
-				printf("PCB %d enviado a CPU %d \n",nodoCPU->pcb,nodoCPU->pid);
+				//printf("PCB %d enviado a CPU %d \n",nodoCPU->pcb,nodoCPU->pid);
 
 			}//Cierra el err
 		} else {

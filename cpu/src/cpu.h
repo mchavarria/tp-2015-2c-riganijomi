@@ -23,6 +23,7 @@
 #include "interprete.h"
 #include "configuracion.h"
 #include "serializacion.h"
+#include <semaphore.h>
 
 #define INICIAR 1
 #define LEER 2
@@ -136,6 +137,7 @@ char * ipADM;
 char * puertoADM;
 int cantidadHilos;
 int retardo;
+sem_t mutexCPU;
 
 
 #endif /* CPU_H_ */

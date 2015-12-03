@@ -1,7 +1,7 @@
 #include "cpu.h"
 
 int main() {
-
+	sem_init(&mutexCPU, 0, 1);
 	//Levanta su configuracion y se prepara para conectarse al Planificador y al ADM
 	cargarCfgs();
 
@@ -75,67 +75,71 @@ void cpu_func(void *idCpu) {
 	int nbytes;
 	int pcNuevoInicial = 0;
 	int controlQuantum = 1;
-	while ((nbytes = recibirPCBdePlanificador(pcbProc,socketPlanificador)) > 0){
+	while (1) {
+		//sem_wait(&mutexCPU);
+		while ((nbytes = recibirPCBdePlanificador(pcbProc,socketPlanificador)) > 0){
+			//sem_post(&mutexCPU);
 
-		FILE * fp;
-		char * linea = NULL;
-		size_t len = 0;
-		ssize_t read;
+			FILE * fp;
+			char * linea = NULL;
+			size_t len = 0;
+			ssize_t read;
 
-		//Configuro el archivo para abrir el mProg
-		char *mprog = malloc(strlen(pcbProc->contextoEjecucion)+8+1);
-		strcpy(mprog,"/mProgs/");
-		strcat(mprog,pcbProc->contextoEjecucion);
+			//Configuro el archivo para abrir el mProg
+			char *mprog = malloc(strlen(pcbProc->contextoEjecucion)+8+1);
+			strcpy(mprog,"/mProgs/");
+			strcat(mprog,pcbProc->contextoEjecucion);
 
-		char *dir = getcwd(NULL, 0);
-		char *contextoEjecucion = malloc(strlen(dir)+strlen(mprog)+1);
-		strcpy(contextoEjecucion,dir);
-		strcat(contextoEjecucion,mprog);
-		//Hasta aca el archivo
+			char *dir = getcwd(NULL, 0);
+			char *contextoEjecucion = malloc(strlen(dir)+strlen(mprog)+1);
+			strcpy(contextoEjecucion,dir);
+			strcat(contextoEjecucion,mprog);
+			//Hasta aca el archivo
 
-		fp = fopen(contextoEjecucion, "r");
+			fp = fopen(contextoEjecucion, "r");
 
-		if (fp == NULL){
-			printf("CPU: Archivo -%s- de PCB %d no válido", pcbProc->contextoEjecucion, pcbProc->PID);
-			notificarNoInicioPCB(pcbProc,socketPlanificador);
-			perror("Archivo no válido.");
-		} else {
-			while (((read = getline(&linea, &len, fp)) != -1) && (continuarLeyendo)) {
+			if (fp == NULL){
+				printf("CPU: Archivo -%s- de PCB %d no válido", pcbProc->contextoEjecucion, pcbProc->PID);
+				notificarNoInicioPCB(pcbProc,socketPlanificador);
+				perror("Archivo no válido.");
+			} else {
+				while (((read = getline(&linea, &len, fp)) != -1) && (continuarLeyendo)) {
 
-				if (pcNuevoInicial++ >= pcbProc->pc)
-				{
-					pcbProc->pc++;  //actualiza el pgm counter
-					if (pcbProc->quantum == 0){
-						//FIFO
-						//Lee linea y ejecuta
-						interpretarLinea(linea,pcbProc,socketADM,socketPlanificador,&continuarLeyendo);
-					} else {
-						//RR
-						if (controlQuantum <= pcbProc->quantum){
+					if (pcNuevoInicial++ >= pcbProc->pc)
+					{
+						pcbProc->pc++;  //actualiza el pgm counter
+						if (pcbProc->quantum == 0){
+							//FIFO
 							//Lee linea y ejecuta
-							controlQuantum++;
 							interpretarLinea(linea,pcbProc,socketADM,socketPlanificador,&continuarLeyendo);
+						} else {
+							//RR
+							if (controlQuantum <= pcbProc->quantum){
+								//Lee linea y ejecuta
+								controlQuantum++;
+								interpretarLinea(linea,pcbProc,socketADM,socketPlanificador,&continuarLeyendo);
 
+							}
 						}
+						sleep(retardo);
 					}
-					sleep(retardo);
-				}
 
-				if ((pcbProc->quantum != 0) && (controlQuantum > pcbProc->quantum) && (continuarLeyendo != 0)){
-					sacarPorQuantum(pcbProc,socketPlanificador,controlQuantum);
-					continuarLeyendo = 0;
-				}
-			}//while
+					if ((pcbProc->quantum != 0) && (controlQuantum > pcbProc->quantum) && (continuarLeyendo != 0)){
+						sacarPorQuantum(pcbProc,socketPlanificador,controlQuantum);
+						continuarLeyendo = 0;
+					}
+				}//while
 
-			fclose(fp);
-			if (linea){
-			  free(linea);
-			}
-		}//fp != null
-		pcNuevoInicial = 0;
-		controlQuantum = 1;
-		continuarLeyendo = 1;
-	}//while rcv
+				fclose(fp);
+				if (linea){
+				  free(linea);
+				}
+			}//fp != null
+			pcNuevoInicial = 0;
+			controlQuantum = 1;
+			continuarLeyendo = 1;
+		}//while rcv
+	}
 }
 
 void notificarNoInicioPCB(t_pcb * pcbProc,int socketPlanificador){
