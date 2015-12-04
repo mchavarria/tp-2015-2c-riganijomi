@@ -35,7 +35,7 @@ swap: $(OBJS) $(USER_OBJS) /home/utnso/rrigonijami/tp-2015-2c-riganijomi/bibliot
 	gcc -L"/home/utnso/rrigonijami/tp-2015-2c-riganijomi/bibliotecaRiganijomi/Debug" -o "swap" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
-
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/rrigonijami/tp-2015-2c-riganijomi/bibliotecaRiganijomi/Debug/
 # Other Targets
 clean:
 	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) swap
