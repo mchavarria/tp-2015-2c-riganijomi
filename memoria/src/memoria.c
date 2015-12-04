@@ -664,6 +664,8 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					//No se pudo asignar un marco
 					finalizarProceso(pid);
 					//Se finaliza el proceso
+					nodoASwap->tipo = FINALIZAR;
+					enviarMensajeDeNodoASWAP(nodoASwap);
 					log_info(archivoLog, "Finalizado por asignacion de marcos: process ID %d", pid);
 					printf("Finalizado por asignacion de marcos: process ID %d\n", pid);
 					finalizaPorError = 1;
