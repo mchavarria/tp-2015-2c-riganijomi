@@ -25,7 +25,7 @@ int main() {
 
 void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 	nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
-	nodoRespuesta->contenido = malloc(1);
+	nodoRespuesta->contenido = string_new();
 	strcpy(nodoRespuesta->contenido,"\0");
 	switch (nodoMemSwap->tipo) {
 		case INICIAR:
@@ -363,14 +363,17 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	nodoProceso = list_find(listaProcesos,(void*) condicionLeer);
 
 	int ubicacion = nodoProceso->indice + (tamanioPaginas*pagina);
-	char * tamTexto = malloc(sizeof("")+1);
+	//char * tamTexto = malloc(sizeof("")+1);
 	int err;
 	if ((err = fseek(particion, ubicacion, SEEK_SET) == 0))
 	{//se ubica bien
 		//fwrite((const char *)texto, strlen((const char *)texto), 1, particion);
+		/*
 		strncpy(tamTexto,texto,tamanioPaginas);
 		strcat(tamTexto,"\0");
 		fputs((const char *)tamTexto, particion);
+		*/
+		fputs((const char *)texto, particion);
 	} else {
 		//no se puede ubicar en esa posicion
 	}
