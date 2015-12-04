@@ -676,15 +676,17 @@ void* bloquearPCB(t_pcb * nodoPCB)
 {
 	sleep(tiempoBloqueo);//Viene de interpretar linea y usa pagRW para dormirlo
 	//se agrega a la lista de listo
-	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
-	sem_wait(&mutexListaListo);
-	list_add(listaDeListo,nodoPCB );
-	sem_post(&semProgramas);
-
 	bool sacarPorPID(t_pcb * nodo) {
 		return (nodo->PID == nodoPCB->PID);
 	}
+	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
+	sem_wait(&mutexListaListo);
+	
 	list_remove_by_condition(listaDeBloqueado,(void*)sacarPorPID);
+	list_add(listaDeListo,nodoPCB );
+	sem_post(&semProgramas);
+
+	
 
 	//Loguea el timepo que estuvo en entrada-salida.
 
