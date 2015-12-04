@@ -108,6 +108,7 @@ void cpu_func(void * idCpu) {
 
 					if (pcNuevoInicial++ >= pcbProc->pc)
 					{
+						sleep(retardo);
 						pcbProc->pc++;  //actualiza el pgm counter
 						if (pcbProc->quantum == 0){
 							//FIFO
@@ -122,7 +123,7 @@ void cpu_func(void * idCpu) {
 
 							}
 						}
-						sleep(retardo);
+						
 					}
 
 					if ((pcbProc->quantum != 0) && (controlQuantum > pcbProc->quantum) && (continuarLeyendo != 0)){
