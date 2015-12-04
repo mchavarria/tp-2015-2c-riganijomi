@@ -13,7 +13,7 @@ int main() {
 	//carga Cfgs
 	levantarCfgInicial();
 	t_nodo_mem_swap * nodoMemSwap = malloc(sizeof(t_nodo_mem_swap));
-	nodoMemSwap->contenido = malloc(1);
+	nodoMemSwap->contenido = string_new();
 	//creacion archivo particion
 	crearParticion();
 	for(;(socketMemoria > 0);){
@@ -407,9 +407,7 @@ void desempaquetarNodoDeMem(unsigned char *buffer,t_nodo_mem_swap * nodo)
 	//t_pcb * pcb = malloc(sizeof(t_pcb));
 	char contenido[50];
 	unpack(buffer,SECUENCIA_NODO_RTA_SWAP_MEM,&nodo->tipo,&nodo->pid,&nodo->pagina,contenido);
-	nodo->contenido = malloc(sizeof(tamanioPaginas)+1);
-	strcpy(nodo->contenido, contenido);
-	strcat(nodo->contenido, "\0");
+	nodo->contenido = contenido;
 }
 
 
