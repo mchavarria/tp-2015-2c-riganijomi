@@ -29,7 +29,7 @@
 #include "serializacion.h"
 
 //Char del orden de la Estructuras para serializar/desserializar
-#define SECUENCIA_PCB "hhhhhs"
+#define SECUENCIA_PCB "hhhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 
 //estados del pcb
@@ -70,6 +70,7 @@ typedef struct CPU {
  */
 typedef struct PCB {
 	int PID;
+	int CPU;
 	int estado;
 	int pc;
 	int quantum;
@@ -173,6 +174,6 @@ t_list * listaDeEjecutado;
 t_list * listaDeHilos;
 t_log * archivoLog;
 t_list * listaDeCPUs;
-t_cpu* nodoCPU;
+t_cpu * nodoCPU;
 
 #endif

@@ -43,26 +43,26 @@ static t_hilos_CPU *hilos_create()
 	return new;
 }
 
-void cpu_func(void *idCpu) {
+void cpu_func(void * idCpu) {
 	int socketPlanificador = 0;
 	int continuarLeyendo = 1;
-	int idCPU = idCpu;
+	idCPU = idCpu;
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
 	if (socketPlanificador == -1) {
-		log_error(archivoLog, "CPU %d: Planificador no se pudo conectar", idCPU);
+		log_error(archivoLog, "CPU %d: Planificador no se pudo conectar", idCpu);
 		exit(EXIT_FAILURE);
 	} else {
-		log_info(archivoLog, "CPU conectada al Planificador, idCpu: %d", idCPU);
+		log_info(archivoLog, "CPU conectada al Planificador, idCpu: %d", idCpu);
 	}
 
 	//Se conecta al ADM
     int socketADM = socketCrearCliente(puertoADM, ipADM,"CPU","Memoria");
 	if (socketADM == -1) {
-		log_error(archivoLog, "CPU %d: Memoria no se pudo conectar", idCPU);
+		log_error(archivoLog, "CPU %d: Memoria no se pudo conectar", idCpu);
 		exit(EXIT_FAILURE);
 	} else {
-		log_info(archivoLog, "CPU conectada a Memoria, idCpu: %d", idCPU);
+		log_info(archivoLog, "CPU conectada a Memoria, idCpu: %d", idCpu);
 	}
 
 	//TODAS LAS CPUS VAN A HACER LO MISMO UNA VEZ CONECTADAS.
@@ -72,6 +72,7 @@ void cpu_func(void *idCpu) {
 	//Voy a recibir la pcb
 	pcbProc = malloc(sizeof(t_pcb));
 	pcbProc->PID = 0;
+	pcbProc->CPU = 0;
 	int nbytes;
 	int pcNuevoInicial = 0;
 	int controlQuantum = 1;
@@ -147,7 +148,7 @@ void notificarNoInicioPCB(t_pcb * pcbProc,int socketPlanificador){
 	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
 
 	nodoRtaCpuPlan->PID = pcbProc->PID;
-	nodoRtaCpuPlan->idCPU = 0;
+	nodoRtaCpuPlan->idCPU = idCPU;
 	nodoRtaCpuPlan->tipo = INICIAR;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = retardo;
@@ -167,7 +168,7 @@ void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador,int controlQuantum){
 	nodoRtaCpuPlan = malloc(sizeof(t_resp_cpu_plan));
 	int exito;
 	nodoRtaCpuPlan->PID = pcbProc->PID;
-	nodoRtaCpuPlan->idCPU = 0;
+	nodoRtaCpuPlan->idCPU = pcbProc->CPU;
 	nodoRtaCpuPlan->tipo = QUANTUM_ACABADO;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = 0;
@@ -242,7 +243,7 @@ int valorPaginaEnEscritura(char * instruccion){
 void instruccionIniciarProceso (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo) {
 
 	nodoRtaCpuPlan->PID = pcbProc->PID;
-	nodoRtaCpuPlan->idCPU = 0;
+	nodoRtaCpuPlan->idCPU = pcbProc->CPU;
 	nodoRtaCpuPlan->tipo = INICIAR;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = retardo;
@@ -275,7 +276,7 @@ void instruccionIniciarProceso (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pl
 
 void instruccionLeerPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo) {
 	nodoRtaCpuPlan->PID = pcbProc->PID;
-	nodoRtaCpuPlan->idCPU = 0;
+	nodoRtaCpuPlan->idCPU = pcbProc->CPU;
 	nodoRtaCpuPlan->tipo = LEER;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	int numPag = devolverIntInstruccion(instruccion,5);
@@ -305,7 +306,7 @@ void instruccionEscribirPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pl
 
 	int exito;
 	nodoRtaCpuPlan->PID = pcbProc->PID;
-	nodoRtaCpuPlan->idCPU = 0;
+	nodoRtaCpuPlan->idCPU = pcbProc->CPU;
 	nodoRtaCpuPlan->tipo = ESCRIBIR;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	int numPag = devolverIntInstruccion(instruccion,9);
@@ -336,7 +337,7 @@ void instruccionEntradaSalida (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pla
 
 	int exito;
 	nodoRtaCpuPlan->PID = pcbProc->PID;
-	nodoRtaCpuPlan->idCPU = 0;
+	nodoRtaCpuPlan->idCPU = pcbProc->CPU;
 	nodoRtaCpuPlan->tipo = ENTRADA_SALIDA;
 	nodoRtaCpuPlan->pc = pcbProc->pc;
 	nodoRtaCpuPlan->pagRW = devolverParteUsableInt(instruccion, 15);
@@ -352,7 +353,7 @@ void instruccionFinalizarProceso(char * instruccion,t_pcb * pcbProc,t_resp_cpu_p
 	int exito;
 	nodoRtaCpuPlan->tipo = FINALIZAR;
 	nodoRtaCpuPlan->pc = 10000;
-	nodoRtaCpuPlan->idCPU = 0;
+	nodoRtaCpuPlan->idCPU = pcbProc->CPU;
 	nodoRtaCpuPlan->respuesta = malloc(1);
 	strcpy(nodoRtaCpuPlan->respuesta,"\0");
 	nodoRtaCpuPlan->PID = pcbProc->PID;
@@ -403,7 +404,7 @@ void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB){
 
 	//t_pcb * pcb = malloc(sizeof(t_pcb));
 	char programa[50];
-	unpack(buffer,SECUENCIA_PCB,&nodoPCB->PID,&nodoPCB->estado,&nodoPCB->pc,&nodoPCB->quantum,&nodoPCB->totalInstrucciones,programa);
+	unpack(buffer,SECUENCIA_PCB,&nodoPCB->PID,&nodoPCB->CPU,&nodoPCB->estado,&nodoPCB->pc,&nodoPCB->quantum,&nodoPCB->totalInstrucciones,programa);
 
 	nodoPCB->contextoEjecucion = programa;
 }

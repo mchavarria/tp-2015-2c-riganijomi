@@ -33,7 +33,7 @@
 #define FINALIZAR 6
 #define ERRONEA 15
 //Char del orden de la Estructuras para serializar/desserializar
-#define SECUENCIA_PCB "hhhhhs"
+#define SECUENCIA_PCB "hhhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_CPU_MEM "hhhs"
@@ -54,6 +54,7 @@ typedef struct NODO_MEM {
  */
 typedef struct PCB {
 	int PID;
+	int CPU;
 	int estado;
 	int pc;
 	int quantum;
@@ -137,6 +138,7 @@ char * ipADM;
 char * puertoADM;
 int cantidadHilos;
 int retardo;
+int idCPU;
 sem_t mutexCPU;
 
 

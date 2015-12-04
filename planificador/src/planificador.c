@@ -98,6 +98,7 @@ void* enviarPCBaCPU()
 				;;
 			}
 			t_pcb * nodoPCB =  list_get(listaDeListo, 0);
+			nodoPCB->CPU = nodoCPU->pid;
 			int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
 			if (err <= 0){
 				//Error en el envío
@@ -611,7 +612,7 @@ void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB)
 			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->contextoEjecucion);
 	 */
 	tamanioBuffer = pack(buffer,SECUENCIA_PCB,
-			nodoPCB->PID,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->totalInstrucciones,nodoPCB->contextoEjecucion);
+			nodoPCB->PID,nodoPCB->CPU,nodoPCB->estado,nodoPCB->pc,nodoPCB->quantum,nodoPCB->totalInstrucciones,nodoPCB->contextoEjecucion);
 
 	//packi16(buffer+1, tamanioBuffer); // store packet size in packet for kicks
 	//printf("Tamaño del PCB serializado es %u bytes\n", tamanioBuffer);
