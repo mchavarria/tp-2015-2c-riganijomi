@@ -505,15 +505,11 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     		break;
     		case ENTRADA_SALIDA:
 				if (exito){
-					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
-					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por entrada-salida %d",idCPU,PID,pagRW);
-
-					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					nodoCPU->disponible = 1;
 					nodoCPU->pcb = 0;
-
+					
 					tiempoBloqueo = pagRW;
-
+				
 					//Inicializamos el clock para calcular la cantidad de tiempo que va a estar en entrada-salida.
 
 					t_espera_clock * nodoClockEspera = malloc(sizeof(t_espera_clock));
@@ -522,13 +518,15 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					nodoClockEspera->processID = PID;
 
 					list_add(listaTiempoDeEspera, nodoClockEspera);
-
+					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					list_add(listaDeBloqueado,nodoPCB);
 
 					pthread_t thread_I_O;
 					int r3;
 					//usa el valor de nodo respuesta como tiempo de entrada salida
 					r3 = pthread_create( &thread_I_O, NULL, bloquearPCB, (void*)nodoPCB );
+					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
+					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por entrada-salida %d",idCPU,PID,pagRW);
 
 				} else {
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo instruccion entrada-salida %d ",idCPU,PID,pagRW);
@@ -674,16 +672,18 @@ void* buscarPCBListoPorPID(int PID){
 
 void* bloquearPCB(t_pcb * nodoPCB)
 {
-	sleep(tiempoBloqueo);//Viene de interpretar linea y usa pagRW para dormirlo
 	//se agrega a la lista de listo
 	bool sacarPorPID(t_pcb * nodo) {
 		return (nodo->PID == nodoPCB->PID);
 	}
-	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
-	sem_wait(&mutexListaListo);
+	
+	sleep(tiempoBloqueo);//Viene de interpretar linea y usa pagRW para dormirlo
 	
 	list_remove_by_condition(listaDeBloqueado,(void*)sacarPorPID);
+	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
+	sem_wait(&mutexListaListo);
 	list_add(listaDeListo,nodoPCB );
+	sem_post(&mutexListaListo);
 	sem_post(&semProgramas);
 
 	
@@ -704,7 +704,7 @@ void* bloquearPCB(t_pcb * nodoPCB)
 
 	//Fin de logueo de que estuvo en entrada-salida.
 
-	sem_post(&mutexListaListo);
+	
 
 }
 
