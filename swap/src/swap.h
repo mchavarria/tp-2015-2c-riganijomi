@@ -8,6 +8,7 @@
 #include <semaphore.h>
 #include <stdint.h>
 #include <commons/collections/list.h>
+#include <commons/string.h>
 #include <stdbool.h>
 #include <commons/log.h>
 
