@@ -383,7 +383,7 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	t_metricas * metricas;
 	metricas = buscarMetricas(idProc);
 	metricas->paginasEscritas++;
-    log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, tamTexto, idProc, pagina);
+    log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, texto, idProc, pagina);
 
 }
 
