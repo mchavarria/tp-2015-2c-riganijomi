@@ -162,7 +162,7 @@ void atenderProcesosEnEspera(){
 		nodoEspera = list_get(listaEspera, i);
 		recibirProceso(nodoEspera->idProc,nodoEspera->tamanio);
 		list_remove(listaEspera, i);
-		free(nodoEspera);
+		//free(nodoEspera);
 	}
 	sem_post(&mutexAtendiendoEspera);
 
@@ -187,7 +187,7 @@ void eliminarProceso(int pid)
 		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", pid, nodoProceso->indice, nodoProceso->tamanio);
 		list_remove_by_condition(listaProcesos,(void*) condicionProcAEliminar);
 		nodoRespuesta->exito = 1;
-		free(nodoProceso);
+		//free(nodoProceso);
 	} else {
 		//no encontro el proceso indicado
 		nodoRespuesta->exito = 0;
@@ -258,7 +258,7 @@ void desplazarYcompactar(int indice){
 		nodoLibre2->indice = nodoLibre1->indice;
 		nodoLibre2->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
 		list_remove(listaLibres, indice);
-		free(nodoLibre1);
+		//free(nodoLibre1);
 		//Modifica el indice del elemento encontrado
 
 	} else {
@@ -291,7 +291,7 @@ void detectarHuecosContiguos(int indice, int tamanio){
 		nodoLibre1->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
 		valor = nodoLibre2->indice;
 		list_remove_by_condition(listaLibres,(void*) condicionNodoAEliminar);
-		free(nodoLibre2);
+		//free(nodoLibre2);
 	}
 
 }
