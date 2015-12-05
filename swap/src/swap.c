@@ -183,6 +183,7 @@ void eliminarProceso(int pid)
 		log_info(archivoLog, "PID: %d, Cantidad de paginas leidas: %d \n", pid, metricas->paginasLeidas);
 		log_info(archivoLog, "PID: %d, Cantidad de paginas escritas: %d \n", pid, metricas->paginasEscritas);
 		//encontro el nodo a eliminar
+		limpiarPaginas(nodoProceso);
 		list_add(listaLibres, crearNodoLibre(nodoProceso->indice, nodoProceso->tamanio));
 		detectarHuecosContiguos(nodoProceso->indice, nodoProceso->tamanio);
 		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", pid, nodoProceso->indice, nodoProceso->tamanio);
@@ -198,6 +199,19 @@ void eliminarProceso(int pid)
 	printf("listaLibre (nodos): %d \n",listaLibres->elements_count);
 	printf("lista procesos (elementos) : %d \n",listaProcesos->elements_count);
 	//enviarMensajeRtaAMem(nodoRespuesta);
+}
+
+void limpiarPaginas(t_nodoProceso * nodoProceso){
+	int i;
+	int total = nodoProceso->tamanio * tamanioPaginas;
+	FILE * particion=fopen("swap.data","r+");
+	int ubicacion = nodoProceso->indice * tamanioPaginas;
+	fseek(particion, ubicacion, SEEK_SET);
+
+	for (i = 0; i < total; i++){
+		putc('\0',particion);
+	}
+	fclose(particion);
 }
 
 int fragmentacionExterna(int tam){
@@ -228,9 +242,10 @@ void compactarSwap(int cantPagProceso){
 void* compactacion(){
 
 	int i;
+	puts("compactando particion");
 	int elementos = listaLibres->elements_count;
-	for (i = 1; i < elementos; i++){
-		desplazarYcompactar(i);
+	for (i = 0; i < elementos; i++){
+		desplazarYcompactar(0);
 	}
 	usleep(retardoCompactacion * 1000000);
 	hayFragmentacion = 0;
@@ -244,29 +259,56 @@ void desplazarYcompactar(int indice){
 	nodoLibre1 = list_get(listaLibres,indice);
 	int tamCalc;
 	tamCalc = nodoLibre1->indice + nodoLibre1->tamanio;
-	bool condicionLibre(t_nodoLibre * nodoLibre) {
+	bool condicionAlLadoDeLibre(t_nodoProceso * nodoP) {
 
-		return (nodoLibre->indice >= tamCalc);
+		return (nodoP->indice >= tamCalc);
 
 	}
-	nodoProceso = list_find(listaProcesos,(void*) condicionLibre);
-	nodoProceso->indice = nodoLibre1->indice;
-	nodoLibre1->indice = tamCalc;
-	nodoLibre1->tamanio = nodoProceso->tamanio - nodoLibre1->tamanio;
+	nodoProceso = list_find(listaProcesos,(void*) condicionAlLadoDeLibre);
+
+	while (nodoProceso != NULL){
+		//DESPLAZAMIENTO CONTENIDO ARCHIVO
+			char leerDelArchivo[1024];
+			int ubicacion = (nodoProceso->indice * tamanioPaginas);
+			int nuevaUbicacion = nodoLibre1->indice * tamanioPaginas;
+			int i=0;
+			puts("moviendo paginas en el archivo");
+			for (i = 0; i < nodoProceso->tamanio; i++){
+				//LEER
+				FILE * particion=fopen("swap.data","r");
+				fseek(particion, ubicacion, SEEK_SET);
+				fread(leerDelArchivo, tamanioPaginas, 1, particion);
+				ubicacion = ubicacion + tamanioPaginas;
+				fclose(particion);
+				//ESCRIBIR
+				FILE * p2=fopen("swap.data","r+");
+				fseek(p2, nuevaUbicacion, SEEK_SET);
+				fputs((const char *)leerDelArchivo, p2);
+				nuevaUbicacion = nuevaUbicacion + tamanioPaginas;
+				fclose(p2);
+
+			}
+			puts("moviendo paginas en el archivo - FIN");
+			//DESPLAZAMIENTO CONTENIDO ARCHIVO
+			nodoProceso->indice = nodoLibre1->indice;
+			nodoLibre1->indice = nodoProceso->indice + nodoProceso->tamanio;
+			//reinicia el while
+			tamCalc = nodoLibre1->indice + nodoLibre1->tamanio;
+			nodoProceso = list_find(listaProcesos,(void*) condicionAlLadoDeLibre);
+	}
+	puts("salio del while");
 	t_nodoLibre * nodoLibre2 = NULL;
-	nodoLibre2 = list_find(listaLibres,(void*) condicionLibre);
-	if (nodoLibre2 != NULL){
-		nodoLibre2->indice = nodoLibre1->indice;
-		nodoLibre2->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
-		list_remove(listaLibres, indice);
-		//free(nodoLibre1);
-		//Modifica el indice del elemento encontrado
+	bool condicionLibreContiguo(t_nodoLibre * nodoL) {
 
-	} else {
-		tamCalc = nodoLibre1->indice + nodoLibre1->tamanio;
-		//se llama de vuelta
-		desplazarYcompactar(indice);
+		return (nodoL->indice >= (nodoLibre1->indice + nodoLibre1->tamanio));
+
 	}
+	nodoLibre2 = list_find(listaLibres,(void*) condicionLibreContiguo);
+	nodoLibre2->indice = nodoLibre1->indice;
+	nodoLibre2->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
+	list_remove(listaLibres, indice);
+	//free(nodoLibre1);
+	//Modifica el indice del elemento encontrado
 
 }
 

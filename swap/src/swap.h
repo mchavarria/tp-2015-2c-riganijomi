@@ -135,6 +135,7 @@ int fragmentacionExterna(int tam);
 void compactarSwap(int cantPagProceso);
 void desplazarYcompactar(int indice);
 void* compactacion();
+void limpiarPaginas(t_nodoProceso * nodoProceso);
 
 void escribir(t_envioPaginaSwap * nodoEscribir);
 t_list * listaLibres;
