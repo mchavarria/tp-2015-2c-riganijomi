@@ -383,11 +383,13 @@ void imprimeEstado(t_list *lista, char*estado ){
 	if(lista->elements_count > 0)
 	{
 		 int tamanio = lista->elements_count;
+		 printf("########################### %s ###########################",estado);
 		 for(i=0; i< tamanio ;i++)
 		 {
 			t_pcb * nodoPCB = list_get(lista, i);
 			printf("mProc %d: %s -> %s\n",nodoPCB->PID,nodoPCB->contextoEjecucion,estado);
 		 }
+		 puts("##############################################################");
 	} else {
 		printf("Lista de mProcs %s vacia.\n",estado);
 	}
