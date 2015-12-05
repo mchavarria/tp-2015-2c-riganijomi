@@ -315,7 +315,7 @@ void leerPaginaProceso(int idProc, int pagina){
 		metricas = buscarMetricas(idProc);
 		metricas->paginasLeidas++;
 		indiceProceso = nodoProceso->indice;
-		int ubicacion = (indiceProceso * tamanioPagina) + (tamanioPaginas*pagina);
+		int ubicacion = (indiceProceso * tamanioPaginas) + (tamanioPaginas*pagina);
 		//modificar para el directorio real
 		//TODO cuidado con las direciones relativas
 		particion=fopen("swap.data","r");
