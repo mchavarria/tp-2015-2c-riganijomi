@@ -315,7 +315,7 @@ void leerPaginaProceso(int idProc, int pagina){
 		metricas = buscarMetricas(idProc);
 		metricas->paginasLeidas++;
 		indiceProceso = nodoProceso->indice;
-		int ubicacion = indiceProceso + (tamanioPaginas*pagina);
+		int ubicacion = (indiceProceso * tamanioPagina) + (tamanioPaginas*pagina);
 		//modificar para el directorio real
 		//TODO cuidado con las direciones relativas
 		particion=fopen("swap.data","r");
@@ -362,7 +362,7 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	t_nodoProceso * nodoProceso = NULL;
 	nodoProceso = list_find(listaProcesos,(void*) condicionLeer);
 
-	int ubicacion = nodoProceso->indice + (tamanioPaginas*pagina);
+	int ubicacion = (nodoProceso->indice * tamanioPaginas) + (tamanioPaginas*pagina);
 	//char * tamTexto = malloc(sizeof("")+1);
 	int err;
 	if ((err = fseek(particion, ubicacion, SEEK_SET) == 0))
