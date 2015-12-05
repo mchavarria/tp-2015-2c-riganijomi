@@ -135,6 +135,7 @@ void recibirProceso(int idProc, int cantPagProceso)
 			if (hayFragmentacion){
 				//necesito compactar
 				list_add(listaEspera, crearNodoEspera(idProc, cantPagProceso));
+				log_info(archivoLog, "Se COMPACTA para recibir el proceso PID: %d", idProc);
 				compactarSwap(cantPagProceso);
 			} else {
 				//No hay elementos libres, no puedo alojar.. Rechazo
@@ -157,11 +158,11 @@ void atenderProcesosEnEspera(){
 
 	int i;
 	int cantidad = listaEspera->elements_count;
-	for (i = 1; i == cantidad; i++){
+	for (i = 0; i < cantidad; i++){
 		t_nodoEspera * nodoEspera = NULL;
-		nodoEspera = list_get(listaEspera, i);
+		nodoEspera = list_get(listaEspera, 0);
 		recibirProceso(nodoEspera->idProc,nodoEspera->tamanio);
-		list_remove(listaEspera, i);
+		list_remove(listaEspera, 0);
 		//free(nodoEspera);
 	}
 	sem_post(&mutexAtendiendoEspera);
@@ -205,7 +206,7 @@ int fragmentacionExterna(int tam){
 	int tamanio = 0;
 	t_nodoLibre * nodoLibre = NULL;
 
-	for (i = 1; i == listaLibres->elements_count; i++){
+	for (i = 0; i < listaLibres->elements_count; i++){
 		nodoLibre = list_get(listaLibres, i);
 		tamanio = tamanio + nodoLibre->tamanio;
 
