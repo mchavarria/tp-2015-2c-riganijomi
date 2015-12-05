@@ -383,7 +383,7 @@ void imprimeEstado(t_list *lista, char*estado ){
 	if(lista->elements_count > 0)
 	{
 		 int tamanio = lista->elements_count;
-		 printf("########################### %s ###########################",estado);
+		 printf("########################### %s ###########################\n",estado);
 		 for(i=0; i< tamanio ;i++)
 		 {
 			t_pcb * nodoPCB = list_get(lista, i);
