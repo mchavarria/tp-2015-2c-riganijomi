@@ -46,5 +46,3 @@ clean:
 /home/utnso/rrigonijami/tp-2015-2c-riganijomi/bibliotecaRiganijomi/Debug/libbibliotecaRiganijomi.so:
 
 -include ../makefile.targets
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/rrigonijami/tp-2015-2c-riganijomi/bibliotecaRiganijomi/Debug/

@@ -2,7 +2,6 @@
 
 int main() {
 
-	sem_init(&mutexAtendiendoEspera,0,1);
 	archivoLog = log_create("swap.log", "Swap", false, 2);
 
 	//Creación de listas
@@ -30,10 +29,7 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 	switch (nodoMemSwap->tipo) {
 		case INICIAR:
 			nodoRespuesta->tipo = INICIAR;
-			sem_wait(&mutexAtendiendoEspera);
 			recibirProceso(nodoMemSwap->pid,nodoMemSwap->pagina);
-			sem_post(&mutexAtendiendoEspera);
-
 			break;
 		case LEER:
 			nodoRespuesta->tipo = LEER;
@@ -45,7 +41,6 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 			usleep(retardoSwap * 1000000);
 		break;
 		case FINALIZAR:
-			puts("Entro");
 			nodoRespuesta->tipo = FINALIZAR;
 			eliminarProceso(nodoMemSwap->pid);
 		break;
@@ -113,22 +108,11 @@ static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProces
 
 void recibirProceso(int idProc, int cantPagProceso)
 {
+	int respuestaAgregar;
 	//Salvo en la auxiliar para poder usarla en condicion
 	if (hayFragmentacion == 0){
-		bool condicionRecibir(t_nodoLibre * nodoLibre) {
-
-			return (nodoLibre->tamanio >= cantPagProceso);
-
-		}
-		t_nodoLibre * nodoLibre = NULL;
-		nodoLibre = list_find(listaLibres,(void*) condicionRecibir);
-		if (nodoLibre != NULL){
-			list_add(listaMetricas, metricas_create(idProc));
-			//hay lugar para alojarlo
-			list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
-			log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
-			nodoLibre->indice = nodoLibre->indice + cantPagProceso;
-			nodoLibre->tamanio = nodoLibre->tamanio - cantPagProceso;
+		respuestaAgregar = agregarProcesoEnSwap(idProc,cantPagProceso);
+		if (respuestaAgregar == 1){
 			nodoRespuesta->exito = 1;
 		} else {
 			hayFragmentacion = fragmentacionExterna(cantPagProceso);
@@ -137,22 +121,51 @@ void recibirProceso(int idProc, int cantPagProceso)
 				list_add(listaEspera, crearNodoEspera(idProc, cantPagProceso));
 				log_info(archivoLog, "Se COMPACTA para recibir el proceso PID: %d", idProc);
 				compactarSwap(cantPagProceso);
-			} else {
-				//No hay elementos libres, no puedo alojar.. Rechazo
-				nodoRespuesta->exito = 0;
-				perror("no hay espacio para el proceso");
-				log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
+				respuestaAgregar = agregarProcesoEnSwap(idProc,cantPagProceso);
 			}
 		}
-	} else {
-		//Esta fragmentando pongo en Espera
-		list_add(listaEspera, crearNodoEspera(idProc, cantPagProceso));
 	}
-	if (hayFragmentacion == 0){
-		enviarMensajeRtaAMem(nodoRespuesta);
+
+	if (respuestaAgregar == 0) {
+		//No hay elementos libres, no puedo alojar.. Rechazo
+		nodoRespuesta->exito = 0;
+		perror("no hay espacio para el proceso");
+		log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
 	}
+
+	enviarMensajeRtaAMem(nodoRespuesta);
 }
 
+int agregarProcesoEnSwap(int idProc, int cantPagProceso){
+
+	int respuesta = 0;
+	bool condicionRecibir(t_nodoLibre * nodoLibre) {
+		return (nodoLibre->tamanio >= cantPagProceso);
+	}
+	t_nodoLibre * nodoLibre = NULL;
+	nodoLibre = list_find(listaLibres,(void*) condicionRecibir);
+	if (nodoLibre != NULL){
+		list_add(listaMetricas, metricas_create(idProc));
+		//hay lugar para alojarlo
+		list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
+		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
+		nodoLibre->tamanio = nodoLibre->tamanio - cantPagProceso;
+		int indiceRecienOcupado (t_nodoLibre * nodo) {
+			return (nodo->indice == nodoLibre->indice);
+		}
+		if (nodoLibre->tamanio == 0) {
+			list_remove_by_condition(listaLibres, (void *) indiceRecienOcupado);
+		} else {
+			nodoLibre->indice = nodoLibre->indice + cantPagProceso;
+		}
+		respuesta = 1;
+	}
+	return respuesta;
+}
+/*
+ * Al no responderle a memoria por estar fragmentando
+ * todavia no llegan nuevos pedidos
+ * hasta que termine
 void atenderProcesosEnEspera(){
 	sem_wait(&mutexAtendiendoEspera);
 
@@ -168,7 +181,7 @@ void atenderProcesosEnEspera(){
 	sem_post(&mutexAtendiendoEspera);
 
 }
-
+*/
 void eliminarProceso(int pid)
 {
 	bool condicionProcAEliminar(t_nodoProceso * nodoProceso) {
@@ -196,22 +209,43 @@ void eliminarProceso(int pid)
 		log_info(archivoLog, "No se pudo eliminar el proceso PID: %d", pid);
 		perror("no se encontró el proceso indicado");
 	}
-	printf("listaLibre (nodos): %d \n",listaLibres->elements_count);
-	printf("lista procesos (elementos) : %d \n",listaProcesos->elements_count);
+	imprimirEstadosListas();
+
 	//enviarMensajeRtaAMem(nodoRespuesta);
+}
+
+void imprimirEstadosListas(){
+	printf("listaLibre: %d \n",listaLibres->elements_count);
+	int totalTamanio=0;
+	void imprimirLibres(t_nodoLibre * nodo)
+	{
+		printf("indice %d, tamanio: %d\n", nodo->indice,nodo->tamanio);
+		totalTamanio += nodo->tamanio;
+	}
+	list_iterate(listaLibres,imprimirLibres);
+	printf("lista procesos: %d \n",listaProcesos->elements_count);
+	totalTamanio = 0;
+	void imprimirNodos(t_nodoProceso * nodo)
+	{
+		printf("PID: %d, indice %d, tamanio: %d\n", nodo->idProc, nodo->indice,nodo->tamanio);
+		totalTamanio += nodo->tamanio;
+	}
+	list_iterate(listaProcesos,imprimirNodos);
 }
 
 void limpiarPaginas(t_nodoProceso * nodoProceso){
 	int i;
-	int total = nodoProceso->tamanio * tamanioPaginas;
-	FILE * particion=fopen("swap.data","r+");
-	int ubicacion = nodoProceso->indice * tamanioPaginas;
-	fseek(particion, ubicacion, SEEK_SET);
-
-	for (i = 0; i < total; i++){
-		putc('\0',particion);
+	int ubicacion = (nodoProceso->indice * tamanioPaginas);
+	for (i = 0; i < nodoProceso->tamanio; i++){
+		//Elimina el contenido de donde estaba antes el proceso.
+		FILE * p3=fopen("swap.data","r+");
+		int j=0;
+		for (j= 0; j < tamanioPaginas; j++){
+			fseek(p3, ubicacion+j, SEEK_SET);
+			putc('\0', p3);
+		}
+		fclose(p3);
 	}
-	fclose(particion);
 }
 
 int fragmentacionExterna(int tam){
@@ -237,19 +271,34 @@ void compactarSwap(int cantPagProceso){
 	char *m1 = "compactar";
 	int r1;
 	r1 = pthread_create(&thread1, NULL, compactacion, (void*) m1);
+	pthread_join( thread1, NULL);
+	puts("Termino de compactar");
 }
 
 void* compactacion(){
 
 	int i;
-	puts("compactando particion");
+	puts("Compactando particion");
 	int elementos = listaLibres->elements_count;
 	for (i = 0; i < elementos; i++){
 		desplazarYcompactar(0);
 	}
 	usleep(retardoCompactacion * 1000000);
 	hayFragmentacion = 0;
-	atenderProcesosEnEspera();
+	listaLibres = list_create();
+	int indiceLibre = 0;
+	int tamanio = 0;
+	void libre(t_nodoProceso * nodo) {
+		if (indiceLibre < nodo->indice) {
+			indiceLibre = nodo->indice + nodo->tamanio;
+		}
+		tamanio += nodo->tamanio;
+	}
+	list_iterate(listaProcesos, (void *)libre);
+	list_add(listaLibres, crearNodoLibre(indiceLibre, (cantPaginas - tamanio)));
+	imprimirEstadosListas();
+	pthread_exit(NULL);
+	//atenderProcesosEnEspera();
 }
 
 void desplazarYcompactar(int indice){
@@ -272,23 +321,31 @@ void desplazarYcompactar(int indice){
 			int ubicacion = (nodoProceso->indice * tamanioPaginas);
 			int nuevaUbicacion = nodoLibre1->indice * tamanioPaginas;
 			int i=0;
-			puts("moviendo paginas en el archivo");
 			for (i = 0; i < nodoProceso->tamanio; i++){
 				//LEER
 				FILE * particion=fopen("swap.data","r");
 				fseek(particion, ubicacion, SEEK_SET);
 				fread(leerDelArchivo, tamanioPaginas, 1, particion);
-				ubicacion = ubicacion + tamanioPaginas;
 				fclose(particion);
+				//Elimina el contenido de donde estaba antes el proceso.
+				FILE * p3=fopen("swap.data","r+");
+				int j=0;
+				for (j= 0; j < tamanioPaginas; j++){
+					fseek(p3, ubicacion+j, SEEK_SET);
+					putc('\0', p3);
+				}
+				nuevaUbicacion = nuevaUbicacion + (tamanioPaginas*i);
+				fclose(p3);
+				ubicacion = ubicacion + (tamanioPaginas*i);
+				puts(leerDelArchivo);
 				//ESCRIBIR
 				FILE * p2=fopen("swap.data","r+");
 				fseek(p2, nuevaUbicacion, SEEK_SET);
 				fputs((const char *)leerDelArchivo, p2);
-				nuevaUbicacion = nuevaUbicacion + tamanioPaginas;
+				//nuevaUbicacion = nuevaUbicacion + (tamanioPaginas*i);
 				fclose(p2);
 
 			}
-			puts("moviendo paginas en el archivo - FIN");
 			//DESPLAZAMIENTO CONTENIDO ARCHIVO
 			nodoProceso->indice = nodoLibre1->indice;
 			nodoLibre1->indice = nodoProceso->indice + nodoProceso->tamanio;
@@ -296,7 +353,6 @@ void desplazarYcompactar(int indice){
 			tamCalc = nodoLibre1->indice + nodoLibre1->tamanio;
 			nodoProceso = list_find(listaProcesos,(void*) condicionAlLadoDeLibre);
 	}
-	puts("salio del while");
 	t_nodoLibre * nodoLibre2 = NULL;
 	bool condicionLibreContiguo(t_nodoLibre * nodoL) {
 
@@ -304,9 +360,11 @@ void desplazarYcompactar(int indice){
 
 	}
 	nodoLibre2 = list_find(listaLibres,(void*) condicionLibreContiguo);
-	nodoLibre2->indice = nodoLibre1->indice;
-	nodoLibre2->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
-	list_remove(listaLibres, indice);
+	if (nodoLibre2 != NULL) {
+		nodoLibre2->indice = nodoLibre1->indice;
+		nodoLibre2->tamanio = nodoLibre1->tamanio + nodoLibre2->tamanio;
+		list_remove(listaLibres, indice);
+	}
 	//free(nodoLibre1);
 	//Modifica el indice del elemento encontrado
 

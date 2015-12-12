@@ -120,7 +120,6 @@ int tamanioPaginas;
 double retardoSwap;
 double retardoCompactacion;
 
-sem_t mutexAtendiendoEspera;
 char instruccion[20];
 int nbytes;
 char respuesta[30];
@@ -136,6 +135,8 @@ void compactarSwap(int cantPagProceso);
 void desplazarYcompactar(int indice);
 void* compactacion();
 void limpiarPaginas(t_nodoProceso * nodoProceso);
+int agregarProcesoEnSwap(int idProc, int cantPagProceso);
+void imprimirEstadosListas();
 
 void escribir(t_envioPaginaSwap * nodoEscribir);
 t_list * listaLibres;
