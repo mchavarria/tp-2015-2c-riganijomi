@@ -113,7 +113,7 @@ void instruccionEscribirPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_pl
 void instruccionEntradaSalida (char * tiempo,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,int socketPlanificador);
 void instruccionFinalizarProceso(char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_nodo_mem * nodoInstruccion,int socketADM, int paginaInstruccion,int socketPlanificador);
 void interpretarLinea(char * line,t_pcb * pcbProc,int socketADM,int socketPlanificador,int * continuarLeyendo);
-void cpu_func(void *idCpu);
+void* cpu_func(void *idCpu);
 void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador,int controlQuantum);
 static t_hilos_CPU *hilos_create();
 

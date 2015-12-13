@@ -337,7 +337,6 @@ void desplazarYcompactar(int indice){
 				nuevaUbicacion = nuevaUbicacion + (tamanioPaginas*i);
 				fclose(p3);
 				ubicacion = ubicacion + (tamanioPaginas*i);
-				puts(leerDelArchivo);
 				//ESCRIBIR
 				FILE * p2=fopen("swap.data","r+");
 				fseek(p2, nuevaUbicacion, SEEK_SET);

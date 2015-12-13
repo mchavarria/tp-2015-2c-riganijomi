@@ -686,8 +686,6 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					//Si falla la CPU debe finalizarlo
 					nodoRtaSwap->exito = 0;
 				}
-				enviarMensajeDeNodoACPU(nodoRtaSwap);
-				usleep(RETARDO_MEMORIA * 1000000);
 			} else {
 				//ESCRIBIR
 				nodoRtaSwap->tipo = ESCRIBIR;
@@ -705,9 +703,10 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 					//Si falla la CPU debe finalizarlo
 					nodoRtaSwap->exito = 0;
 				}
-				enviarMensajeDeNodoACPU(nodoRtaSwap);
-				usleep(RETARDO_MEMORIA * 1000000);
+
 			}
+			usleep(RETARDO_MEMORIA * 1000000);
+			enviarMensajeDeNodoACPU(nodoRtaSwap);
 			//printf("El retardo fue de %g", RETARDO_MEMORIA);
 			if (!finalizaPorError){
 				//Actualizar el bit de uso y/o Modificacion

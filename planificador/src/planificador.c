@@ -16,6 +16,7 @@
 int main() {
 	sem_init(&semProgramas,0,0);
 	sem_init(&mutexListaListo,0,1);
+	sem_init(&mutexProgramas,0,1);
 	levantarCfg();
 	listaDeBloqueado = list_create();
 	listaDeEjecutado = list_create();
@@ -56,11 +57,11 @@ int main() {
 	r3 = pthread_create( &thread3, NULL, consola, (void*) m3);
 
 	//Enviar PCB a CPU
-	pthread_t threadPcbACpu;
+	/*pthread_t threadPcbACpu;
 	int rcp;
 	//usa el valor de nodo respuesta como tiempo de entrada salida
 	rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
-
+	*/
 	pthread_join( thread3, NULL);
 
 	return 1;
@@ -123,23 +124,15 @@ void* enviarPCBaCPU()
 	}
 }
 
-void recibirRespuestaCPU(int socketCpu, int * nbytes){
-	t_resp_cpu_plan * nodoRespuesta;
-	nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
-	//nodoRespuesta->respuesta = malloc(1);
-	*nbytes = recibirRtadeCPU(socketCpu, nodoRespuesta);//Dereferencia del puntero para cambmiarle el valor
-	actualizarNodoCpu(socketCpu);
-	interpretarLinea(nodoRespuesta);
-}
-
-void actualizarNodoCpu(int socketCpu)
+int recibirRespuestaCPU(int socketCpu, t_resp_cpu_plan * nodoRespuesta)
 {
-	bool buscarCPUporSocket(t_cpu * nodoCPU) {
-		return (nodoCPU->socket == socketCpu);
+	int nbytes = recibirRtadeCPU(socketCpu, nodoRespuesta);//Dereferencia del puntero para cambmiarle el valor
+	if (nbytes <= 0) {
+		// connection closed
+		close(socketCpu); // bye!
+		informarDesconexionCPU(socketCpu);
 	}
-	nodoCPU=NULL;
-	nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporSocket);
-	nodoCPU->instruccionesLeidas++;
+	return nbytes;
 }
 
 /*
@@ -216,10 +209,16 @@ void* agregarPCBALista(char * programa) {
 
 	list_add(listaTiempoDeRespuesta, nodoClockRespuesta);
 
-	pcb->pc=0;
-	pcb->estado=LISTO;
-	pcb->quantum=quantumcfg;
-	pcb->totalInstrucciones= totalInstruccionesArchivo(programa);
+	pcb->CPU = -1;
+	pcb->pc = 0;
+	pcb->estado = LISTO;
+	pcb->totalInstrucciones = totalInstruccionesArchivo(programa);
+	if (quantumcfg == 0)
+	{
+		pcb->quantum = pcb->totalInstrucciones;
+	} else {
+		pcb->quantum=quantumcfg;
+	}
 	//imprimo pcb
 	int antesDeAgregar = listaDeListo->elements_count;
 	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
@@ -387,7 +386,11 @@ void imprimeEstado(t_list *lista, char*estado ){
 		 for(i=0; i< tamanio ;i++)
 		 {
 			t_pcb * nodoPCB = list_get(lista, i);
-			printf("mProc %d: %s -> %s\n",nodoPCB->PID,nodoPCB->contextoEjecucion,estado);
+			if (nodoPCB->CPU > -1){
+				printf("mProc %d: %s -> %s en CPU: %d\n",nodoPCB->PID,nodoPCB->contextoEjecucion,estado, nodoPCB->CPU);
+			} else {
+				printf("mProc %d: %s -> %s\n",nodoPCB->PID,nodoPCB->contextoEjecucion,estado);
+			}
 		 }
 		 puts("##############################################################");
 	} else {
@@ -418,10 +421,10 @@ void levantarCfg(){
 }
 
 
-void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
+int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 
 	int PID = nodoRespuesta->PID;
-
+	int continuarRecibiendo = 1;
     int tipoResp = nodoRespuesta->tipo;
     int exito = nodoRespuesta->exito;
     int pagRW = nodoRespuesta->pagRW;
@@ -469,9 +472,6 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					//el nodo cpu tendra como parametro el retardo
 					nodoCPU->retardo = pagRW;
 					nodoCPU->disponible = 0;
-					if (nodoCPU->pid == 0){
-						nodoCPU->pid = idCPU;
-					}
 					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
 					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) creado",idCPU,PID,nodoPCB->contextoEjecucion);
 				} else {
@@ -479,6 +479,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d (%s) fallo",idCPU,PID,nodoPCB->contextoEjecucion);
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					nodoCPU->disponible = 1;
+					continuarRecibiendo = 0;
 				}
 			break;
     		case LEER:
@@ -491,6 +492,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					nodoCPU->disponible = 1;
 					nodoCPU->pcb = 0;
+					continuarRecibiendo = 0;
 				}
     		break;
     		case ESCRIBIR:
@@ -503,6 +505,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					nodoCPU->disponible = 1;
 					nodoCPU->pcb = 0;
+					continuarRecibiendo = 0;
 				}
     		break;
     		case ENTRADA_SALIDA:
@@ -537,6 +540,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					nodoCPU->disponible = 1;
 					nodoCPU->pcb = 0;
 				}
+				continuarRecibiendo = 0;
 				break;
     		case QUANTUM_ACABADO:
 				if (exito){
@@ -555,6 +559,7 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
 					//validar luego que opcion hay para fallar
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo la instruccion por quantum",idCPU,PID);
 				}
+				continuarRecibiendo = 0;
 				break;
     		case FINALIZAR:
     			;
@@ -575,10 +580,12 @@ void interpretarLinea(t_resp_cpu_plan * nodoRespuesta) {
     			nodoCPU->disponible = 1;
     			list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
     			//free(nodoPCB);
-			break;
+    			continuarRecibiendo = 0;
+    			break;
     		default:
     		    perror("mensaje erroneo.");
     	}
+    return continuarRecibiendo;
 }
 
 
@@ -623,8 +630,7 @@ void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta
 	unpack(buffer,SECUENCIA_NODO_RTA_CPU_PLAN,
 			&nodoRta->PID,&nodoRta->idCPU,&nodoRta->tipo,&nodoRta->exito,
 			&nodoRta->pagRW,&nodoRta->pc,respuesta);
-	nodoRta->respuesta = malloc(sizeof(respuesta));
-	strcpy(nodoRta->respuesta, respuesta);
+	nodoRta->respuesta = respuesta;
 }
 
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta){
@@ -710,6 +716,62 @@ void* bloquearPCB(t_pcb * nodoPCB)
 
 }
 
+void* hiloDeCPU(void * socketCPU) {
+	int elSocket = socketCPU;
+	bool buscarCPUDisponible(t_cpu * nodoCPU) {
+		return (nodoCPU->socket == elSocket);
+	}
+	t_cpu * nodoCPU = NULL;
+	while (1){
+		sem_wait(&semProgramas);
+		sem_wait(&mutexProgramas);
+		nodoCPU = NULL;
+		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
+		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
+		//CPU disponible, envío el PCB
+		//sem_wait(sem_CPU_conectada);
+		//sleep(2);
+		t_pcb * nodoPCB =  list_get(listaDeListo, 0);
+		nodoPCB->CPU = nodoCPU->pid;
+		int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
+		if (err <= 0){
+			//Error en el envío
+			nodoPCB->CPU = -1;
+			printf("No se pudo enviar el PCB %d",nodoPCB->PID);
+			sem_post(&semProgramas);
+		} else {
+			nodoCPU->pcb = nodoPCB->PID;
+			//Enviado correctamente
+			nodoCPU->disponible = 0;
+			//saca de lista ready
+			list_remove(listaDeListo, 0);
+			sem_post(&mutexProgramas);
+			//se agrega a la lista de ejecucion
+			list_add(listaDeEjecutado,nodoPCB);
+
+			//printf("PCB %d enviado a CPU %d \n",nodoCPU->pcb,nodoCPU->pid);
+		}//Cierra el err
+
+		//Hago un while para respuestas de instrucciones
+		int continuar = 1;
+		int nbytes;
+		t_resp_cpu_plan * nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
+		nodoRespuesta->respuesta = string_new();
+		while (continuar == 1)
+		{
+			if ((nbytes = recibirRespuestaCPU(nodoCPU->socket, nodoRespuesta)) > 0)
+			{
+				nodoCPU->instruccionesLeidas++;
+				continuar = interpretarLinea(nodoRespuesta,nodoCPU);
+			} else {
+				puts("SALIII POR ERROR");
+				pthread_exit(NULL);
+			}
+		}
+
+	}
+}
+
 void agregarCPUALista(int socketCpu) {
 	t_cpu * nodoCpu = malloc(sizeof(t_cpu));
 	nodoCpu->pid = listaDeCPUs->elements_count;
@@ -721,12 +783,12 @@ void agregarCPUALista(int socketCpu) {
 	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
 	list_add(listaDeCPUs, nodoCpu);
 	//Enviar PCB a CPU
-	/*
-	pthread_t threadPcbACpu;
-	int rcp;
+
+	pthread_t threadDeCPU;
+	int r;
 	//usa el valor de nodo respuesta como tiempo de entrada salida
-	rcp = pthread_create( &threadPcbACpu, NULL, enviarPCBaCPU, (void*) "pcbACpu");
-	*/
+	r = pthread_create( &threadDeCPU, NULL, hiloDeCPU, (void*) socketCpu);
+
 }
 
 
@@ -761,16 +823,17 @@ void* monitorearSockets(){
                 	//Aceptamos la conexion entrante, y creamos un nuevo socket mediante el cual nos podamos comunicar.
                     nuevoCliente = socketAceptarConexion(servidorPlanificador,"Planificador","CPU");
                     if (nuevoCliente > 0) {
-                        FD_SET(nuevoCliente, &coleccionSockets); // agrega el cliente al set de sockets
+                        //FD_SET(nuevoCliente, &coleccionSockets); // agrega el cliente al set de sockets
 
-                        if (nuevoCliente > colMax) {    // actualiza el maximo
+                        /*if (nuevoCliente > colMax) {    // actualiza el maximo
                             colMax = nuevoCliente;
                         }
-                        int pid;
+                        int pid;*/
                         //la agrega a la lista de CPUs
+                    	//Se crea un nuevo hilo, para cada CPU.
                         agregarCPUALista(nuevoCliente);
                     }
-                } else {
+                } /*else {
                 	//Tengo un mensaje de algún cliente.
                 	//Respuesta de alguna instrucción de CPU
                 	recibirRespuestaCPU(i, &nbytes);
@@ -779,9 +842,9 @@ void* monitorearSockets(){
                 		close(i); // bye!
 						FD_CLR(i, &coleccionSockets); // remove from master set
 						informarDesconexionCPU(i);
-					}
+					}*/
 
-                } // fin recepcion de mensajes de cliente
+                // fin recepcion de mensajes de cliente
             } // fin isset
         } // fin recorrido del set
     } // fin del for(;;)

@@ -43,9 +43,9 @@ static t_hilos_CPU *hilos_create()
 	return new;
 }
 
-void cpu_func(void * idCpu) {
+void* cpu_func(void * idCpu) {
 	int socketPlanificador = 0;
-	int continuarLeyendo = 1;
+
 	idCPU = idCpu;
 	//Se conecta al Planificador
 	socketPlanificador = socketCrearCliente(puertoPlanificador, ipPlanificador,"CPU","Planificador");
@@ -74,8 +74,7 @@ void cpu_func(void * idCpu) {
 	pcbProc->PID = 0;
 	pcbProc->CPU = 0;
 	int nbytes;
-	int pcNuevoInicial = 0;
-	int controlQuantum = 1;
+
 	while (1) {
 		//sem_wait(&mutexCPU);
 		while ((nbytes = recibirPCBdePlanificador(pcbProc,socketPlanificador)) > 0){
@@ -97,40 +96,48 @@ void cpu_func(void * idCpu) {
 			strcat(contextoEjecucion,mprog);
 			//Hasta aca el archivo
 
-			fp = fopen(contextoEjecucion, "r");
+			int continuarLeyendo = 1;
+			int pcNuevoInicial = 0;
+			int controlQuantum = 0;
 
+			fp = fopen(contextoEjecucion, "r");
+			int ninguno = 0;
 			if (fp == NULL){
 				printf("CPU: Archivo -%s- de PCB %d no válido", pcbProc->contextoEjecucion, pcbProc->PID);
 				notificarNoInicioPCB(pcbProc,socketPlanificador);
 				perror("Archivo no válido.");
 			} else {
+				int nuevoPC;
+				nuevoPC = pcbProc->pc;
 				while (((read = getline(&linea, &len, fp)) != -1) && (continuarLeyendo)) {
 
-					if (pcNuevoInicial++ >= pcbProc->pc)
+					if (pcNuevoInicial == nuevoPC)
 					{
 						sleep(retardo);
-						pcbProc->pc++;  //actualiza el pgm counter
-						if (pcbProc->quantum == 0){
-							//FIFO
+						if (controlQuantum < pcbProc->quantum){
+							ninguno = 1;
 							//Lee linea y ejecuta
+							pcbProc->pc++;  //actualiza el pgm counter
+							controlQuantum++;
 							interpretarLinea(linea,pcbProc,socketADM,socketPlanificador,&continuarLeyendo);
-						} else {
-							//RR
-							if (controlQuantum <= pcbProc->quantum){
-								//Lee linea y ejecuta
-								controlQuantum++;
-								interpretarLinea(linea,pcbProc,socketADM,socketPlanificador,&continuarLeyendo);
-
-							}
 						}
-						
+
+					} else {
+						pcNuevoInicial++;
 					}
 
-					if ((pcbProc->quantum != 0) && (controlQuantum > pcbProc->quantum) && (continuarLeyendo != 0)){
+					if ((controlQuantum == pcbProc->quantum) && (continuarLeyendo == 1)){
 						sacarPorQuantum(pcbProc,socketPlanificador,controlQuantum);
 						continuarLeyendo = 0;
+						if (ninguno != 0) {
+							printf("sale por quantum PID: %d, proximo PC = %d\n",pcbProc->PID, pcbProc->pc);
+						}
 					}
-				}//while
+					if ((pcNuevoInicial == nuevoPC) && (ninguno == 0))
+					{//hay alguna falla entre controlQuantum y la comparacion con pcbProc quantum
+						printf("entra a leer pero no pasa el control de Quantum PID: %d, proximo PC = %d\n",pcbProc->PID, pcbProc->pc);
+					}
+				}//while del archivo
 
 				fclose(fp);
 				if (linea){
@@ -138,7 +145,7 @@ void cpu_func(void * idCpu) {
 				}
 			}//fp != null
 			pcNuevoInicial = 0;
-			controlQuantum = 1;
+			controlQuantum = 0;
 			continuarLeyendo = 1;
 		}//while rcv
 	}
@@ -393,6 +400,8 @@ int recibirPCBdePlanificador(t_pcb * nodoPCB,int socketPlanificador){
 		printf("CPU %d: Error recibiendo mensaje de Planificador", pidCpu);
 	} else if (nbytes == 0) {
 		printf("CPU %d: Socket Planificador desconectado", pidCpu);
+		perror("Cerrando CPU");
+		exit(1);
 		//CERRAR LA CPU
 	}
 	desempaquetarPCB(buffer,nodoPCB);
