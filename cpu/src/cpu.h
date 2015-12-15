@@ -14,6 +14,7 @@
 #include <commons/collections/list.h>
 #include <commons/config.h>
 #include <commons/string.h>
+#include <commons/process.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <commons/log.h>
@@ -37,6 +38,7 @@
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_CPU_MEM "hhhs"
+#define SECUENCIA_CPU_INFO "hh"
 
 typedef struct NODO_MEM {
 	int pid;
@@ -45,6 +47,11 @@ typedef struct NODO_MEM {
 	char *texto;
 } t_nodo_mem;
 
+
+typedef struct NODO_CPU_INFO {
+	int idCPU;
+	int retardo;
+} t_info_cpu;
 
 /* el estado puede ser:
  * 1: listo
@@ -107,14 +114,13 @@ t_log* archivoLog;
 void ejecutarInstrucciones();
 void cargarCfgs();
 
-void instruccionIniciarProceso (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo);
-void instruccionLeerPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo);
-void instruccionEscribirPagina (char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,char * texto, int socketADM,int paginaInstruccion,int socketPlanificador,int * continuarLeyendo);
-void instruccionEntradaSalida (char * tiempo,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,int socketPlanificador);
-void instruccionFinalizarProceso(char * instruccion,t_pcb * pcbProc,t_resp_cpu_plan * nodoRtaCpuPlan,t_nodo_mem * nodoInstruccion,int socketADM, int paginaInstruccion,int socketPlanificador);
-void interpretarLinea(char * line,t_pcb * pcbProc,int socketADM,int socketPlanificador,int * continuarLeyendo);
-void* cpu_func(void *idCpu);
-void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador,int controlQuantum);
+int instruccionIniciarProceso (t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM);
+int instruccionLeerPagina (t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM);
+int instruccionEscribirPagina (t_resp_swap_mem * nodoRta,t_nodo_mem * nodoInstruccion,int socketADM);
+void instruccionFinalizarProceso(t_nodo_mem * nodoInstruccion,int socketADM);
+int interpretarLineaAejecutar(char * line,t_pcb * pcbProc,int socketADM,int socketPlanificador);
+void* cpu_func();
+void sacarPorQuantum(t_pcb * pcbProc,int socketPlanificador);
 static t_hilos_CPU *hilos_create();
 
 //Serializacion
@@ -123,13 +129,19 @@ void notificarNoInicioPCB(t_pcb * pcbProc,int socketPlanificador);
 void desempaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int enviarMensajeRespuestaCPU(int socketPlanificador, t_resp_cpu_plan * nodoRta);
 void empaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
-int enviarMensajeDeNodoAMem(int socketADM, t_nodo_mem * nodo,char * texto, int paginaInstruccion);
-void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo,char * texto, int paginaInstruccion);
+int enviarMensajeDeNodoAMem(int socketADM, t_nodo_mem * nodo,char * texto);//texto va por si es ESCRIBIR
+void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo,char * texto);
 int recibirNodoDeMEM(int socketADM, t_resp_swap_mem * nodo);
 void desempaquetarNodoMem(unsigned char *buffer,t_resp_swap_mem * nodo);
 char * traducirInstruccion(int tipo);
 int valorPaginaEnEscritura(char * instruccion);
 void textoAEscribir(char * instruccion, char * texto);
+int comprobarArchivo(t_pcb * pcb);
+void obtenerInstruccionesSegunQuantum(t_pcb * pcb, t_list * lista);
+FILE * abrirArchivo(char *contextoEjecucion);
+
+int enviarMensajeInfoCPU(int socketPlanificador,t_info_cpu * nodoInfoCpu);
+void empaquetarNodoInfoCPU(unsigned char *buffer,t_info_cpu * nodoInfoCpu);
 //Variables globales
 char directorioActual[1024];
 char * ipPlanificador;
@@ -139,7 +151,6 @@ char * puertoADM;
 int cantidadHilos;
 int retardo;
 int idCPU;
-sem_t mutexCPU;
-
+pthread_mutex_t mutexOrdenCpu;
 
 #endif /* CPU_H_ */

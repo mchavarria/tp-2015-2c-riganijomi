@@ -31,6 +31,7 @@
 //Char del orden de la Estructuras para serializar/desserializar
 #define SECUENCIA_PCB "hhhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
+#define SECUENCIA_CPU_INFO "hh"
 
 //estados del pcb
 #define LISTO 1
@@ -51,6 +52,12 @@ typedef struct hilo {
 	char m[100];
 	int  r;
 } t_hilos;
+
+
+typedef struct NODO_CPU_INFO {
+	int idCPU;
+	int retardo;
+} t_info_cpu;
 
 typedef struct CPU {
 	int pid;
@@ -127,8 +134,9 @@ int contadorPID = 0;
 int clientePlanificador = 0;
 int servidorPlanificador = 0;
 sem_t semProgramas;
-sem_t mutexProgramas;
-sem_t mutexListaListo;
+pthread_mutex_t mutexCPU;
+pthread_mutex_t mutexListaListo;
+pthread_mutex_t mutexListaEjecutado;
 char comando[100];
 int quantumcfg = 0;
 char algoritmo[4];
@@ -140,17 +148,17 @@ void levantarCfg();
 //Hilos principales
 void* consola();
 void* monitorearSockets();
-void* enviarPCBaCPU();
+//void* enviarPCBaCPU();
 
 int programaValido(char * programa);
-void* agregarPCBALista(char * programa);
+void* agregarPCBALista(void *prog);
 void agregarCPUALista(int cpu);
 int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU);
 int enviarMensajeDePCBaCPU(int socketCPU, t_pcb * nodoPCB);
 void empaquetarPCB(unsigned char *buffer,t_pcb * nodoPCB);
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta);
 void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta);
-void* bloquearPCB(t_pcb * nodoPCB);
+void* bloquearPCB(void *nodo);
 void imprimeEstado(t_list *lista, char*estado );
 void imprimePorcentajeCPU();
 float porcentajeCPU(t_cpu *nodoCPU);
@@ -165,7 +173,10 @@ void* buscarBloqueado(int PID);
 void* buscarPCBEjecutandoPorPID(int PID);
 void* buscarPCBListoPorPID(int PID);
 void * cronometro();
-void* hiloDeCPU(void * socketCPU);
+void* hiloDeCPU(void *nodo);
+
+int recibirInfodeCPU(int socketCPU, t_info_cpu * nodoInfoCpu);
+void desempaquetarNodoInfoCpu(unsigned char *buffer,t_info_cpu * nodoInfoCpu);
 t_list * listaTiempoDeRespuesta;
 t_list * listaTiempoDeEjecucion;
 t_list * listaTiempoDeEspera;

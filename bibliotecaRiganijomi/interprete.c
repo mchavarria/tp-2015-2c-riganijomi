@@ -40,9 +40,8 @@ int devolverIntInstruccion(char * linea, int desde) {
 }
 
 char * traducirExitoStatus(int exito){
-	char * resultado;
-	resultado = malloc(strlen("Exito")+1);
-	if (exito)
+	char * resultado = string_new();
+	if (exito == 1)
 	{
 		strcpy(resultado,"Exito");
 	} else {

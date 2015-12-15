@@ -15,8 +15,10 @@
 
 int main() {
 	sem_init(&semProgramas,0,0);
-	sem_init(&mutexListaListo,0,1);
-	sem_init(&mutexProgramas,0,1);
+	pthread_mutex_init(&mutexListaListo, NULL);
+	pthread_mutex_init(&mutexListaEjecutado, NULL);
+	pthread_mutex_init(&mutexCPU, NULL);
+
 	levantarCfg();
 	listaDeBloqueado = list_create();
 	listaDeEjecutado = list_create();
@@ -74,10 +76,10 @@ void * cronometro() {
 	}
 }
 
-
+/*
 //HACERLO POR CADA CPU CONECTADA
 //INFORMARSE CON UN MONITOR CADA VEZ QUE SE CONECTA UNA
-void* enviarPCBaCPU()
+void* enviarPCBaCPU()//NO SE USA MAS
 {
 	while (list_is_empty(listaDeCPUs)) {
 		;;
@@ -123,6 +125,7 @@ void* enviarPCBaCPU()
 		}
 	}
 }
+*/
 
 int recibirRespuestaCPU(int socketCpu, t_resp_cpu_plan * nodoRespuesta)
 {
@@ -193,8 +196,9 @@ int totalInstruccionesArchivo(char * programa){
 	return resultado;
 }
 
-void* agregarPCBALista(char * programa) {
+void* agregarPCBALista(void *prog) {
 
+	char * programa = prog;
 	t_pcb * pcb = malloc(sizeof(t_pcb));
 	pcb->PID = ++contadorPID;
 	strcat(programa, "\0");
@@ -222,9 +226,9 @@ void* agregarPCBALista(char * programa) {
 	//imprimo pcb
 	int antesDeAgregar = listaDeListo->elements_count;
 	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
-	sem_wait(&mutexListaListo);
+	pthread_mutex_lock(&mutexListaListo);
 	list_add(listaDeListo, pcb);
-	sem_post(&mutexListaListo);
+	pthread_mutex_unlock(&mutexListaListo);
 	//MUTEX
 	int despuesDeAgregar = listaDeListo->elements_count;
 	if (despuesDeAgregar > antesDeAgregar) {
@@ -477,8 +481,11 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 				} else {
 					//saco de la lista de ejecutando
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d (%s) fallo",idCPU,PID,nodoPCB->contextoEjecucion);
+					pthread_mutex_lock(&mutexListaEjecutado);
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+					pthread_mutex_unlock(&mutexListaEjecutado);
 					nodoCPU->disponible = 1;
+					nodoCPU->pcb = 0;
 					continuarRecibiendo = 0;
 				}
 			break;
@@ -489,7 +496,9 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 				} else {
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d - pagina %d No leida.",idCPU,PID,pagRW);
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d - error en asignacion/reemplazo de marcos",idCPU,PID);
+					pthread_mutex_lock(&mutexListaEjecutado);
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+					pthread_mutex_unlock(&mutexListaEjecutado);
 					nodoCPU->disponible = 1;
 					nodoCPU->pcb = 0;
 					continuarRecibiendo = 0;
@@ -502,7 +511,9 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 				} else {
 					log_debug(archivoLog,"CPU %d:Proceso mProc %d NO escribio",idCPU,PID);
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d - error en asignacion/reemplazo de marcos",idCPU,PID);
+					pthread_mutex_lock(&mutexListaEjecutado);
 					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+					pthread_mutex_unlock(&mutexListaEjecutado);
 					nodoCPU->disponible = 1;
 					nodoCPU->pcb = 0;
 					continuarRecibiendo = 0;
@@ -510,9 +521,6 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
     		break;
     		case ENTRADA_SALIDA:
 				if (exito){
-					nodoCPU->disponible = 1;
-					nodoCPU->pcb = 0;
-					
 					tiempoBloqueo = pagRW;
 				
 					//Inicializamos el clock para calcular la cantidad de tiempo que va a estar en entrada-salida.
@@ -523,9 +531,8 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 					nodoClockEspera->processID = PID;
 
 					list_add(listaTiempoDeEspera, nodoClockEspera);
-					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
 					list_add(listaDeBloqueado,nodoPCB);
-
+					nodoPCB->CPU = -1;
 					pthread_t thread_I_O;
 					int r3;
 					//usa el valor de nodo respuesta como tiempo de entrada salida
@@ -536,29 +543,32 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 				} else {
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo instruccion entrada-salida %d ",idCPU,PID,pagRW);
 					log_debug(archivoLog,"CPU %d: Proceso mProc %d - error en entrada/salida",idCPU,PID);
-					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
-					nodoCPU->disponible = 1;
-					nodoCPU->pcb = 0;
 				}
+				pthread_mutex_lock(&mutexListaEjecutado);
+				list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+				pthread_mutex_unlock(&mutexListaEjecutado);
+				nodoCPU->disponible = 1;
+				nodoCPU->pcb = 0;
 				continuarRecibiendo = 0;
 				break;
     		case QUANTUM_ACABADO:
 				if (exito){
-
-					list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
-					nodoCPU->disponible = 1;
-					nodoCPU->pcb = 0;
 					//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
-					sem_wait(&mutexListaListo);
+					pthread_mutex_lock(&mutexListaListo);
 					list_add(listaDeListo, nodoPCB);
-					sem_post(&mutexListaListo);
+					pthread_mutex_unlock(&mutexListaListo);
 					sem_post(&semProgramas);
-
+					nodoPCB->CPU = -1;
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - se bloquea por quantum acabado ",idCPU,PID);
 				} else {
 					//validar luego que opcion hay para fallar
 					log_info(archivoLog,"CPU %d: Proceso mProc %d - fallo la instruccion por quantum",idCPU,PID);
 				}
+				pthread_mutex_lock(&mutexListaEjecutado);
+				list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+				pthread_mutex_unlock(&mutexListaEjecutado);
+				nodoCPU->disponible = 1;
+				nodoCPU->pcb = 0;
 				continuarRecibiendo = 0;
 				break;
     		case FINALIZAR:
@@ -578,7 +588,10 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 					log_info(archivoLog,"CPU %d: Proceso mProc %d (%s) no finalizado",idCPU,PID,nodoPCB->contextoEjecucion);
 				}
     			nodoCPU->disponible = 1;
-    			list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+    			nodoCPU->pcb = 0;
+    			pthread_mutex_lock(&mutexListaEjecutado);
+				list_remove_by_condition(listaDeEjecutado,(void*)buscarPCBporPID);
+				pthread_mutex_unlock(&mutexListaEjecutado);
     			//free(nodoPCB);
     			continuarRecibiendo = 0;
     			break;
@@ -633,6 +646,23 @@ void desempaquetarNodoRtaCpuPlan(unsigned char *buffer,t_resp_cpu_plan * nodoRta
 	nodoRta->respuesta = respuesta;
 }
 
+int recibirInfodeCPU(int socketCPU, t_info_cpu * nodoInfoCpu){
+	unsigned char buffer[1024];
+	int nbytes;
+	if ((nbytes = recv(socketCPU , buffer , sizeof(buffer) , 0)) < 0){
+		printf("Planificador: Error recibiendo mensaje de CPU.\n");
+	} else if (nbytes == 0) {
+		printf("Planificador: Socket CPU desconectado.\n");
+	} else {
+		desempaquetarNodoInfoCpu(buffer,nodoInfoCpu);
+	}
+	return nbytes;
+}
+
+void desempaquetarNodoInfoCpu(unsigned char *buffer,t_info_cpu * nodoInfoCpu){
+	unpack(buffer,SECUENCIA_CPU_INFO,&nodoInfoCpu->idCPU,&nodoInfoCpu->retardo);
+}
+
 int recibirRtadeCPU(int socketCPU, t_resp_cpu_plan * nodoRta){
 	unsigned char buffer[1024];
 	int nbytes;
@@ -678,8 +708,9 @@ void* buscarPCBListoPorPID(int PID){
 	return nodoPCB;
 }
 
-void* bloquearPCB(t_pcb * nodoPCB)
+void* bloquearPCB(void *nodo)
 {
+	t_pcb * nodoPCB = nodo;
 	//se agrega a la lista de listo
 	bool sacarPorPID(t_pcb * nodo) {
 		return (nodo->PID == nodoPCB->PID);
@@ -689,9 +720,9 @@ void* bloquearPCB(t_pcb * nodoPCB)
 	
 	list_remove_by_condition(listaDeBloqueado,(void*)sacarPorPID);
 	//MUTEX  PARA PRIORIZAR BLOQUEADOS Y RR SOBRE NUEVOS
-	sem_wait(&mutexListaListo);
+	pthread_mutex_lock(&mutexListaListo);
 	list_add(listaDeListo,nodoPCB );
-	sem_post(&mutexListaListo);
+	pthread_mutex_unlock(&mutexListaListo);
 	sem_post(&semProgramas);
 
 	
@@ -716,22 +747,15 @@ void* bloquearPCB(t_pcb * nodoPCB)
 
 }
 
-void* hiloDeCPU(void * socketCPU) {
-	int elSocket = socketCPU;
-	bool buscarCPUDisponible(t_cpu * nodoCPU) {
-		return (nodoCPU->socket == elSocket);
-	}
-	t_cpu * nodoCPU = NULL;
+void* hiloDeCPU(void *nodo) {
+	t_cpu * nodoCPU = nodo;
+
 	while (1){
+		pthread_mutex_lock(&mutexCPU);
 		sem_wait(&semProgramas);
-		sem_wait(&mutexProgramas);
-		nodoCPU = NULL;
-		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUDisponible);
-		//Buscar una CPU disponible en la colección de CPUS donde agrega el monitor
-		//CPU disponible, envío el PCB
-		//sem_wait(sem_CPU_conectada);
-		//sleep(2);
+		pthread_mutex_lock(&mutexListaListo);
 		t_pcb * nodoPCB =  list_get(listaDeListo, 0);
+		pthread_mutex_unlock(&mutexListaListo);
 		nodoPCB->CPU = nodoCPU->pid;
 		int err = enviarMensajeDePCBaCPU(nodoCPU->socket, nodoPCB);
 		if (err <= 0){
@@ -744,14 +768,17 @@ void* hiloDeCPU(void * socketCPU) {
 			//Enviado correctamente
 			nodoCPU->disponible = 0;
 			//saca de lista ready
+			pthread_mutex_lock(&mutexListaListo);
 			list_remove(listaDeListo, 0);
-			sem_post(&mutexProgramas);
+			pthread_mutex_unlock(&mutexListaListo);
 			//se agrega a la lista de ejecucion
+			pthread_mutex_lock(&mutexListaEjecutado);
 			list_add(listaDeEjecutado,nodoPCB);
+			pthread_mutex_unlock(&mutexListaEjecutado);
 
 			//printf("PCB %d enviado a CPU %d \n",nodoCPU->pcb,nodoCPU->pid);
 		}//Cierra el err
-
+		pthread_mutex_unlock(&mutexCPU);
 		//Hago un while para respuestas de instrucciones
 		int continuar = 1;
 		int nbytes;
@@ -774,20 +801,22 @@ void* hiloDeCPU(void * socketCPU) {
 
 void agregarCPUALista(int socketCpu) {
 	t_cpu * nodoCpu = malloc(sizeof(t_cpu));
-	nodoCpu->pid = listaDeCPUs->elements_count;
+	t_info_cpu * nodoInfoCpu = malloc(sizeof(t_info_cpu));
+	recibirInfodeCPU(socketCpu, nodoInfoCpu);
+	nodoCpu->pid = nodoInfoCpu->idCPU;
 	nodoCpu->socket = socketCpu;
-	nodoCpu->retardo = 0;
+	nodoCpu->retardo = nodoInfoCpu->retardo;
 	nodoCpu->instruccionesLeidas = 0;
 	nodoCpu->porc = 0;
 	nodoCpu->disponible = 1;
 	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
 	list_add(listaDeCPUs, nodoCpu);
 	//Enviar PCB a CPU
-
+	free(nodoInfoCpu);
 	pthread_t threadDeCPU;
 	int r;
 	//usa el valor de nodo respuesta como tiempo de entrada salida
-	r = pthread_create( &threadDeCPU, NULL, hiloDeCPU, (void*) socketCpu);
+	r = pthread_create( &threadDeCPU, NULL, hiloDeCPU, (void*) nodoCpu);
 
 }
 
