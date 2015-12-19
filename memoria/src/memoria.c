@@ -1157,14 +1157,14 @@ void* monitorearSockets(){
                 	//Aceptamos la conexion entrante, y creamos un nuevo socket mediante el cual nos podamos comunicar.
                     nuevoCliente = socketAceptarConexion(socketServidor,"Memoria","CPU");
                     if (nuevoCliente > 0) {
+                    	//la agrega a la lista de CPUs
+                        agregarCPUALista(nuevoCliente);
                         FD_SET(nuevoCliente, &coleccionSockets); // agrega el cliente al set de sockets
 
                         if (nuevoCliente > colMax) {    // actualiza el maximo
                             colMax = nuevoCliente;
                         }
-                        int pid;
-                        //la agrega a la lista de CPUs
-                        agregarCPUALista(nuevoCliente);
+
                     }
                 } else {
                 	//Tengo un mensaje de algún cliente.
@@ -1214,6 +1214,7 @@ void* recibirRespuestasCompactacion(int tiempoEspera){
 		pthread_mutex_unlock(&mutexlistaEspera);
 
 	}
+	listaRespuestasEnEspera = list_create();
 	puts("Fin respuestas encoladas");
 	pthread_mutex_lock(&prioridadEspera);
 }
@@ -1324,10 +1325,31 @@ int atenderRespuestaEnCola(t_nodo_mem * nodoInst)
 }
 
 
+int recibirInfodeCPU(int socketCPU, t_info_cpu * nodoInfoCpu){
+	unsigned char buffer[1024];
+	int nbytes;
+	if ((nbytes = recv(socketCPU , buffer , sizeof(buffer) , 0)) < 0){
+		printf("Planificador: Error recibiendo mensaje de CPU.\n");
+	} else if (nbytes == 0) {
+		printf("Planificador: Socket CPU desconectado.\n");
+	} else {
+		desempaquetarNodoInfoCpu(buffer,nodoInfoCpu);
+	}
+	return nbytes;
+}
+
+void desempaquetarNodoInfoCpu(unsigned char *buffer,t_info_cpu * nodoInfoCpu){
+	unpack(buffer,SECUENCIA_CPU_INFO,&nodoInfoCpu->idCPU,&nodoInfoCpu->retardo);
+}
+
+
 void agregarCPUALista(int socketCpu) {
 	t_cpu * nodoCpu = malloc(sizeof(t_cpu));
-	nodoCpu->pid = listaDeCPUs->elements_count;
+	t_info_cpu * nodoInfoCpu = malloc(sizeof(t_info_cpu));
+	recibirInfodeCPU(socketCpu, nodoInfoCpu);
+	nodoCpu->pid = nodoInfoCpu->idCPU;
 	nodoCpu->socket = socketCpu;
+	free(nodoInfoCpu);
 	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
 	list_add(listaDeCPUs, nodoCpu);
 }

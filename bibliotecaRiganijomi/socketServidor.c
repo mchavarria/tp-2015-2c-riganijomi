@@ -57,8 +57,6 @@ int socketAceptarConexion(int socket, char * procesoNombre, char * procesoClient
 	{
 		printf("%s: Error aceptando conexión a %s.\n",procesoNombre, procesoCliente);
 		perror("Error - Aceptando conexión.");
-	} else {
-		printf("%s: Conexión aceptada a %s.\n",procesoNombre, procesoCliente);
 	}
 
 	return socketCliente;

@@ -64,7 +64,7 @@ void* cpu_func() {
 		log_error(archivoLog, "CPU %d: Memoria no se pudo conectar", idCPU);
 		exit(EXIT_FAILURE);
 	}
-	//enviarMensajeInfoCPU(socketPlanificador,nodoInfoCpu);Podría hacer el mismo tiepo de envío a la memoria
+	enviarMensajeInfoCPU(socketADM,nodoInfoCpu);
 	free(nodoInfoCpu);
 	pthread_mutex_unlock(&mutexOrdenCpu);
 	//TODAS LAS CPUS VAN A HACER LO MISMO UNA VEZ CONECTADAS.
@@ -244,8 +244,10 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 			if (nodoRta->tipo == COMPACTACION){
 				//printf("CPU %d: El swap se compacta",process_get_thread_id());
 				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
-				sleep(nodoRta->pagina - 1);
-				recibirNodoDeMEM(socketADM,nodoRta);
+				int nbytes;
+				while ((nbytes = recibirNodoDeMEM(socketADM,nodoRta))< 0){
+					//Sigue esperando su respuesta
+				}
 				pthread_mutex_lock(&mutexOrdenCpu);
 			}
 			nodoRtaCpuPlan->exito = nodoRta->exito;
@@ -264,8 +266,10 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 			//Se pudo comunicar bien
 			if (nodoRta->tipo == COMPACTACION){
 				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
-				sleep(nodoRta->pagina - 1);
-				recibirNodoDeMEM(socketADM,nodoRta);
+				int nbytes;
+				while ((nbytes = recibirNodoDeMEM(socketADM,nodoRta))< 0){
+					//Sigue esperando su respuesta
+				}
 				pthread_mutex_lock(&mutexOrdenCpu);
 			}
 			nodoRtaCpuPlan->exito = nodoRta->exito;
@@ -291,8 +295,10 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 		if (exito != -1){
 			if (nodoRta->tipo == COMPACTACION){
 				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
-				sleep(nodoRta->pagina - 1);
-				recibirNodoDeMEM(socketADM,nodoRta);
+				int nbytes;
+				while ((nbytes = recibirNodoDeMEM(socketADM,nodoRta))< 0){
+					//Sigue esperando su respuesta
+				}
 				pthread_mutex_lock(&mutexOrdenCpu);
 			}
 			//Se pudo comunicar bien

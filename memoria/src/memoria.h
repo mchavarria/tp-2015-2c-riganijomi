@@ -28,7 +28,7 @@
 #define NULO 1000000
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_MEM_SWAP "hhhs"
-
+#define SECUENCIA_CPU_INFO "hh"
 #define SECUENCIA_CPU_MEM "hhhhs"
 
 #define LRU 50
@@ -210,8 +210,12 @@ static t_tlb * tlb_create();
 typedef struct CPU {
 	int pid;
 	int socket;
-	int procActual;
 } t_cpu;
+
+typedef struct NODO_CPU_INFO {
+	int idCPU;
+	int retardo;
+} t_info_cpu;
 
 t_list * listaDeCPUs;
 t_list * listaSolicitudes;
@@ -234,6 +238,8 @@ void * calcularTasaAciertos();
 void* recibirRespuestasCompactacion(int tiempoEspera);
 int atenderRespuestaEnCola(t_nodo_mem * nodoInst);
 void agregarNodoEnEspera(t_nodo_mem * nodoInst);
+int recibirInfodeCPU(int socketCPU, t_info_cpu * nodoInfoCpu);
+void desempaquetarNodoInfoCpu(unsigned char *buffer,t_info_cpu * nodoInfoCpu);
 #endif /* MEMORIA_H_ */
 
 

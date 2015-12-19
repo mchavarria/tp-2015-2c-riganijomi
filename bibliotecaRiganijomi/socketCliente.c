@@ -28,7 +28,6 @@ int socketCrearCliente(char * PUERTO, char * IP, char * procesoNombre, char * pr
 	{
 		printf("%s: No se puede crear el socket para conectar a %s\n", procesoNombre,procesoServidor);
 	} else {
-		printf("%s: Socket creado para conectar a %s\n", procesoNombre,procesoServidor);
 		//Ahora me conecto!
 		if (connect(serverSocket, serverInfo->ai_addr, serverInfo->ai_addrlen))
 		{

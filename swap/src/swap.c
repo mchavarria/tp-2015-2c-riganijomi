@@ -56,6 +56,12 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 		pthread_mutex_lock(&mutexListaEspera);
 		agregarAListaDeEspera(nodoMemSwap);
 		pthread_mutex_unlock(&mutexListaEspera);
+		if (nodoMemSwap->tipo != FINALIZAR){
+			//Debo avisar que está en compactacion
+			nodoRespuesta->tipo = COMPACTACION;
+			nodoRespuesta->pagina = retardoCompactacion;
+			enviarMensajeRtaAMem(nodoRespuesta);
+		}
 	}
 }
 
@@ -344,6 +350,7 @@ void atenderProcesosEnEspera(){
 		estructuraRecibida(nodo);
 		pthread_mutex_unlock(&mutexListaEspera);
 	}
+	listaEspera = list_create();
 	puts("Finaliza atencion de solicitudes en espera");
 }
 
