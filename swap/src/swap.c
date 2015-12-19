@@ -54,7 +54,7 @@ void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
 		log_info(archivoLog,"PID %d: Solicitud agregada en Lista de Esepra.\n",nodoMemSwap->pid);
 		//Tengo que agregar a la lista de pedidos
 		pthread_mutex_lock(&mutexListaEspera);
-		list_add(listaEspera, nodoMemSwap);
+		agregarAListaDeEspera(nodoMemSwap);
 		pthread_mutex_unlock(&mutexListaEspera);
 	}
 }
@@ -131,7 +131,7 @@ void recibirProceso(t_nodo_mem_swap * nodoMemSwap)
 				printf("PID %d: Solicitud %s agregada en Lista de Esepra.\n",nodoMemSwap->pid,traducirTipoInstruccion(nodoMemSwap->tipo));
 				log_info(archivoLog,"PID %d: Solicitud agregada en Lista de Esepra.\n",nodoMemSwap->pid);
 				pthread_mutex_lock(&mutexListaEspera);
-				list_add(listaEspera, nodoMemSwap);
+				agregarAListaDeEspera(nodoMemSwap);
 				pthread_mutex_unlock(&mutexListaEspera);
 
 				log_info(archivoLog, "Se COMPACTA para recibir el proceso PID: %d", idProc);
@@ -157,6 +157,16 @@ void recibirProceso(t_nodo_mem_swap * nodoMemSwap)
 	}
 
 	enviarMensajeRtaAMem(nodoRespuesta);
+}
+
+void agregarAListaDeEspera(t_nodo_mem_swap * nodoMemSwap){
+	t_nodo_mem_swap * nodo = malloc(sizeof(t_nodo_mem_swap));
+	nodo->contenido = string_new();
+	nodo->pagina = nodoMemSwap->pagina;
+	nodo->pid = nodoMemSwap->pid;
+	nodo->tipo = nodoMemSwap->tipo;
+	strcpy(nodo->contenido,nodoMemSwap->contenido);
+	list_add(listaEspera, nodo);
 }
 
 int agregarProcesoEnSwap(int idProc, int cantPagProceso){
@@ -237,7 +247,7 @@ void eliminarProceso(int pid)
 		nodoRespuesta->exito = 0;
 		log_info(archivoLog, "PID %d: No se pudo eliminar de Swap.", pid);
 	}
-	imprimirEstadosListas();
+	//imprimirEstadosListas();
 
 	//enviarMensajeRtaAMem(nodoRespuesta);
 }
@@ -315,7 +325,7 @@ void* compactacion(){
 	list_iterate(listaProcesos, (void *)libre);
 	list_add(listaLibres, crearNodoLibre(indiceLibre, (cantPaginas - tamanio)));
 	puts("Compactacion finalizada");
-	imprimirEstadosListas();
+	//imprimirEstadosListas();
 	//Atiendo los nodos en espera y despues libero.
 	pthread_mutex_lock(&ordenAtencion);
 	hayFragmentacion = 0;

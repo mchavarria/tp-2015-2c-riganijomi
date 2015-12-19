@@ -140,6 +140,7 @@ void avisarAMemQueEspere();
 void escribir(t_envioPaginaSwap * nodoEscribir);
 void atenderProcesosEnEspera();
 char * traducirTipoInstruccion(int tipo);
+void agregarAListaDeEspera(t_nodo_mem_swap * nodoMemSwap);
 t_list * listaLibres;
 t_list * listaProcesos;
 t_list * listaEspera;

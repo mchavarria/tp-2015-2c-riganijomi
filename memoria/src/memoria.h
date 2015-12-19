@@ -29,7 +29,7 @@
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_MEM_SWAP "hhhs"
 
-#define SECUENCIA_CPU_MEM "hhhs"
+#define SECUENCIA_CPU_MEM "hhhhs"
 
 #define LRU 50
 
@@ -50,7 +50,6 @@ t_config* archConfig;
 //LOG
 t_log* archivoLog;
 //sockets
-int socketCpu;
 int socketSwap;
 int socketServidor;
 double comandosTotales = 0;
@@ -86,6 +85,7 @@ typedef struct NODO_MEM {
 	int pid;
 	int pagina;
 	int instruccion;
+	int socketCpu;
 	char *texto;
 } t_nodo_mem;
 
@@ -194,9 +194,9 @@ void desasignarTodosLosProcesos();
 void flushTLBActivacion();
 void configurarSockets();
 //SERIALIZACION
-int recibirNodoDeCPU(t_nodo_mem * nodo);
+int recibirNodoDeCPU(t_nodo_mem * nodo,int socketCpu);
 void desempaquetarNodoInstruccion(unsigned char *buffer,t_nodo_mem * nodo);
-int enviarMensajeDeNodoACPU(t_resp_swap_mem * nodo);
+int enviarMensajeDeNodoACPU(t_resp_swap_mem * nodo,int socketCpu);
 void empaquetarNodoRtaCPU(unsigned char *buffer,t_resp_swap_mem * nodo);
 int enviarMensajeDeNodoASWAP(t_nodo_mem_swap * nodo);
 void empaquetarNodoMemSWAP(unsigned char *buffer,t_nodo_mem_swap * nodo);
@@ -209,19 +209,21 @@ static t_tlb * tlb_create();
 typedef struct CPU {
 	int pid;
 	int socket;
+	int procActual;
 } t_cpu;
 
 t_list * listaDeCPUs;
 t_list * listaSolicitudes;
 t_list * listaRespuestasEnEspera;
 pthread_mutex_t prioridadEspera;
+pthread_mutex_t mutexlistaEspera;
 sem_t cantSolicitudes;
 void informarDesconexionCPU(int socketCPU);
 void* monitorearSockets();
 void recibirSolicitudCPU();
 void agregarCPUALista(int socketCpu);
 void* atenderSolicitudes();
-void recibirSolicitudDeCpu(int socket, int * nbytes);
+void recibirSolicitudDeCpu(int socketCPU, int * nbytes);
 int obtenerPaginaLeeroEscribir(char * linea);
 static t_marco * seleccionarMarcoVictima(int pid);
 void finalizarProceso(int pid);
@@ -230,7 +232,7 @@ int algoritmoReemplazoClock(int processID);
 void * calcularTasaAciertos();
 void* recibirRespuestasCompactacion(int tiempoEspera);
 int atenderRespuestaEnCola(t_nodo_mem * nodoInst);
-
+void agregarNodoEnEspera(t_nodo_mem * nodoInst);
 #endif /* MEMORIA_H_ */
 
 

@@ -855,7 +855,6 @@ void* monitorearSockets(){
                 	//Aceptamos la conexion entrante, y creamos un nuevo socket mediante el cual nos podamos comunicar.
                     nuevoCliente = socketAceptarConexion(servidorPlanificador,"Planificador","CPU");
                     if (nuevoCliente > 0) {
-                    	sleep(1);
                     	agregarCPUALista(nuevoCliente);
                         FD_SET(nuevoCliente, &coleccionSockets); // agrega el cliente al set de sockets
                         if (nuevoCliente > colMax) {    // actualiza el maximo

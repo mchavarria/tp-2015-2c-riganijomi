@@ -38,16 +38,16 @@
 #define SECUENCIA_PCB "hhhhhhs"
 #define SECUENCIA_NODO_RTA_CPU_PLAN "hhhhhhs"
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
-#define SECUENCIA_CPU_MEM "hhhs"
+#define SECUENCIA_CPU_MEM "hhhhs"
 #define SECUENCIA_CPU_INFO "hh"
 
 typedef struct NODO_MEM {
 	int pid;
 	int pagina;
 	int instruccion;
+	int socketCpu;
 	char *texto;
 } t_nodo_mem;
-
 
 typedef struct NODO_CPU_INFO {
 	int idCPU;

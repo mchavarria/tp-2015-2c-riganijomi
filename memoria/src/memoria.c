@@ -598,6 +598,20 @@ void actualizarNodoPaginas(int indiceMarco, int processID, int numeroPagina) {
 	nodoPagina->numeroMarco = indiceMarco;
 }
 
+void agregarNodoEnEspera(t_nodo_mem * nodoInst){
+	t_nodo_mem * nodo = malloc(sizeof(t_nodo_mem));
+	nodo->instruccion = nodoInst->instruccion;
+	nodo->pagina = nodoInst->pagina;
+	nodo->pid = nodoInst->pid;
+	nodo->texto = string_new();
+	nodo->socketCpu = nodoInst->socketCpu;
+	strcpy(nodo->texto,nodoInst->texto);
+	pthread_mutex_lock(&mutexlistaEspera);
+	list_add(listaRespuestasEnEspera,nodo);//Guardo la solicitud enviada
+	pthread_mutex_unlock(&mutexlistaEspera);
+
+}
+
 int interpretarLinea(t_nodo_mem * nodoInst)
 {
 	int pid = nodoInst->pid;
@@ -627,20 +641,20 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				if (nodoRtaSwap->exito){
 					inicializarTablaDePaginas(pagina, pid);
 				}
-				enviarMensajeDeNodoACPU(nodoRtaSwap);
+				enviarMensajeDeNodoACPU(nodoRtaSwap,nodoInst->socketCpu);
 				log_info(archivoLog, "PID %d: Total de paginas %d. Inicio: %s", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
 				puts("----------------------");
 				printf("PID %d: Total de paginas %d. Inicio: %s\n", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
 				puts("----------------------");
 			} else {
 				//Agrego a la lista de solicitudes pendientes
-				list_add(listaRespuestasEnEspera,nodoInst);//Guardo la solicitud enviada
+				agregarNodoEnEspera(nodoInst);
 				//abro hilo que espere los 60 seg antes de recibir respuestas
 				pthread_t hiloRespuestasEnEspera;
 				int r4;
 				r4 = pthread_create( &hiloRespuestasEnEspera, NULL, recibirRespuestasCompactacion, (void*) nodoRtaSwap->pagina);
 				nodoRtaSwap->tipo = COMPACTACION;
-				enviarMensajeDeNodoACPU(nodoRtaSwap);
+				enviarMensajeDeNodoACPU(nodoRtaSwap,nodoInst->socketCpu);
 			}
 			break;
 		case FINALIZAR:
@@ -673,9 +687,9 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				recibirNodoDeRtaSwap(nodoRtaSwap);
 				if (nodoRtaSwap->tipo == COMPACTACION){
 					//Agrego a la lista de solicitudes pendientes
-					list_add(listaRespuestasEnEspera,nodoInst);//Guardo la solicitud enviada
+					agregarNodoEnEspera(nodoInst);
 					nodoRtaSwap->tipo = COMPACTACION;
-					enviarMensajeDeNodoACPU(nodoRtaSwap);
+					enviarMensajeDeNodoACPU(nodoRtaSwap,nodoInst->socketCpu);
 					PFyCompactacion = 1;
 				} else {
 					//NO hay compactacion
@@ -692,7 +706,9 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 						nodoASwap->tipo = FINALIZAR;
 						enviarMensajeDeNodoASWAP(nodoASwap);
 						log_info(archivoLog, "PID %d: Finalizado por asignacion de marcos.", pid);
+						puts("----------------------");
 						printf("PID %d: Finalizado por asignacion de marcos.\n", pid);
+						puts("----------------------");
 						finalizaPorError = 1;
 					} else {
 						strcpy(marco->valor, nodoRtaSwap->contenido);
@@ -732,7 +748,7 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			if (PFyCompactacion == 0){
 				//Si no hay compactacion responde normalmente
 				usleep(RETARDO_MEMORIA * 1000000);
-				enviarMensajeDeNodoACPU(nodoRtaSwap);
+				enviarMensajeDeNodoACPU(nodoRtaSwap,nodoInst->socketCpu);
 				//printf("El retardo fue de %g", RETARDO_MEMORIA);
 				if (!finalizaPorError){
 					//Actualizar el bit de uso y/o Modificacion
@@ -991,7 +1007,7 @@ void desasignarTodosLosProcesos() {
 }
 
 
-int recibirNodoDeCPU(t_nodo_mem * nodo){
+int recibirNodoDeCPU(t_nodo_mem * nodo,int socketCpu){
 	unsigned char buffer[1024];
 	int nbytes;
 	nbytes = recv(socketCpu , buffer , sizeof(buffer) , 0);
@@ -1004,12 +1020,12 @@ int recibirNodoDeCPU(t_nodo_mem * nodo){
 void desempaquetarNodoInstruccion(unsigned char *buffer,t_nodo_mem * nodo){
 
 	char texto[100];
-	unpack(buffer,SECUENCIA_CPU_MEM,&nodo->pid,&nodo->pagina,&nodo->instruccion,texto);
+	unpack(buffer,SECUENCIA_CPU_MEM,&nodo->pid,&nodo->pagina,&nodo->instruccion,&nodo->socketCpu,texto);
 	strcpy(nodo->texto,texto);
 }
 
 
-int enviarMensajeDeNodoACPU(t_resp_swap_mem * nodo)
+int enviarMensajeDeNodoACPU(t_resp_swap_mem * nodo,int socketCpu)
 {
 	int nbytes;
 	unsigned char buffer[1024];
@@ -1054,7 +1070,6 @@ void desempaquetarNodoRtaSwap(unsigned char *buffer,t_resp_swap_mem * nodo)
 	//t_pcb * pcb = malloc(sizeof(t_pcb));
 	char contenido[50];
 	unpack(buffer,SECUENCIA_NODO_RTA_SWAP_MEM,&nodo->tipo,&nodo->exito,&nodo->pagina,contenido);
-	nodo->contenido = malloc(sizeof(contenido));
 	strcpy(nodo->contenido, contenido);
 }
 
@@ -1127,7 +1142,6 @@ void* monitorearSockets(){
                 } else {
                 	//Tengo un mensaje de algún cliente.
                 	//Respuesta de alguna instrucción de CPU
-                	socketCpu = i;
                 	recibirSolicitudDeCpu(i, &nbytes);
                 	if (nbytes <= 0) {
 						// connection closed
@@ -1161,13 +1175,19 @@ void* atenderSolicitudes()
 }
 
 void* recibirRespuestasCompactacion(int tiempoEspera){
-	sleep(tiempoEspera);
+	sleep(tiempoEspera - 1);
 	int cant = listaRespuestasEnEspera->elements_count;
 	int i;
 	pthread_mutex_unlock(&prioridadEspera);
+	puts("Recibiendo respuestas encoladas");
 	for (i = 0; i < cant; i++){
-		atenderRespuestaEnCola(list_remove(listaRespuestasEnEspera,0));
+		pthread_mutex_lock(&mutexlistaEspera);
+		t_nodo_mem * nodo = list_get(listaRespuestasEnEspera,i);
+		atenderRespuestaEnCola(nodo);
+		pthread_mutex_unlock(&mutexlistaEspera);
+
 	}
+	puts("Fin respuestas encoladas");
 	pthread_mutex_lock(&prioridadEspera);
 }
 
@@ -1187,16 +1207,14 @@ int atenderRespuestaEnCola(t_nodo_mem * nodoInst)
 	pagina = nodoInst->pagina;
 	int finalizaPorError = 0;
 	//para la Lectura/escritura
-	t_marco * marco = NULL;
 	switch(nodoInst->instruccion){
 		case INICIAR:
 			nodoASwap->tipo = INICIAR;
 			nodoASwap->pagina = pagina;
-			enviarMensajeDeNodoASWAP(nodoASwap);
 			if (nodoRtaSwap->exito){
 				inicializarTablaDePaginas(pagina, pid);
 			}
-			enviarMensajeDeNodoACPU(nodoRtaSwap);
+			enviarMensajeDeNodoACPU(nodoRtaSwap,nodoInst->socketCpu);
 			log_info(archivoLog, "PID %d: Total de paginas %d. Inicio: %s", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
 			puts("----------------------");
 			printf("PID %d: Total de paginas %d. Inicio: %s\n", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
@@ -1207,7 +1225,6 @@ int atenderRespuestaEnCola(t_nodo_mem * nodoInst)
 			//Lectura o Escritura
 			comandosTotales++; //para calcuar la tasa de aciertos de la TLB
 			//Habia PF por eso pedi la lectura
-			recibirNodoDeRtaSwap(nodoRtaSwap);
 			pageFaultLectura = 1;
 			t_tablasPaginas * tablaDeProceso;
 			tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
@@ -1259,7 +1276,7 @@ int atenderRespuestaEnCola(t_nodo_mem * nodoInst)
 			}
 			//Si no hay compactacion responde normalmente
 			usleep(RETARDO_MEMORIA * 1000000);
-			enviarMensajeDeNodoACPU(nodoRtaSwap);
+			enviarMensajeDeNodoACPU(nodoRtaSwap,nodoInst->socketCpu);
 			//printf("El retardo fue de %g", RETARDO_MEMORIA);
 			if (!finalizaPorError){
 				//Actualizar el bit de uso y/o Modificacion
@@ -1299,12 +1316,13 @@ void informarDesconexionCPU(int socketCPU)
 	printf("La CPU: %d ha sido desconectada.\n", nodoCPU->pid);
 }
 
-void recibirSolicitudDeCpu(int socket, int * nbytes){
+void recibirSolicitudDeCpu(int socketCPU, int * nbytes){
 	t_nodo_mem * nodo = malloc(sizeof(t_nodo_mem));
 	nodo->texto = string_new();
-	int err = recibirNodoDeCPU(nodo);
+	int err = recibirNodoDeCPU(nodo,socketCPU);
 	*nbytes = err;//Dereferencia del puntero para cambmiarle el valor
 	if (err > 0){
+		nodo->socketCpu = socketCPU;
 		//agrega a lista
 		list_add(listaSolicitudes,nodo);
 		sem_post(&cantSolicitudes);

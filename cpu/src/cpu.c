@@ -26,6 +26,7 @@ int main() {
 	for (i = 0; i < cantCPUs; i++) {
 		nodoHilosCPU =  list_get(listaHilosCPU, i);
 		pthread_create(&(nodoHilosCPU->hiloCPU), NULL, cpu_func, (void*) i);
+		sleep(1);
 	}
 	//Esperar hilos
 	for (i = 0; i < cantCPUs; i++) {
@@ -226,6 +227,7 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 	t_nodo_mem * nodoInstruccion;
 	nodoInstruccion = malloc(sizeof(t_nodo_mem));
 	nodoInstruccion->pid = pcbProc->PID;
+	nodoInstruccion->socketCpu = 0;
 	nodoInstruccion->texto = string_new();
 	//El ADM me reenvia la respuesta del SWAP
 	t_resp_swap_mem * nodoRta;
@@ -240,10 +242,11 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 		if (exito != -1){
 			//Se pudo comunicar bien
 			if (nodoRta->tipo == COMPACTACION){
+				//printf("CPU %d: El swap se compacta",process_get_thread_id());
 				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
 				sleep(nodoRta->pagina - 1);
-				pthread_mutex_lock(&mutexOrdenCpu);
 				recibirNodoDeMEM(socketADM,nodoRta);
+				pthread_mutex_lock(&mutexOrdenCpu);
 			}
 			nodoRtaCpuPlan->exito = nodoRta->exito;
 		}
@@ -262,8 +265,8 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 			if (nodoRta->tipo == COMPACTACION){
 				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
 				sleep(nodoRta->pagina - 1);
-				pthread_mutex_lock(&mutexOrdenCpu);
 				recibirNodoDeMEM(socketADM,nodoRta);
+				pthread_mutex_lock(&mutexOrdenCpu);
 			}
 			nodoRtaCpuPlan->exito = nodoRta->exito;
 			strcpy(nodoRtaCpuPlan->respuesta,nodoRta->contenido);
@@ -289,8 +292,8 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 			if (nodoRta->tipo == COMPACTACION){
 				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
 				sleep(nodoRta->pagina - 1);
-				pthread_mutex_lock(&mutexOrdenCpu);
 				recibirNodoDeMEM(socketADM,nodoRta);
+				pthread_mutex_lock(&mutexOrdenCpu);
 			}
 			//Se pudo comunicar bien
 			nodoRtaCpuPlan->exito = nodoRta->exito;
@@ -502,7 +505,7 @@ int enviarMensajeDeNodoAMem(int socketADM, t_nodo_mem * nodo, char * texto)
 void empaquetarNodoMemCPU(unsigned char *buffer,t_nodo_mem * nodo, char * texto)
 {
 	unsigned int tamanioBuffer;
-	tamanioBuffer = pack(buffer,SECUENCIA_CPU_MEM,nodo->pid,nodo->pagina,nodo->instruccion,texto);
+	tamanioBuffer = pack(buffer,SECUENCIA_CPU_MEM,nodo->pid,nodo->pagina,nodo->instruccion,nodo->socketCpu,texto);
 }
 
 
