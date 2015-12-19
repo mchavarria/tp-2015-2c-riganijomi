@@ -24,6 +24,7 @@
 #define ESCRIBIR 3
 #define FINALIZAR 6
 #define ERRONEA 15
+#define COMPACTACION 10
 #define NULO 1000000
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_MEM_SWAP "hhhs"
@@ -213,6 +214,8 @@ typedef struct CPU {
 
 t_list * listaDeCPUs;
 t_list * listaSolicitudes;
+t_list * listaRespuestasEnEspera;
+pthread_mutex_t prioridadEspera;
 sem_t cantSolicitudes;
 void informarDesconexionCPU(int socketCPU);
 void* monitorearSockets();
@@ -226,6 +229,8 @@ void finalizarProceso(int pid);
 void modificarBitsClock (int pid, t_list * listaMarcos,int indiceMarco);
 int algoritmoReemplazoClock(int processID);
 void * calcularTasaAciertos();
+void* recibirRespuestasCompactacion(int tiempoEspera);
+int atenderRespuestaEnCola(t_nodo_mem * nodoInst);
 
 #endif /* MEMORIA_H_ */
 

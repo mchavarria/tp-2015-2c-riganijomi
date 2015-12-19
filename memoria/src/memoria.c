@@ -10,11 +10,13 @@ int main(int argc, char* argv[]) {
 	sem_init(&mutexFlushTLB, 0, 1);
 	sem_init(&cantSolicitudes,0,0);
 	sem_init(&productorSwap, 0, 1);
+	pthread_mutex_init(&prioridadEspera, NULL);
 	listaTablasPaginas = list_create();
 	listaMarco = list_create();
 	listaTLB = list_create();
 	listaDeCPUs = list_create();
 	listaSolicitudes = list_create();
+	listaRespuestasEnEspera = list_create();
 
 	levantarCfgInicial();
 	configurarSockets();
@@ -67,7 +69,7 @@ static t_marco * marco_create(int numeroMarco) {
     new->numeroPagina = 0;
     new->bitModificacion = 1;
     new->bitLeido = 0;
-    new->valor = malloc(sizeof("")+1);
+    new->valor = string_new();
     strcpy(new->valor,"NULL");
     //Si esta en 1 arranca desde ahi
     new->punteroClock = 0;
@@ -234,7 +236,7 @@ int buscarEnTLB(int processID, int numeroPagina) {
 		nodoTLB = list_find(listaTLB, (void *) devolverValorDeTLB);
 
 		if (nodoTLB != NULL) {
-			printf("encontrado en TLB marco %d\n",nodoTLB->marco);
+			printf("PID %d: Pagina %d encontrada en TLB - marco %d\n",nodoTLB->processID, nodoTLB->numeroPagina, nodoTLB->marco);
 			return nodoTLB->marco;
 		}
 	}
@@ -552,7 +554,7 @@ void desasignarMarco(int processID, int marco) {
 	t_marco * nodoMarco = list_get(listaMarco, marco);
 	if (nodoMarco->bitModificacion == 1){
 		//TODO escribir en SWAP
-		printf("PageFault (REEMPLAZO): Guardando contenido modificado a Swap: Proceso %d - Pagina %d - Contenido %s.\n",processID,nodoMarco->numeroPagina,nodoMarco->valor);
+		printf("PID %d: Pagina %d  - PF (REEMPLAZO): Enviando contenido modificado -%s- a Swap.\n",processID,nodoMarco->numeroPagina,nodoMarco->valor);
 		t_nodo_mem_swap * nodito = malloc(sizeof(t_nodo_mem_swap));
 		nodito->tipo = ESCRIBIR;
 		nodito->pagina = nodoMarco->numeroPagina;
@@ -607,13 +609,11 @@ int interpretarLinea(t_nodo_mem * nodoInst)
     //Envio a SWAP
     nodoASwap = malloc(sizeof(t_nodo_mem_swap));
 	nodoASwap->pid = pid;
-	nodoASwap->contenido = malloc(strlen("")+1);
-	strcpy(nodoASwap->contenido,"\0");
+	nodoASwap->contenido = string_new();
 
 	//Respuesta a CPU
 	nodoRtaSwap = malloc(sizeof(t_resp_swap_mem));
-	nodoRtaSwap->contenido = malloc(strlen("")+1);
-	strcpy(nodoRtaSwap->contenido,"\0");
+	nodoRtaSwap->contenido = string_new();
 	int pagina;
 	pagina = nodoInst->pagina;
 	int finalizaPorError = 0;
@@ -626,82 +626,106 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 			nodoASwap->pagina = pagina;
 			enviarMensajeDeNodoASWAP(nodoASwap);
 			recibirNodoDeRtaSwap(nodoRtaSwap);
-			if (nodoRtaSwap->exito){
-				inicializarTablaDePaginas(pagina, pid);
+			if (nodoRtaSwap->tipo != COMPACTACION){
+				//opero normalmente
+				if (nodoRtaSwap->exito){
+					inicializarTablaDePaginas(pagina, pid);
+				}
+				enviarMensajeDeNodoACPU(nodoRtaSwap);
+				log_info(archivoLog, "PID %d: Total de paginas %d. Inicio: %s", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
+				puts("----------------------");
+				printf("PID %d: Total de paginas %d. Inicio: %s\n", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
+				puts("----------------------");
+			} else {
+				//Agrego a la lista de solicitudes pendientes
+				list_add(listaRespuestasEnEspera,nodoInst);//Guardo la solicitud enviada
+				//abro hilo que espere los 60 seg antes de recibir respuestas
+				pthread_t hiloRespuestasEnEspera;
+				int r4;
+				r4 = pthread_create( &hiloRespuestasEnEspera, NULL, recibirRespuestasCompactacion, (void*) nodoRtaSwap->pagina);
+				nodoRtaSwap->tipo = COMPACTACION;
+				enviarMensajeDeNodoACPU(nodoRtaSwap);
 			}
-			enviarMensajeDeNodoACPU(nodoRtaSwap);
-			log_info(archivoLog, "Proceso ID %d, cantidad de paginas %d. Inicio: %s", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
-			printf("Proceso ID %d, cantidad de paginas %d. Inicio: %s\n", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
 			break;
 		case FINALIZAR:
 			nodoASwap->tipo = FINALIZAR;
 			nodoRtaSwap->tipo = FINALIZAR;
 			t_tablasPaginas * tablaDeProceso;
 			tablaDeProceso = buscarTablaPaginas(pid);
-			log_info(archivoLog, "Cantidad de paginas accedidas: %d del proceso %d.", tablaDeProceso->paginasAccedidas, pid);
-			log_info(archivoLog, "Cantidad de page faults: %d, del proceso %d", tablaDeProceso->contadorPageFault, pid);
+			log_info(archivoLog, "PID %d: Cantidad de paginas accedidas: %d.", tablaDeProceso->paginasAccedidas, pid);
+			log_info(archivoLog, "PID %d: Cantidad de page faults: %d.", tablaDeProceso->contadorPageFault, pid);
 			finalizarProceso(pid);//Finaliza el proceso
 			nodoASwap->pagina = 0;
 			enviarMensajeDeNodoASWAP(nodoASwap);
-			log_info(archivoLog, "Se ha finalizado el proceso con ID: %d.", pid);
-			printf("Se ha finalizado el proceso con ID: %d.\n", pid);
+			log_info(archivoLog, "PID %d: Finalizado.", pid);
+			puts("----------------------");
+			printf("PID %d: Finalizado.\n", pid);
+			puts("----------------------");
 			break;
 		default:
 			sem_wait(&mutexFlushMarcos);
 			//Lectura o Escritura
 			comandosTotales++; //para calcuar la tasa de aciertos de la TLB
+			int PFyCompactacion = 0;
 			marco = detectarPageFault(nodoInst,pagina);
 			if (marco == NULL)
 			{//Hay page fault
-				pageFaultLectura = 1;
-				t_tablasPaginas * tablaDeProceso;
-				tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
-				tablaDeProceso->contadorPageFault++;
-				tablaDeProceso->paginasAccedidas++;
-				printf("PageFault: Solicitando contenido a Swap: Proceso %d - Pagina %d\n",pid,pagina);
+				printf("PID %d: Pagina %d. PF - Solicitando contenido a Swap.\n",pid,pagina);
 				nodoASwap->tipo = LEER;
 				nodoASwap->pagina = pagina;
-				enviarMensajeDeNodoASWAP(nodoASwap);
+				enviarMensajeDeNodoASWAP(nodoASwap);//Pido lectura en SWAP
 				recibirNodoDeRtaSwap(nodoRtaSwap);
-				marco = seleccionarMarcoVictima(pid);
-				if (marco == NULL){
-					//No se pudo asignar un marco
-					finalizarProceso(pid);
-					//Se finaliza el proceso
-					nodoASwap->tipo = FINALIZAR;
-					enviarMensajeDeNodoASWAP(nodoASwap);
-					log_info(archivoLog, "Finalizado por asignacion de marcos: process ID %d", pid);
-					printf("Finalizado por asignacion de marcos: process ID %d\n", pid);
-					finalizaPorError = 1;
+				if (nodoRtaSwap->tipo == COMPACTACION){
+					//Agrego a la lista de solicitudes pendientes
+					list_add(listaRespuestasEnEspera,nodoInst);//Guardo la solicitud enviada
+					nodoRtaSwap->tipo = COMPACTACION;
+					enviarMensajeDeNodoACPU(nodoRtaSwap);
+					PFyCompactacion = 1;
 				} else {
-					strcpy(marco->valor, nodoRtaSwap->contenido);
+					//NO hay compactacion
+					pageFaultLectura = 1;
+					t_tablasPaginas * tablaDeProceso;
+					tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
+					tablaDeProceso->contadorPageFault++;
+					tablaDeProceso->paginasAccedidas++;
+					marco = seleccionarMarcoVictima(pid);
+					if (marco == NULL){
+						//No se pudo asignar un marco
+						finalizarProceso(pid);
+						//Se finaliza el proceso
+						nodoASwap->tipo = FINALIZAR;
+						enviarMensajeDeNodoASWAP(nodoASwap);
+						log_info(archivoLog, "PID %d: Finalizado por asignacion de marcos.", pid);
+						printf("PID %d: Finalizado por asignacion de marcos.\n", pid);
+						finalizaPorError = 1;
+					} else {
+						strcpy(marco->valor, nodoRtaSwap->contenido);
+					}
 				}
 			}
-			if (nodoInst->instruccion == LEER)
+			if (nodoInst->instruccion == LEER && PFyCompactacion == 0)
 			{
 				nodoRtaSwap->tipo = LEER;
 				if (!finalizaPorError){
 					nodoRtaSwap->exito = 1;
 					strcpy(nodoRtaSwap->contenido, marco->valor);
-					log_info(archivoLog, "Se ha leido una pagina: process ID %d, pagina leida %d con el valor '%s'", pid, pagina, marco->valor);
-					printf("Se ha leido una pagina: process ID %d, pagina leida %d con el valor '%s'\n", pid, pagina, marco->valor);
+					log_info(archivoLog, "PID %d: Pagina %d leida - contenido '%s'", pid, pagina, marco->valor);
+					printf("PID %d: Pagina %d leida - contenido '%s'\n", pid, pagina, marco->valor);
 
 				} else {
 					//Si falla la CPU debe finalizarlo
 					nodoRtaSwap->exito = 0;
 				}
-			} else {
+			}
+			if (nodoInst->instruccion == ESCRIBIR && PFyCompactacion == 0) {
 				//ESCRIBIR
 				nodoRtaSwap->tipo = ESCRIBIR;
 				if (!finalizaPorError){
 					nodoRtaSwap->exito = 1;
-					char * tamTexto = malloc(sizeof("")+1);
-					strncpy(tamTexto,nodoInst->texto,TAMANIO_MARCO);
-					strcat(tamTexto,"\0");
-					strcpy(marco->valor,tamTexto);
-					strcpy(nodoRtaSwap->contenido,tamTexto);
-					log_info(archivoLog, "Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'", pid, pagina, marco->valor);
-					printf("Se ha escrito una pagina: process ID %d, pagina escrita %d con el valor '%s'\n", pid, pagina, marco->valor);
+					strcpy(marco->valor,nodoInst->texto);
+					strcpy(nodoRtaSwap->contenido,nodoInst->texto);
+					log_info(archivoLog, "PID %d: Pagina %d escrita - contenido '%s'", pid, pagina, marco->valor);
+					printf("PID %d: Pagina %d escrita - contenido '%s'\n", pid, pagina, marco->valor);
 
 				} else {
 					//Si falla la CPU debe finalizarlo
@@ -709,22 +733,26 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				}
 
 			}
-			if (encontradoEnTLB) {
-				usleep(RETARDO_MEMORIA * 1000000);
-			}
-			encontradoEnTLB = 1;
-			enviarMensajeDeNodoACPU(nodoRtaSwap);
-			//printf("El retardo fue de %g", RETARDO_MEMORIA);
-			if (!finalizaPorError){
-				//Actualizar el bit de uso y/o Modificacion
-				actualizarMarco(marco->valor,pid,pagina,marco->numeroMarco,nodoRtaSwap->tipo);
-				//actualiza TLB con el uso reciente.
-				cargarTlb(nodoInstruccion, marco, pid);
-			}
-			sem_post(&mutexFlushMarcos);
 
 			//imprimirTLB();
+			if (PFyCompactacion == 0){
+				//Si no hay compactacion responde normalmente
+				if (encontradoEnTLB) {
+					usleep(RETARDO_MEMORIA * 1000000);
+				}
+				encontradoEnTLB = 1;
+				enviarMensajeDeNodoACPU(nodoRtaSwap);
+				//printf("El retardo fue de %g", RETARDO_MEMORIA);
+				if (!finalizaPorError){
+					//Actualizar el bit de uso y/o Modificacion
+					actualizarMarco(marco->valor,pid,pagina,marco->numeroMarco,nodoRtaSwap->tipo);
+					//actualiza TLB con el uso reciente.
+					cargarTlb(nodoInstruccion, marco, pid);
+				}
+				sem_post(&mutexFlushMarcos);
 
+				//imprimirTLB();
+			}
 			break;
 	}
 
@@ -789,7 +817,7 @@ static t_marco * seleccionarMarcoVictima(int pid)
 		//elimina numero de marco en la pagina victima
 		indiceMarco = algoritmoReemplazo(pid);
 		//Debe escribirlo en swap en caso de haber sido escrita
-		printf("La victima es: %d\n", indiceMarco);
+		printf("PID %d: Marco %d seleccionado para ser reemplazado.\n",pid,indiceMarco);
 		desasignarMarco(pid,indiceMarco);
 	} else {
 		puts("Error de cantidad de marcos");
@@ -826,12 +854,12 @@ void cargarTlb(t_nodo_mem * nodoInstruccion, t_marco * marco, int pid){
 				nodoTLB->marco = marco->numeroMarco;
 				nodoTLB->processID = nodoInstruccion->pid;
 				nodoTLB->numeroPagina = marco->numeroPagina;
-				printf("Marco: %d, processID: %d, Numero Pagina: %d\n", nodoTLB->marco, nodoTLB->processID, nodoTLB->numeroPagina);
+				printf("PID %d: Pagina %d en Marco %d\n",nodoTLB->processID,nodoTLB->numeroPagina, nodoTLB->marco);
 			}
 		} else {
 			nodoTLB->numeroPagina = marco->numeroPagina;
 			nodoTLB->processID = nodoInstruccion->pid;
-			printf("processID: %d, Numero Pagina: %d\n", nodoTLB->processID, nodoTLB->numeroPagina);
+			//printf("PID: %d, Numero Pagina: %d\n", nodoTLB->processID, nodoTLB->numeroPagina);
 		}
 	}
 
@@ -851,9 +879,6 @@ int valorPagina(char * instruccion){
 
 void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int tipo){
 	t_marco * ptrMarco = NULL;
-	char * tamTexto = malloc(sizeof("")+1);
-	strncpy(tamTexto,texto,TAMANIO_MARCO);
-	strcat(tamTexto,"\0");
 	ptrMarco = list_get(listaMarco, marco);
 	ptrMarco->processID = processID;
 	ptrMarco->numeroPagina = numeroPagina;
@@ -862,7 +887,7 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 			//es lectura
 			ptrMarco->bitLeido = 1;
 			//Si hubo PF guardo el valor
-			strcpy(ptrMarco->valor,tamTexto);
+			strcpy(ptrMarco->valor,texto);
 
 			if (pageFaultLectura == 1 && string_equals_ignore_case(ALGORITMO_REEMPLAZO, "FIFO") ) {
 				//int valor = list_count_satisfying(tablaDeProceso->listaPaginas, (void*) contarMarcosAsignados);
@@ -929,7 +954,7 @@ void escribirMarco(int processID, int marco, char * texto, int numeroPagina,int 
 			ptrMarco->bitLeido = 1;
 			ptrMarco->bitModificacion = 1;
 
-			strcpy(ptrMarco->valor,tamTexto);
+			strcpy(ptrMarco->valor,texto);
 		}
 		pageFaultLectura = 0;
 		//printf("Bit del FIFO: %d \n", bitIngresoFIFO);
@@ -1147,6 +1172,7 @@ void* atenderSolicitudes()
 	nodoInstruccion = NULL;
 	while (1){
 		sem_wait(&cantSolicitudes);
+		pthread_mutex_unlock(&prioridadEspera);
 		nodoInstruccion = list_get(listaSolicitudes,0);
 		if (nodoInstruccion != NULL){
 			sem_wait(&productorSwap);
@@ -1154,8 +1180,128 @@ void* atenderSolicitudes()
 			list_remove(listaSolicitudes,0);
 			sem_post(&productorSwap);
 		}
+		pthread_mutex_lock(&prioridadEspera);
 	}
 
+}
+
+void* recibirRespuestasCompactacion(int tiempoEspera){
+	sleep(tiempoEspera);
+	int cant = listaRespuestasEnEspera->elements_count;
+	int i;
+	pthread_mutex_unlock(&prioridadEspera);
+	for (i = 0; i < cant; i++){
+		atenderRespuestaEnCola(list_remove(listaRespuestasEnEspera,0));
+	}
+	pthread_mutex_lock(&prioridadEspera);
+}
+
+
+int atenderRespuestaEnCola(t_nodo_mem * nodoInst)
+{
+	int pid = nodoInst->pid;
+	//Envio a SWAP
+	nodoASwap = malloc(sizeof(t_nodo_mem_swap));
+	nodoASwap->pid = pid;
+	nodoASwap->contenido = string_new();
+	//Respuesta a CPU
+	nodoRtaSwap = malloc(sizeof(t_resp_swap_mem));
+	nodoRtaSwap->contenido = string_new();
+	recibirNodoDeRtaSwap(nodoRtaSwap);
+	int pagina;
+	pagina = nodoInst->pagina;
+	int finalizaPorError = 0;
+	//para la Lectura/escritura
+	t_marco * marco = NULL;
+	switch(nodoInst->instruccion){
+		case INICIAR:
+			nodoASwap->tipo = INICIAR;
+			nodoASwap->pagina = pagina;
+			enviarMensajeDeNodoASWAP(nodoASwap);
+			if (nodoRtaSwap->exito){
+				inicializarTablaDePaginas(pagina, pid);
+			}
+			enviarMensajeDeNodoACPU(nodoRtaSwap);
+			log_info(archivoLog, "PID %d: Total de paginas %d. Inicio: %s", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
+			puts("----------------------");
+			printf("PID %d: Total de paginas %d. Inicio: %s\n", pid, pagina,traducirExitoStatus(nodoRtaSwap->exito));
+			puts("----------------------");
+			break;
+		default:
+			sem_wait(&mutexFlushMarcos);
+			//Lectura o Escritura
+			comandosTotales++; //para calcuar la tasa de aciertos de la TLB
+			//Habia PF por eso pedi la lectura
+			recibirNodoDeRtaSwap(nodoRtaSwap);
+			pageFaultLectura = 1;
+			t_tablasPaginas * tablaDeProceso;
+			tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
+			tablaDeProceso->contadorPageFault++;
+			tablaDeProceso->paginasAccedidas++;
+			t_marco * marco = seleccionarMarcoVictima(pid);
+			if (marco == NULL){
+				//No se pudo asignar un marco
+				finalizarProceso(pid);
+				//Se finaliza el proceso
+				nodoASwap->tipo = FINALIZAR;
+				enviarMensajeDeNodoASWAP(nodoASwap);
+				log_info(archivoLog, "PID %d: Finalizado por asignacion de marcos.", pid);
+				puts("----------------------");
+				printf("PID %d: Finalizado por asignacion de marcos.\n", pid);
+				puts("----------------------");
+				finalizaPorError = 1;
+			} else {
+				strcpy(marco->valor, nodoRtaSwap->contenido);
+			}
+
+			if (nodoInst->instruccion == LEER)
+			{
+				nodoRtaSwap->tipo = LEER;
+				if (!finalizaPorError){
+					nodoRtaSwap->exito = 1;
+					strcpy(nodoRtaSwap->contenido, marco->valor);
+					log_info(archivoLog, "PID %d: Pagina %d leida - contenido '%s'", pid, pagina, marco->valor);
+					printf("PID %d: Pagina %d leida - contenido '%s'\n", pid, pagina, marco->valor);
+
+				} else {
+					//Si falla la CPU debe finalizarlo
+					nodoRtaSwap->exito = 0;
+				}
+			} else {
+				//ESCRIBIR
+				nodoRtaSwap->tipo = ESCRIBIR;
+				if (!finalizaPorError){
+					nodoRtaSwap->exito = 1;
+					strcpy(marco->valor,nodoInst->texto);
+					strcpy(nodoRtaSwap->contenido,nodoInst->texto);
+					log_info(archivoLog, "PID %d: Pagina %d escrita - contenido '%s'", pid, pagina, marco->valor);
+					printf("PID %d: Pagina %d escrita - contenido '%s'\n", pid, pagina, marco->valor);
+				} else {
+					//Si falla la CPU debe finalizarlo
+					nodoRtaSwap->exito = 0;
+				}
+
+			}
+			//Si no hay compactacion responde normalmente
+			usleep(RETARDO_MEMORIA * 1000000);
+			enviarMensajeDeNodoACPU(nodoRtaSwap);
+			//printf("El retardo fue de %g", RETARDO_MEMORIA);
+			if (!finalizaPorError){
+				//Actualizar el bit de uso y/o Modificacion
+				actualizarMarco(marco->valor,pid,pagina,marco->numeroMarco,nodoRtaSwap->tipo);
+				//actualiza TLB con el uso reciente.
+				cargarTlb(nodoInstruccion, marco, pid);
+			}
+			sem_post(&mutexFlushMarcos);
+
+			//imprimirTLB();
+			break;
+	}
+
+    free(nodoRtaSwap);
+    free(nodoASwap);
+
+    return 1;
 }
 
 
@@ -1180,7 +1326,7 @@ void informarDesconexionCPU(int socketCPU)
 
 void recibirSolicitudDeCpu(int socket, int * nbytes){
 	t_nodo_mem * nodo = malloc(sizeof(t_nodo_mem));
-	nodo->texto = malloc(sizeof("")+1);
+	nodo->texto = string_new();
 	int err = recibirNodoDeCPU(nodo);
 	*nbytes = err;//Dereferencia del puntero para cambmiarle el valor
 	if (err > 0){

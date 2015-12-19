@@ -24,6 +24,7 @@
 #define LEER 2
 #define ESCRIBIR 3
 #define FINALIZAR 6
+#define COMPACTACION 10
 
 #define SECUENCIA_NODO_RTA_SWAP_MEM "hhhs"
 #define SECUENCIA_MEM_SWAP "hhhs"
@@ -92,7 +93,6 @@ void levantarCfgInicial();
 void crearParticion();
 void configurarSocketServer();
 static t_nodoLibre *crearNodoLibre(int indice, int tamanio);
-static t_nodoEspera *crearNodoEspera(int idProc, int cantPagProceso);
 static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProceso);
 static t_metricas * metricas_create(int pid);
 
@@ -100,14 +100,14 @@ static t_metricas * metricas_create(int pid);
 //En caso de rechazarlo nada jajaja
 //En caso de estar fragmentando (SEMAFOOOROOO) lo pone en nodoEspera
 //En todos los casos genera un MENSAJE de aviso.
-void recibirProceso();
+void recibirProceso(t_nodo_mem_swap * nodoMemSwap);
 
 //cuando finaliza el proceso, lo elimina.
 //En la lista de libres agrega el indice y el tamaño del nodo eliminado
 void eliminarProceso(int pid);
 
-void leerPaginaProceso(int idProc, int pagina);
-void escribirPagina (int idProc, int pagina, char * texto);
+void leerPaginaProceso(t_nodo_mem_swap * nodoMemSwap);
+void escribirPagina(t_nodo_mem_swap * nodoMemSwap);
 t_metricas * buscarMetricas(int processID);
 //Condicion para el list_find en nodos libres
 
@@ -131,19 +131,21 @@ int enviarMensajeRtaAMem(t_resp_swap_mem * nodo);
 void empaquetarNodoRtaAMem(unsigned char *buffer,t_resp_swap_mem * nodo);
 void detectarHuecosContiguos(int indice, int tamanio);
 int fragmentacionExterna(int tam);
-void compactarSwap(int cantPagProceso);
 void desplazarYcompactar(int indice);
 void* compactacion();
 void limpiarPaginas(t_nodoProceso * nodoProceso);
 int agregarProcesoEnSwap(int idProc, int cantPagProceso);
 void imprimirEstadosListas();
-
+void avisarAMemQueEspere();
 void escribir(t_envioPaginaSwap * nodoEscribir);
+void atenderProcesosEnEspera();
+char * traducirTipoInstruccion(int tipo);
 t_list * listaLibres;
 t_list * listaProcesos;
 t_list * listaEspera;
 t_list * listaMetricas;
-
+pthread_mutex_t ordenAtencion;
+pthread_mutex_t mutexListaEspera;
 #endif /* SWAP_H_ */
 
 

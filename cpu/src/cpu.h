@@ -32,6 +32,7 @@
 #define ENTRADA_SALIDA 4
 #define QUANTUM_ACABADO 5
 #define FINALIZAR 6
+#define COMPACTACION 10
 #define ERRONEA 15
 //Char del orden de la Estructuras para serializar/desserializar
 #define SECUENCIA_PCB "hhhhhhs"
