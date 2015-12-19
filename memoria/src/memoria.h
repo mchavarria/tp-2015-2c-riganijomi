@@ -56,6 +56,7 @@ double comandosTotales = 0;
 double aciertosTLB = 0;
 int pageFaultPa = 0;
 int bitIngresoFIFO = 0;
+int encontradoEnTLB = 1;
 /*
  * Tipo indica la operación que se realiza
  * [INICIAR | LEER | ESCRIBIR | FINALIZAR]
