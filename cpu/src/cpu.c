@@ -26,7 +26,7 @@ int main() {
 	for (i = 0; i < cantCPUs; i++) {
 		nodoHilosCPU =  list_get(listaHilosCPU, i);
 		pthread_create(&(nodoHilosCPU->hiloCPU), NULL, cpu_func, (void*) i);
-		sleep(1);
+		usleep(500000);
 	}
 	//Esperar hilos
 	for (i = 0; i < cantCPUs; i++) {

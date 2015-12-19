@@ -1011,7 +1011,7 @@ void* flushMarcos() {
 		nodo->processID = NULO;
 		nodo->bitLeido = 0;
 		nodo->bitModificacion = 1;
-		nodo->valor = malloc(sizeof("")+1);
+		nodo->valor = string_new();
 		strcpy(nodo->valor,"NULL");
 		nodo->punteroClock = 0;
 		//log_info(archivoLog, "El marco quedo en %d, el numero de pagina quedo en %d, el processID quedo en %d.", nodo->marco, nodo->numeroPagina, nodo->processID);
@@ -1188,7 +1188,7 @@ void* atenderSolicitudes()
 	nodoInstruccion = NULL;
 	while (1){
 		sem_wait(&cantSolicitudes);
-		pthread_mutex_unlock(&prioridadEspera);
+		pthread_mutex_lock(&prioridadEspera);
 		nodoInstruccion = list_get(listaSolicitudes,0);
 		if (nodoInstruccion != NULL){
 			sem_wait(&productorSwap);
@@ -1196,7 +1196,7 @@ void* atenderSolicitudes()
 			list_remove(listaSolicitudes,0);
 			sem_post(&productorSwap);
 		}
-		pthread_mutex_lock(&prioridadEspera);
+		pthread_mutex_unlock(&prioridadEspera);
 	}
 
 }
@@ -1205,7 +1205,7 @@ void* recibirRespuestasCompactacion(int tiempoEspera){
 	sleep(tiempoEspera - 1);
 	int cant = listaRespuestasEnEspera->elements_count;
 	int i;
-	pthread_mutex_unlock(&prioridadEspera);
+	pthread_mutex_lock(&prioridadEspera);
 	puts("Recibiendo respuestas encoladas");
 	for (i = 0; i < cant; i++){
 		pthread_mutex_lock(&mutexlistaEspera);
@@ -1216,7 +1216,7 @@ void* recibirRespuestasCompactacion(int tiempoEspera){
 	}
 	listaRespuestasEnEspera = list_create();
 	puts("Fin respuestas encoladas");
-	pthread_mutex_lock(&prioridadEspera);
+	pthread_mutex_unlock(&prioridadEspera);
 }
 
 
