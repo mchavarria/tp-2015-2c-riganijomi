@@ -221,7 +221,7 @@ void assert_valorTLB(t_tlb * nodoTLB, int processID, int numeroPagina, int fueMo
 }
 
 int buscarEnTLB(int processID, int numeroPagina) {
-
+	//sem_wait(&mutexFlushTLB);
 	if (string_equals_ignore_case(TLB_HABILITADA, "SI")) {
 		int devolverValorDeTLB(t_tlb * nodo) {
 			return (nodo->processID == processID && nodo->numeroPagina == numeroPagina);
@@ -238,6 +238,7 @@ int buscarEnTLB(int processID, int numeroPagina) {
 			return nodoTLB->marco;
 		}
 	}
+	//sem_post(&mutexFlushTLB);
 	return NULO;
 }
 
@@ -352,6 +353,10 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 	t_tablasPaginas * tablaDeProceso;
 	t_tablaPaginasProceso * nodoPagina;
 	resultadoBusqueda = buscarEnTLB(nodoInst->pid, numeroPagina);
+	if (resultadoBusqueda != NULO) {
+		aciertosTLB++;
+		encontradoEnTLB = 0;
+	}
 	if (resultadoBusqueda == NULO) {
 		tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
 		nodoPagina = obtenerPagina(numeroPagina, tablaDeProceso);
@@ -360,7 +365,6 @@ static t_marco * detectarPageFault(t_nodo_mem * nodoInst, int numeroPagina) {
 	//Encontrado en TLB
 	if (resultadoBusqueda != NULO){
 		//No hubo PF
-		aciertosTLB++;
 		nodoMarco = list_find(listaMarco, (void*) devolverValor);
 		tablaDeProceso = buscarTablaPaginas(nodoInst->pid);
 		tablaDeProceso->paginasAccedidas++;
@@ -705,7 +709,10 @@ int interpretarLinea(t_nodo_mem * nodoInst)
 				}
 
 			}
-			usleep(RETARDO_MEMORIA * 1000000);
+			if (encontradoEnTLB) {
+				usleep(RETARDO_MEMORIA * 1000000);
+			}
+			encontradoEnTLB = 1;
 			enviarMensajeDeNodoACPU(nodoRtaSwap);
 			//printf("El retardo fue de %g", RETARDO_MEMORIA);
 			if (!finalizaPorError){
@@ -942,15 +949,31 @@ void dumpMemoria(){
 
 void* flushTLB() {
 	sem_wait(&mutexFlushTLB);
-	listaTLB = list_create();
-	inicializarTLB();
+	//listaTLB = list_create();
+	//inicializarTLB();
+	void borrarTODO(t_tlb * nodo) {
+		nodo->marco = NULO;
+		nodo->numeroPagina = NULO;
+		nodo->processID = NULO;
+		//log_info(archivoLog, "El marco quedo en %d, el numero de pagina quedo en %d, el processID quedo en %d.", nodo->marco, nodo->numeroPagina, nodo->processID);
+	}
+	list_iterate(listaTLB, borrarTODO);
 	sem_post(&mutexFlushTLB);
 }
 
 void* flushMarcos() {
 	sem_wait(&mutexFlushMarcos);
-	listaMarco = list_create();
-	inicializarMarco();
+	void borrarTODO(t_marco * nodo) {
+		nodo->numeroPagina = 0;
+		nodo->processID = NULO;
+		nodo->bitLeido = 0;
+		nodo->bitModificacion = 1;
+		nodo->valor = malloc(sizeof("")+1);
+		strcpy(nodo->valor,"NULL");
+		nodo->punteroClock = 0;
+		//log_info(archivoLog, "El marco quedo en %d, el numero de pagina quedo en %d, el processID quedo en %d.", nodo->marco, nodo->numeroPagina, nodo->processID);
+	}
+	list_iterate(listaMarco, borrarTODO);
 	desasignarTodosLosProcesos();
 	sem_post(&mutexFlushMarcos);
 }
