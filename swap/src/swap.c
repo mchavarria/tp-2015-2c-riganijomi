@@ -3,7 +3,8 @@
 int main() {
 
 	archivoLog = log_create("swap.log", "Swap", false, 2);
-
+	pthread_mutex_init(&ordenAtencion, NULL);
+	pthread_mutex_init(&mutexListaEspera,NULL);
 	//Creación de listas
 	listaLibres = list_create();
 	listaProcesos = list_create();
@@ -17,33 +18,44 @@ int main() {
 	crearParticion();
 	for(;(socketMemoria > 0);){
 		recibirNodoDeMem(nodoMemSwap);
+		pthread_mutex_lock(&ordenAtencion);
 		estructuraRecibida(nodoMemSwap);
+		pthread_mutex_unlock(&ordenAtencion);
 	}
 	return 1;
 }
 
 void estructuraRecibida(t_nodo_mem_swap * nodoMemSwap){
-	nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
-	nodoRespuesta->contenido = string_new();
-	strcpy(nodoRespuesta->contenido,"\0");
-	switch (nodoMemSwap->tipo) {
-		case INICIAR:
-			nodoRespuesta->tipo = INICIAR;
-			recibirProceso(nodoMemSwap->pid,nodoMemSwap->pagina);
-			break;
-		case LEER:
-			nodoRespuesta->tipo = LEER;
-			leerPaginaProceso(nodoMemSwap->pid,nodoMemSwap->pagina);
-			usleep(retardoSwap * 1000000);
-			break;
-		case ESCRIBIR:
-			escribirPagina(nodoMemSwap->pid,nodoMemSwap->pagina, nodoMemSwap->contenido);
-			usleep(retardoSwap * 1000000);
-		break;
-		case FINALIZAR:
-			nodoRespuesta->tipo = FINALIZAR;
-			eliminarProceso(nodoMemSwap->pid);
-		break;
+	if (hayFragmentacion == 0) {
+		//opero tranquilo
+		nodoRespuesta = malloc(sizeof(t_resp_swap_mem));
+		nodoRespuesta->contenido = string_new();
+		switch (nodoMemSwap->tipo) {
+			case INICIAR:
+				nodoRespuesta->tipo = INICIAR;
+				recibirProceso(nodoMemSwap);
+				break;
+			case LEER:
+				nodoRespuesta->tipo = LEER;
+				leerPaginaProceso(nodoMemSwap);
+				usleep(retardoSwap * 1000000);
+				break;
+			case ESCRIBIR:
+				escribirPagina(nodoMemSwap);
+				usleep(retardoSwap * 1000000);
+				break;
+			case FINALIZAR:
+				nodoRespuesta->tipo = FINALIZAR;
+				eliminarProceso(nodoMemSwap->pid);
+				break;
+		}
+	} else {
+		printf("PID %d: Solicitud %s agregada en Lista de Espera.\n",nodoMemSwap->pid,traducirTipoInstruccion(nodoMemSwap->tipo));
+		log_info(archivoLog,"PID %d: Solicitud agregada en Lista de Esepra.\n",nodoMemSwap->pid);
+		//Tengo que agregar a la lista de pedidos
+		pthread_mutex_lock(&mutexListaEspera);
+		list_add(listaEspera, nodoMemSwap);
+		pthread_mutex_unlock(&mutexListaEspera);
 	}
 }
 
@@ -92,22 +104,19 @@ static t_nodoLibre *crearNodoLibre(int indice, int tamanio) {
 	nodoLibre->tamanio = tamanio;
     return nodoLibre;
 }
-static t_nodoEspera *crearNodoEspera(int idProc, int cantPagProceso) {
-	t_nodoEspera *nodoEspera = malloc(sizeof(t_nodoEspera));
-	nodoEspera->idProc = idProc;
-    return nodoEspera;
-}
+
 static t_nodoProceso *crearNodoProceso(int idProc, int indice, int cantPagProceso) {
 	t_nodoProceso *nodoProceso = malloc(sizeof(t_nodoProceso));
 	nodoProceso->idProc = idProc;
 	nodoProceso->tamanio = cantPagProceso;
 	nodoProceso->indice = indice;
-	printf("nodo nuevo: pid %d, indice %d, tamanio %d \n",idProc,indice,cantPagProceso);
     return nodoProceso;
 }
 
-void recibirProceso(int idProc, int cantPagProceso)
+void recibirProceso(t_nodo_mem_swap * nodoMemSwap)
 {
+	int idProc = nodoMemSwap->pid;
+	int cantPagProceso = nodoMemSwap->pagina;
 	int respuestaAgregar;
 	//Salvo en la auxiliar para poder usarla en condicion
 	if (hayFragmentacion == 0){
@@ -116,21 +125,35 @@ void recibirProceso(int idProc, int cantPagProceso)
 			nodoRespuesta->exito = 1;
 		} else {
 			hayFragmentacion = fragmentacionExterna(cantPagProceso);
-			if (hayFragmentacion){
+			if (hayFragmentacion == 1){
+				printf("PID %d: Fallo iniciar en Swap por fragmentacion Externa.\n", idProc);
 				//necesito compactar
-				list_add(listaEspera, crearNodoEspera(idProc, cantPagProceso));
+				printf("PID %d: Solicitud %s agregada en Lista de Esepra.\n",nodoMemSwap->pid,traducirTipoInstruccion(nodoMemSwap->tipo));
+				log_info(archivoLog,"PID %d: Solicitud agregada en Lista de Esepra.\n",nodoMemSwap->pid);
+				pthread_mutex_lock(&mutexListaEspera);
+				list_add(listaEspera, nodoMemSwap);
+				pthread_mutex_unlock(&mutexListaEspera);
+
 				log_info(archivoLog, "Se COMPACTA para recibir el proceso PID: %d", idProc);
-				compactarSwap(cantPagProceso);
-				respuestaAgregar = agregarProcesoEnSwap(idProc,cantPagProceso);
+				pthread_t thread1;
+				char *m1 = "compactar";
+				int r1;
+				r1 = pthread_create(&thread1, NULL, compactacion, (void*) m1);
+				/*printf("PID %d: Intentando iniciar nuevamente.\n", idProc);
+				respuestaAgregar = agregarProcesoEnSwap(idProc,cantPagProceso);*/
 			}
 		}
 	}
 
-	if (respuestaAgregar == 0) {
+	if (respuestaAgregar == 0 && hayFragmentacion == 0) {
 		//No hay elementos libres, no puedo alojar.. Rechazo
 		nodoRespuesta->exito = 0;
-		perror("no hay espacio para el proceso");
-		log_info(archivoLog, "No hay espacio para alojar el proceso PID: %d", idProc);
+		printf("PID %d: No hay espacio para el proceso.\n", idProc);
+		log_info(archivoLog, "PID %d: No hay espacio para el proceso.", idProc);
+	}
+	if (hayFragmentacion == 1){
+		nodoRespuesta->tipo = COMPACTACION;
+		nodoRespuesta->pagina = retardoCompactacion;
 	}
 
 	enviarMensajeRtaAMem(nodoRespuesta);
@@ -148,7 +171,10 @@ int agregarProcesoEnSwap(int idProc, int cantPagProceso){
 		list_add(listaMetricas, metricas_create(idProc));
 		//hay lugar para alojarlo
 		list_add(listaProcesos, crearNodoProceso(idProc, nodoLibre->indice, cantPagProceso));
-		log_info(archivoLog, "Proceso Recibido PID: %d, Indice: %d, Tamanio: %d", idProc, nodoLibre->indice, cantPagProceso);
+		log_info(archivoLog, "PID %d: Total Paginas %d. Recibido y alojado en Indice %d", idProc,cantPagProceso , nodoLibre->indice);
+		puts("----------------------");
+		printf("PID %d: Total Paginas %d. Recibido y alojado en Indice %d\n", idProc,cantPagProceso , nodoLibre->indice);
+		puts("----------------------");
 		nodoLibre->tamanio = nodoLibre->tamanio - cantPagProceso;
 		int indiceRecienOcupado (t_nodoLibre * nodo) {
 			return (nodo->indice == nodoLibre->indice);
@@ -193,21 +219,23 @@ void eliminarProceso(int pid)
 	if (nodoProceso != NULL){
 		t_metricas * metricas = malloc(sizeof(t_metricas));
 		metricas = buscarMetricas(pid);
-		log_info(archivoLog, "PID: %d, Cantidad de paginas leidas: %d \n", pid, metricas->paginasLeidas);
-		log_info(archivoLog, "PID: %d, Cantidad de paginas escritas: %d \n", pid, metricas->paginasEscritas);
+		log_info(archivoLog, "PID %d: Cantidad de paginas leidas: %d.", pid, metricas->paginasLeidas);
+		log_info(archivoLog, "PID %d: Cantidad de paginas escritas: %d.", pid, metricas->paginasEscritas);
 		//encontro el nodo a eliminar
 		limpiarPaginas(nodoProceso);
 		list_add(listaLibres, crearNodoLibre(nodoProceso->indice, nodoProceso->tamanio));
 		detectarHuecosContiguos(nodoProceso->indice, nodoProceso->tamanio);
-		log_info(archivoLog, "Proceso eliminado PID: %d, Indice: %d, Tamanio: %d \n", pid, nodoProceso->indice, nodoProceso->tamanio);
+		log_info(archivoLog, "PID %d: Eliminado de Swap.", pid);
+		puts("----------------------");
+		printf("PID %d: Eliminado de Swap.\n", pid);
+		puts("----------------------");
 		list_remove_by_condition(listaProcesos,(void*) condicionProcAEliminar);
 		nodoRespuesta->exito = 1;
 		//free(nodoProceso);
 	} else {
 		//no encontro el proceso indicado
 		nodoRespuesta->exito = 0;
-		log_info(archivoLog, "No se pudo eliminar el proceso PID: %d", pid);
-		perror("no se encontró el proceso indicado");
+		log_info(archivoLog, "PID %d: No se pudo eliminar de Swap.", pid);
 	}
 	imprimirEstadosListas();
 
@@ -215,22 +243,22 @@ void eliminarProceso(int pid)
 }
 
 void imprimirEstadosListas(){
-	printf("listaLibre: %d \n",listaLibres->elements_count);
+	printf("Libres: %d elementos.\n",listaLibres->elements_count);
 	int totalTamanio=0;
 	void imprimirLibres(t_nodoLibre * nodo)
 	{
-		printf("indice %d, tamanio: %d\n", nodo->indice,nodo->tamanio);
+		printf("Indice %d, paginas libres: %d\n", nodo->indice,nodo->tamanio);
 		totalTamanio += nodo->tamanio;
 	}
-	list_iterate(listaLibres,imprimirLibres);
-	printf("lista procesos: %d \n",listaProcesos->elements_count);
+	list_iterate(listaLibres,(void *) imprimirLibres);
+	printf("Procesos: %d activos.\n",listaProcesos->elements_count);
 	totalTamanio = 0;
 	void imprimirNodos(t_nodoProceso * nodo)
 	{
-		printf("PID: %d, indice %d, tamanio: %d\n", nodo->idProc, nodo->indice,nodo->tamanio);
+		printf("PID: %d, indice %d, cantidad de paginas: %d\n", nodo->idProc, nodo->indice,nodo->tamanio);
 		totalTamanio += nodo->tamanio;
 	}
-	list_iterate(listaProcesos,imprimirNodos);
+	list_iterate(listaProcesos,(void *) imprimirNodos);
 }
 
 void limpiarPaginas(t_nodoProceso * nodoProceso){
@@ -265,26 +293,16 @@ int fragmentacionExterna(int tam){
 	return resp;
 }
 
-void compactarSwap(int cantPagProceso){
-
-	pthread_t thread1;
-	char *m1 = "compactar";
-	int r1;
-	r1 = pthread_create(&thread1, NULL, compactacion, (void*) m1);
-	pthread_join( thread1, NULL);
-	puts("Termino de compactar");
-}
-
 void* compactacion(){
 
+	//aviso a memoria que espere
 	int i;
 	puts("Compactando particion");
+	usleep(retardoCompactacion * 1000000);
 	int elementos = listaLibres->elements_count;
 	for (i = 0; i < elementos; i++){
 		desplazarYcompactar(0);
 	}
-	usleep(retardoCompactacion * 1000000);
-	hayFragmentacion = 0;
 	listaLibres = list_create();
 	int indiceLibre = 0;
 	int tamanio = 0;
@@ -296,9 +314,27 @@ void* compactacion(){
 	}
 	list_iterate(listaProcesos, (void *)libre);
 	list_add(listaLibres, crearNodoLibre(indiceLibre, (cantPaginas - tamanio)));
+	puts("Compactacion finalizada");
 	imprimirEstadosListas();
-	pthread_exit(NULL);
-	//atenderProcesosEnEspera();
+	//Atiendo los nodos en espera y despues libero.
+	pthread_mutex_lock(&ordenAtencion);
+	hayFragmentacion = 0;
+	atenderProcesosEnEspera();
+	pthread_mutex_unlock(&ordenAtencion);
+
+}
+
+void atenderProcesosEnEspera(){
+	int i;
+	int cant = listaEspera->elements_count;
+	printf("Atendiendo %d solicitudes en espera.\n",cant);
+	for (i = 0; i < cant; i++){
+		pthread_mutex_lock(&mutexListaEspera);
+		t_nodo_mem_swap * nodo = list_get(listaEspera,i);
+		estructuraRecibida(nodo);
+		pthread_mutex_unlock(&mutexListaEspera);
+	}
+	puts("Finaliza atencion de solicitudes en espera");
 }
 
 void desplazarYcompactar(int indice){
@@ -396,8 +432,10 @@ void detectarHuecosContiguos(int indice, int tamanio){
 
 }
 
-void leerPaginaProceso(int idProc, int pagina){
+void leerPaginaProceso(t_nodo_mem_swap * nodoMemSwap){
 
+	int idProc = nodoMemSwap->pid;
+	int pagina = nodoMemSwap->pagina;
 	char leerDelArchivo[1024];
 	int indiceProceso;
 	FILE *particion;
@@ -441,7 +479,7 @@ void leerPaginaProceso(int idProc, int pagina){
 			}
 
 			fclose(particion);
-			log_info(archivoLog, "Lectura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, leerDelArchivo, idProc, pagina);
+			log_info(archivoLog, "PID %d: Pagina %d leida en indice %d, contenido -%s-.",idProc,pagina, ubicacion,leerDelArchivo);
 		}
 	}else{
 
@@ -451,7 +489,10 @@ void leerPaginaProceso(int idProc, int pagina){
 }
 
 
-void escribirPagina (int idProc, int pagina, char * texto) {
+void escribirPagina(t_nodo_mem_swap * nodoMemSwap) {
+	int idProc = nodoMemSwap->pid;
+	int pagina = nodoMemSwap->pagina;
+	char * texto = nodoMemSwap->contenido;
 	FILE *particion;
 
 	particion = fopen("swap.data","r+");
@@ -483,7 +524,7 @@ void escribirPagina (int idProc, int pagina, char * texto) {
 	t_metricas * metricas;
 	metricas = buscarMetricas(idProc);
 	metricas->paginasEscritas++;
-    log_info(archivoLog, "Escritura en el SWAP: ubicacion %d, valor %s del process ID %d, de la pagina %d.", ubicacion, texto, idProc, pagina);
+    log_info(archivoLog, "PID %d: Pagina %d escrita en indice %d, valor -%s-.",idProc,pagina, ubicacion, texto);
 
 }
 
@@ -555,4 +596,23 @@ t_metricas * buscarMetricas(int processID){
 	nodoMetricas = list_find(listaMetricas, (void *) devolverTablaMetricas);
 
 	return nodoMetricas;
+}
+
+char * traducirTipoInstruccion(int tipo){
+	char * instruccion = string_new();
+	switch (tipo) {
+		case INICIAR:
+			strcpy(instruccion,"INICIAR");
+			break;
+		case LEER:
+			strcpy(instruccion,"LEER");
+			break;
+		case ESCRIBIR:
+			strcpy(instruccion,"ESCRIBIR");
+			break;
+		case FINALIZAR:
+			strcpy(instruccion,"FINALIZAR");
+			break;
+	}
+	return instruccion;
 }

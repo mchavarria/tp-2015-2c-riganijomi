@@ -38,7 +38,6 @@
 #define BLOQUEADO 2
 #define FINALIZADO 4
 #define EJECUTANDO 3
-
 //tipos de resuesta
 #define INICIAR 1
 #define LEER 2
@@ -67,6 +66,7 @@ typedef struct CPU {
 	int pcb;
 	int instruccionesLeidas;
 	float porc;
+	t_list * respuestasCpu;
 } t_cpu;
 
 /* el estado puede ser:
@@ -167,7 +167,7 @@ int interpretarLineaSegunRetardo(char * linea, int retardo);
 int devolverParteUsableInt(char * linea, int desde);
 int totalInstruccionesArchivo(char * programa);
 void* eliminaCadaMinuto();
-int recibirRespuestaCPU(int socketCpu, t_resp_cpu_plan * nodoRespuesta);
+int recibirRespuestaCPU(int socketCpu);
 void informarDesconexionCPU(int socket);
 void* buscarBloqueado(int PID);
 void* buscarPCBEjecutandoPorPID(int PID);

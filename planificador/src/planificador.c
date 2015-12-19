@@ -127,13 +127,18 @@ void* enviarPCBaCPU()//NO SE USA MAS
 }
 */
 
-int recibirRespuestaCPU(int socketCpu, t_resp_cpu_plan * nodoRespuesta)
+int recibirRespuestaCPU(int socketCpu)
 {
-	int nbytes = recibirRtadeCPU(socketCpu, nodoRespuesta);//Dereferencia del puntero para cambmiarle el valor
-	if (nbytes <= 0) {
-		// connection closed
-		close(socketCpu); // bye!
-		informarDesconexionCPU(socketCpu);
+	t_resp_cpu_plan * nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
+	nodoRespuesta->respuesta = string_new();
+	int nbytes = recibirRtadeCPU(socketCpu, nodoRespuesta);
+	bool buscarCPUporSocket(t_cpu * nodoCPU) {
+		return (nodoCPU->socket == socketCpu);
+	}
+	t_cpu* nodoCPU=NULL;
+	if (nbytes > 0){
+		nodoCPU = list_find(listaDeCPUs,(void*)buscarCPUporSocket);
+		list_add(nodoCPU->respuestasCpu,nodoRespuesta);
 	}
 	return nbytes;
 }
@@ -327,7 +332,7 @@ void* eliminaCadaMinuto()
 	}
 	while(1)
 	{
-		list_iterate(listaDeCPUs,limpiar);
+		list_iterate(listaDeCPUs,(void *) limpiar);
 		sleep(60);
 	}
 
@@ -386,7 +391,7 @@ void imprimeEstado(t_list *lista, char*estado ){
 	if(lista->elements_count > 0)
 	{
 		 int tamanio = lista->elements_count;
-		 printf("########################### %s ###########################\n",estado);
+		 printf("------------------------ %s ------------------------\n",estado);
 		 for(i=0; i< tamanio ;i++)
 		 {
 			t_pcb * nodoPCB = list_get(lista, i);
@@ -396,9 +401,11 @@ void imprimeEstado(t_list *lista, char*estado ){
 				printf("mProc %d: %s -> %s\n",nodoPCB->PID,nodoPCB->contextoEjecucion,estado);
 			}
 		 }
-		 puts("##############################################################");
+		 puts("------------------------------------------------------------");
 	} else {
+		puts("------------------------------------------------------------");
 		printf("Lista de mProcs %s vacia.\n",estado);
+		puts("------------------------------------------------------------");
 	}
 }
 
@@ -488,7 +495,7 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 					nodoCPU->pcb = 0;
 					continuarRecibiendo = 0;
 				}
-			break;
+				break;
     		case LEER:
     			if (exito){
 					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
@@ -503,7 +510,7 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 					nodoCPU->pcb = 0;
 					continuarRecibiendo = 0;
 				}
-    		break;
+    			break;
     		case ESCRIBIR:
     			if (exito){
 					//el nodo cpu tendra como parametro el puntero a la siguiente instruccion
@@ -518,7 +525,7 @@ int interpretarLinea(t_resp_cpu_plan * nodoRespuesta, t_cpu * nodoCPU) {
 					nodoCPU->pcb = 0;
 					continuarRecibiendo = 0;
 				}
-    		break;
+    			break;
     		case ENTRADA_SALIDA:
 				if (exito){
 					tiempoBloqueo = pagRW;
@@ -781,22 +788,17 @@ void* hiloDeCPU(void *nodo) {
 		pthread_mutex_unlock(&mutexCPU);
 		//Hago un while para respuestas de instrucciones
 		int continuar = 1;
-		int nbytes;
-		t_resp_cpu_plan * nodoRespuesta = malloc(sizeof(t_resp_cpu_plan));
-		nodoRespuesta->respuesta = string_new();
 		while (continuar == 1)
 		{
-			if ((nbytes = recibirRespuestaCPU(nodoCPU->socket, nodoRespuesta)) > 0)
-			{
+			if (nodoCPU->respuestasCpu->elements_count > 0){
+
+				t_resp_cpu_plan * nodoRespuesta = list_remove(nodoCPU->respuestasCpu,0);
 				nodoCPU->instruccionesLeidas++;
 				continuar = interpretarLinea(nodoRespuesta,nodoCPU);
-			} else {
-				puts("SALIII POR ERROR");
-				pthread_exit(NULL);
 			}
-		}
+		}//Fin while continuar
 
-	}
+	}//Fin while
 }
 
 void agregarCPUALista(int socketCpu) {
@@ -809,6 +811,7 @@ void agregarCPUALista(int socketCpu) {
 	nodoCpu->instruccionesLeidas = 0;
 	nodoCpu->porc = 0;
 	nodoCpu->disponible = 1;
+	nodoCpu->respuestasCpu = list_create();
 	printf("CPU: %d, socket: %d, agregada a la lista de CPUs.\n", nodoCpu->pid,nodoCpu->socket );
 	list_add(listaDeCPUs, nodoCpu);
 	//Enviar PCB a CPU
@@ -852,28 +855,25 @@ void* monitorearSockets(){
                 	//Aceptamos la conexion entrante, y creamos un nuevo socket mediante el cual nos podamos comunicar.
                     nuevoCliente = socketAceptarConexion(servidorPlanificador,"Planificador","CPU");
                     if (nuevoCliente > 0) {
-                        //FD_SET(nuevoCliente, &coleccionSockets); // agrega el cliente al set de sockets
-
-                        /*if (nuevoCliente > colMax) {    // actualiza el maximo
+                    	sleep(1);
+                    	agregarCPUALista(nuevoCliente);
+                        FD_SET(nuevoCliente, &coleccionSockets); // agrega el cliente al set de sockets
+                        if (nuevoCliente > colMax) {    // actualiza el maximo
                             colMax = nuevoCliente;
                         }
-                        int pid;*/
-                        //la agrega a la lista de CPUs
-                    	//Se crea un nuevo hilo, para cada CPU.
-                        agregarCPUALista(nuevoCliente);
                     }
-                } /*else {
+                } else {
                 	//Tengo un mensaje de algún cliente.
                 	//Respuesta de alguna instrucción de CPU
-                	recibirRespuestaCPU(i, &nbytes);
+                	nbytes = recibirRespuestaCPU(i);
                 	if (nbytes <= 0) {
 						// connection closed
                 		close(i); // bye!
 						FD_CLR(i, &coleccionSockets); // remove from master set
 						informarDesconexionCPU(i);
-					}*/
+					}
 
-                // fin recepcion de mensajes de cliente
+                }// fin recepcion de mensajes de cliente
             } // fin isset
         } // fin recorrido del set
     } // fin del for(;;)

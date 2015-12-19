@@ -99,13 +99,6 @@ void* cpu_func() {
 			//Archivo no valido
 			notificarNoInicioPCB(pcbProc,socketPlanificador);//Avisa que no lo inicia
 		}
-		/*
-		int eliminarElementos(char * elemento){
-			free(elemento);
-		}
-		if (instruccionesParaEjecutar->elements_count > 0){
-			list_clean_and_destroy_elements(instruccionesParaEjecutar,(void *)eliminarElementos);
-		}*/
 	}
 }
 
@@ -246,6 +239,12 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 		exito = instruccionIniciarProceso(nodoRta,nodoInstruccion,socketADM);
 		if (exito != -1){
 			//Se pudo comunicar bien
+			if (nodoRta->tipo == COMPACTACION){
+				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
+				sleep(nodoRta->pagina - 1);
+				pthread_mutex_lock(&mutexOrdenCpu);
+				recibirNodoDeMEM(socketADM,nodoRta);
+			}
 			nodoRtaCpuPlan->exito = nodoRta->exito;
 		}
 		nodoRtaCpuPlan->tipo = INICIAR;
@@ -260,6 +259,12 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 		exito = instruccionLeerPagina(nodoRta,nodoInstruccion,socketADM);
 		if (exito != -1){
 			//Se pudo comunicar bien
+			if (nodoRta->tipo == COMPACTACION){
+				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
+				sleep(nodoRta->pagina - 1);
+				pthread_mutex_lock(&mutexOrdenCpu);
+				recibirNodoDeMEM(socketADM,nodoRta);
+			}
 			nodoRtaCpuPlan->exito = nodoRta->exito;
 			strcpy(nodoRtaCpuPlan->respuesta,nodoRta->contenido);
 		}
@@ -281,6 +286,12 @@ int interpretarLineaAejecutar(char * linea,t_pcb * pcbProc,int socketADM,int soc
 		textoAEscribir(linea,nodoInstruccion->texto);
 		exito = instruccionEscribirPagina(nodoRta,nodoInstruccion,socketADM);
 		if (exito != -1){
+			if (nodoRta->tipo == COMPACTACION){
+				pthread_mutex_unlock(&mutexOrdenCpu);//libero para que otra cpu pueda interactuar con su MEM
+				sleep(nodoRta->pagina - 1);
+				pthread_mutex_lock(&mutexOrdenCpu);
+				recibirNodoDeMEM(socketADM,nodoRta);
+			}
 			//Se pudo comunicar bien
 			nodoRtaCpuPlan->exito = nodoRta->exito;
 		}
